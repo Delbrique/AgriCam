@@ -1,0 +1,126 @@
+/* ==========================================================================
+   AgriCam - systeme de design
+   --------------------------------------------------------------------------
+   Contexte d'usage : plein soleil, telephone d'entree de gamme, une seule main
+   libre. Toutes les decisions ci-dessous en decoulent - contraste eleve,
+   corps de texte genereux, cibles tactiles d'au moins 48 px.
+
+   Ce fichier ne contient plus que les VARIABLES : la remise a zero et les
+   classes semantiques partagees (.donnee, .carte, .bouton-principal...) ont
+   migre dans styles/tailwind.css (@layer base/components), pour que
+   tailwind.config.ts puisse mapper ses couleurs/tailles directement sur ces
+   variables (voir "colors: { papier: 'var(--papier)', ... }").
+
+   L'element signature reste la BANDE DE SEVERITE (voir bande.css) : une
+   bandelette de test agronomique qui porte le verdict et se retrouve a
+   l'identique sur la fiche de resultat, dans l'historique et sur la carte.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;700&display=swap');
+
+:root {
+  /* --- Couleurs -------------------------------------------------------- */
+  /* Le neutre tire vers le vert-gris froid, pas vers le creme : sous une
+     lumiere chaude de plein champ, un fond creme vire au jaune sale. */
+  --papier: #f2f4ef;
+  --carte: #ffffff;
+  --encre: #0e1a13;
+  --encre-douce: #4a5a51;
+  --trait: #d5dbd2;
+
+  /* Vert d'accent, utilise pour les appels a l'action sur fond sombre
+     (bandeau d'accueil) et les elements de marque. */
+  --accent: #7ee08a;
+  --accent-survol: #98eca3;
+
+  /* Chrome de marque : en-tete, cartouches "culture", bloc d'appel final.
+     Volontairement CONSTANT quel que soit le theme clair/sombre - ce sont
+     des elements de marque toujours sombres, pas des surfaces de contenu ;
+     les redefinir ici plutot que de reutiliser --encre/--papier evite que
+     l'en-tete ne s'inverse quand le site passe en mode sombre. */
+  --chrome-fond: #0e1a13;
+  --chrome-texte: #f2f4ef;
+  --chrome-texte-douce: #b9c6bd;
+
+  /* L'echelle de diagnostic EST la palette. Aucune couleur decorative. */
+  --sain: #1f7a4d;
+  --alerte: #d98a04;
+  --atteint: #b3411a;
+  --grave: #6e1f14;
+  --inconnu: #6b7a72;
+
+  /* Fonds tres desatures des memes teintes, pour les surfaces. */
+  --sain-fond: #e6f2ea;
+  --alerte-fond: #fdf1d9;
+  --atteint-fond: #f9e7e0;
+  --grave-fond: #f4d9d0;
+  --inconnu-fond: #eceeea;
+
+  /* --- Typographie ----------------------------------------------------- */
+  --police-titre: 'Bricolage Grotesque', system-ui, sans-serif;
+  --police-texte: 'Source Sans 3', system-ui, sans-serif;
+  --police-donnee: 'JetBrains Mono', ui-monospace, monospace;
+
+  --t-xs: 0.75rem;
+  --t-sm: 0.875rem;
+  --t-md: 1rem;
+  --t-lg: 1.25rem;
+  --t-xl: 1.75rem;
+  --t-2xl: 2.5rem;
+
+  /* --- Espacement et formes -------------------------------------------- */
+  --e1: 0.25rem;
+  --e2: 0.5rem;
+  --e3: 0.75rem;
+  --e4: 1rem;
+  --e5: 1.5rem;
+  --e6: 2rem;
+  --e7: 3rem;
+
+  --rayon: 4px;
+  --rayon-l: 10px;
+  --cible: 48px; /* hauteur minimale de toute zone tactile */
+
+  --ombre: 0 1px 2px rgba(14, 26, 19, 0.06), 0 4px 12px rgba(14, 26, 19, 0.05);
+
+  /* --- Largeur de page ------------------------------------------------- */
+  /* Le contenu (en-tete ET pages) est borne a cette largeur, puis centre ;
+     au-dela, le surplus part en marges laterales. Reglee sur AgriScan CM
+     (max-w-6xl = 1152 px, px-6 = 1.5rem de retrait lateral). Changer ces
+     deux valeurs suffit a re-largeur toute l'application d'un coup. */
+  --largeur-max: 1152px;
+  --marge-page: 1.5rem;
+  /* Formule de retrait lateral, calculee une seule fois ici plutot que
+     repetee dans chaque classe Tailwind qui en a besoin (en-tete, contenu). */
+  --pad-page: max(var(--marge-page), calc((100% - var(--largeur-max)) / 2));
+}
+
+/* --- Mode sombre ----------------------------------------------------------
+   Meme grammaire de teintes, luminance inversee. Bascule sur la classe
+   "dark" posee sur <html> par ThemeProvider (voir components/ThemeProvider) -
+   comme les couleurs Tailwind pointent toutes vers ces variables, aucune
+   classe "dark:" n'est necessaire ailleurs dans l'application. */
+:root.dark {
+  --papier: #0e1a13;
+  --carte: #16241b;
+  --encre: #f2f4ef;
+  --encre-douce: #9fb0a6;
+  --trait: #2a3830;
+
+  --accent: #7ee08a;
+  --accent-survol: #98eca3;
+
+  --sain: #4fd189;
+  --alerte: #f0ad2e;
+  --atteint: #e2673c;
+  --grave: #e2836c;
+  --inconnu: #8a9a92;
+
+  --sain-fond: rgba(31, 122, 77, 0.22);
+  --alerte-fond: rgba(217, 138, 4, 0.2);
+  --atteint-fond: rgba(179, 65, 26, 0.22);
+  --grave-fond: rgba(110, 31, 20, 0.28);
+  --inconnu-fond: rgba(107, 122, 114, 0.2);
+
+  --ombre: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.35);
+}

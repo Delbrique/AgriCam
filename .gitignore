@@ -1,0 +1,17 @@
+node_modules/
+dist/
+dev-dist/
+modeles/
+public/models/*
+!public/models/.gitkeep
+public/ort/
+.DS_Store
+__pycache__/
+*.pyc
+
+.vercel
+.env
+
+# Ancienne copie du script, supplantee par scripts/exporter_modeles.py
+# (detection automatique des chemins, executable depuis n'importe ou).
+/exporter_modeles.py

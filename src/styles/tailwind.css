@@ -1,0 +1,125 @@
+/* ==========================================================================
+   Point d'entree Tailwind.
+   Les couches "base" et "components" reprennent les regles globales qui
+   vivaient auparavant dans tokens.css : ce sont des classes semantiques
+   (.donnee, .intitule, .carte, .bouton-principal...) reutilisees dans une
+   dizaine de fichiers, les regrouper ici evite de les dupliquer partout ou
+   de casser leur style en migrant vers des classes utilitaires eparpillees.
+   ========================================================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    @apply box-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply m-0 bg-papier text-encre font-texte text-md antialiased;
+    line-height: 1.55;
+    overscroll-behavior-y: contain;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-titre font-bold m-0;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    @apply text-xl;
+  }
+  h2 {
+    @apply text-lg;
+  }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+    @apply min-h-cible rounded border border-transparent;
+    transition: background-color 120ms ease, transform 80ms ease;
+  }
+
+  button:active {
+    transform: translateY(1px);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--encre);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Chiffres, pourcentages, coordonnees : toujours en chasse fixe, pour que
+     les valeurs s'alignent d'une ligne a l'autre dans l'historique. */
+  .donnee {
+    @apply font-donnee tabular-nums font-medium;
+  }
+
+  /* Intitule de section : petite capitale espacee, jamais decorative - elle
+     nomme toujours une etape reelle du diagnostic. */
+  .intitule {
+    @apply font-donnee text-xs font-bold uppercase text-encre-douce;
+    letter-spacing: 0.12em;
+  }
+
+  .carte {
+    @apply bg-carte border border-trait rounded-lg p-e4 shadow-carte;
+  }
+
+  .bouton-principal {
+    @apply bg-encre text-papier px-e5 font-semibold w-full;
+  }
+
+  .bouton-principal:disabled {
+    @apply bg-encre-douce cursor-not-allowed;
+  }
+
+  .bouton-second {
+    @apply bg-transparent text-encre border-trait px-e4 font-semibold;
+  }
+
+  .avis {
+    @apply text-sm p-e3 rounded border-l-4 flex flex-col gap-e3 m-0;
+  }
+
+  .avis p {
+    @apply m-0;
+  }
+
+  .avis--attention {
+    @apply bg-alerte-fond border-alerte;
+  }
+
+  .avis--erreur {
+    @apply bg-atteint-fond border-atteint;
+  }
+
+  .avis--incertain {
+    @apply bg-inconnu-fond border-inconnu;
+  }
+
+  .avis--merci {
+    @apply bg-sain-fond border-sain;
+  }
+}
