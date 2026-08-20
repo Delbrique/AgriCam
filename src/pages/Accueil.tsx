@@ -10,9 +10,11 @@
  * fait l'outil, et ce que fait le detecteur que personne d'autre n'embarque.
  */
 
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CLASSES, couleurGravite, type Classe } from '../lib/classes';
 import { useTraduction } from '../lib/traduction';
+import { historique } from '../lib/stockage';
 import { InstallApp } from '../components/InstallApp';
 import {
   Camera, ScanEye, Crop, Stethoscope, Flame, ListChecks,
@@ -55,7 +57,22 @@ const ICONES_CHIFFRES = [Target, Timer, Layers, WifiOff];
 const ICONES_DISTINCTIONS = [WifiOff, Grid2x2, Eye, ShieldQuestion];
 
 export function Accueil() {
-  const { t } = useTraduction();
+  const { t, langue } = useTraduction();
+  // Duree moyenne d'un diagnostic : mesuree pour de vrai sur cet appareil
+  // (dureeMs, calcule dans lib/pipeline.ts a chaque diagnostic), plutot
+  // qu'un chiffre fixe invente - la latence reelle varie enormement d'un
+  // telephone a l'autre. `null` tant qu'aucun diagnostic n'a encore ete
+  // fait ici : jamais de nombre invente pour combler l'attente.
+  const [dureeMoyenneS, setDureeMoyenneS] = useState<number | null>(null);
+
+  useEffect(() => {
+    historique().then((consultations) => {
+      if (consultations.length === 0) return;
+      const moyenneMs =
+        consultations.reduce((s, c) => s + c.dureeMs, 0) / consultations.length;
+      setDureeMoyenneS(moyenneMs / 1000);
+    });
+  }, []);
 
   return (
     <div className="flex flex-col gap-e7">
@@ -110,26 +127,45 @@ export function Accueil() {
           pastille colorée à gauche. Mais les valeurs sont mesurées, pas des
           mots-clés — elles prouvent ce que l'accroche affirme. */}
       <section className="grid grid-cols-1 gap-e3 bp520:grid-cols-2 bp900:grid-cols-4">
-        {t.accueil.chiffres.map(({ valeur, unite, libelle }, i) => {
-          const Icone = ICONES_CHIFFRES[i];
-          return (
-            <div key={libelle} className="carte flex items-center gap-e3">
-              <span
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sain-fond text-sain"
-                aria-hidden="true"
-              >
-                <Icone size={22} strokeWidth={1.75} />
-              </span>
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="donnee flex items-baseline gap-1 text-xl font-bold leading-none tracking-[-0.02em] text-encre">
-                  {valeur}
-                  {unite && <span className="text-[0.5em] font-bold text-encre-douce">{unite}</span>}
+        {t.accueil.chiffres
+          .map((chiffre, i) => {
+            // Index 1 : duree moyenne, remplacee par la vraie mesure de cet
+            // appareil des qu'elle existe (voir l'effet ci-dessus).
+            if (i !== 1) return chiffre;
+            if (dureeMoyenneS === null) {
+              return { valeur: '—', unite: '', libelle: t.accueil.dureeVide };
+            }
+            return {
+              valeur: dureeMoyenneS.toLocaleString(langue === 'fr' ? 'fr-FR' : 'en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }),
+              unite: 's',
+              libelle: t.accueil.dureeLibelle,
+            };
+          })
+          .map(({ valeur, unite, libelle }, i) => {
+            const Icone = ICONES_CHIFFRES[i];
+            return (
+              <div key={libelle} className="carte flex items-center gap-e3">
+                <span
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sain-fond text-sain"
+                  aria-hidden="true"
+                >
+                  <Icone size={22} strokeWidth={1.75} />
                 </span>
-                <span className="text-sm leading-[1.3] text-encre-douce">{libelle}</span>
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="donnee flex items-baseline gap-1 text-xl font-bold leading-none tracking-[-0.02em] text-encre">
+                    {valeur}
+                    {unite && (
+                      <span className="text-[0.5em] font-bold text-encre-douce">{unite}</span>
+                    )}
+                  </span>
+                  <span className="text-sm leading-[1.3] text-encre-douce">{libelle}</span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </section>
 
       {/* ================= Ce qui est reconnu ================= */}

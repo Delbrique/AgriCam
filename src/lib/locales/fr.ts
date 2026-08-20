@@ -23,10 +23,12 @@ export const fr: Traductions = {
     boutonHistorique: 'Voir l’historique',
     chiffres: [
       { valeur: '95,9', unite: '%', libelle: 'exactitude sur le jeu de test' },
-      { valeur: '0,65', unite: 's', libelle: 'par diagnostic' },
+      { valeur: '0', unite: 's', libelle: 'par diagnostic' },
       { valeur: '9', unite: '', libelle: 'états reconnus · 3 cultures' },
-      { valeur: '100', unite: '%', libelle: 'hors ligne · aucune donnée envoyée' },
+      { valeur: '0', unite: 'octet transmis', libelle: 'aucune photo ne quitte votre téléphone' },
     ],
+    dureeLibelle: 'par diagnostic, mesuré sur cet appareil',
+    dureeVide: 'pas encore de diagnostic sur cet appareil',
     reconnuTitre: 'Ce que l’application reconnaît',
     reconnuNote:
       'Neuf états sanitaires sur l’organe récolté — le fruit, ou le bulbe pour l’oignon.',

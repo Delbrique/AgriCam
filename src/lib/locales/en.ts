@@ -23,10 +23,12 @@ export const en: Traductions = {
     boutonHistorique: 'View history',
     chiffres: [
       { valeur: '95.9', unite: '%', libelle: 'accuracy on the test set' },
-      { valeur: '0.65', unite: 's', libelle: 'per diagnosis' },
+      { valeur: '0', unite: 's', libelle: 'per diagnosis' },
       { valeur: '9', unite: '', libelle: 'states recognised · 3 crops' },
-      { valeur: '100', unite: '%', libelle: 'offline · no data ever sent' },
+      { valeur: '0', unite: 'bytes sent', libelle: 'no photo ever leaves your phone' },
     ],
+    dureeLibelle: 'per diagnosis, measured on this device',
+    dureeVide: 'no diagnosis run on this device yet',
     reconnuTitre: 'What the app recognises',
     reconnuNote:
       'Nine health states on the harvested organ — the fruit, or the bulb for onion.',

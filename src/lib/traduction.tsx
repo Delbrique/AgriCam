@@ -42,6 +42,12 @@ export interface Traductions {
     boutonDiagnostic: string;
     boutonHistorique: string;
     chiffres: { valeur: string; unite: string; libelle: string }[];
+    /** Libelle du chiffre "duree moyenne" une fois une vraie mesure disponible
+     * sur cet appareil (voir Accueil.tsx - remplace chiffres[1] a l'affichage). */
+    dureeLibelle: string;
+    /** Affiche a la place du chiffre "duree moyenne" tant qu'aucun diagnostic
+     * n'a encore ete fait sur cet appareil : jamais de nombre invente. */
+    dureeVide: string;
     reconnuTitre: string;
     reconnuNote: string;
     cultures: {
