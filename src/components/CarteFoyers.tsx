@@ -27,8 +27,10 @@ import {
   type Consultation,
   type Parcelle,
 } from '../lib/stockage';
+import type { Foyer } from '../lib/alerte';
 import type { Gravite } from '../lib/classes';
 import { GestionParcelles } from './GestionParcelles';
+import { AlerteFoyer } from './AlerteFoyer';
 
 type FiltreCulture = 'toutes' | 'tomate' | 'piment' | 'oignon';
 
@@ -129,6 +131,16 @@ export function CarteFoyers() {
   function centrerSurParcelle(p: Parcelle) {
     if (!p.position || !carteRef.current) return;
     carteRef.current.setView([p.position.latitude, p.position.longitude], ZOOM_QUARTIER);
+  }
+
+  function centrerSurFoyer(foyer: Foyer) {
+    if (!carteRef.current || foyer.points.length === 0) return;
+    const points: [number, number][] = foyer.points.map((p) => [p.latitude, p.longitude]);
+    if (points.length === 1) {
+      carteRef.current.setView(points[0], ZOOM_QUARTIER);
+    } else {
+      carteRef.current.fitBounds(L.latLngBounds(points).pad(0.3), { maxZoom: 17 });
+    }
   }
 
   const geolocalisees = (consultations ?? []).filter(
@@ -290,6 +302,8 @@ export function CarteFoyers() {
 
   return (
     <div className="flex flex-col gap-e4">
+      <AlerteFoyer onLocaliser={centrerSurFoyer} />
+
       {consultations !== null && geolocalisees.length === 0 && (
         <p className="avis avis--attention">
           Aucun diagnostic géolocalisé pour l&apos;instant. Autorisez le

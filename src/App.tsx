@@ -17,6 +17,7 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSelector } from './components/LanguageSelector';
 import { Assistant } from './components/Assistant';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { AlerteFoyer } from './components/AlerteFoyer';
 
 /** Chargee a la demande : Leaflet n'a pas a alourdir les trois autres pages,
  * consultees bien plus souvent que la carte. */
@@ -107,6 +108,11 @@ export default function App() {
             <strong>{t.chrome.modeleIncompatible}</strong> {alerte}
           </p>
         )}
+
+        {/* La page Carte affiche sa propre version de ce bandeau, capable de
+            recentrer la vue sur le foyer plutot que de renvoyer vers /carte :
+            pas de doublon ici. */}
+        {location.pathname !== '/carte' && <AlerteFoyer />}
 
         {/* key={pathname} : une erreur de rendu remplace la page par un
             message plutot que de planter l'app, mais un ErrorBoundary ne se

@@ -15,3 +15,5 @@ __pycache__/
 # Ancienne copie du script, supplantee par scripts/exporter_modeles.py
 # (detection automatique des chemins, executable depuis n'importe ou).
 /exporter_modeles.py
+
+.env*
