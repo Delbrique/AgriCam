@@ -25,9 +25,12 @@ interface CorpsRequete {
 }
 
 /** Modele texte par defaut, et modele bascule des qu'une image est jointe
- * dans la conversation (les deux sont servis par Groq). */
-const MODELE_TEXTE = 'llama-3.3-70b-versatile';
-const MODELE_VISION = 'meta-llama/llama-4-scout-17b-16e-instruct';
+ * dans la conversation (les deux sont servis par Groq). Chacun est un
+ * modele de raisonnement, mais avec un reglage `reasoning_effort` different
+ * (voir plus bas) : sans lui, l'un comme l'autre peuvent consommer tout le
+ * budget de tokens en reflexion interne et renvoyer un contenu vide. */
+const MODELE_TEXTE = 'openai/gpt-oss-120b';
+const MODELE_VISION = 'qwen/qwen3.6-27b';
 
 const SYSTEME =
   "Tu es l'assistant integre a AgriCam, une application de diagnostic des " +
@@ -82,6 +85,9 @@ export default async function handler(req: any, res: any) {
         },
         body: JSON.stringify({
           model: contientImage ? MODELE_VISION : MODELE_TEXTE,
+          // Les deux modeles acceptent ce parametre mais pas les memes
+          // valeurs : gpt-oss attend low/medium/high, qwen attend none/default.
+          reasoning_effort: contientImage ? 'none' : 'low',
           temperature: 0.5,
           max_tokens: 1024,
           messages: [
