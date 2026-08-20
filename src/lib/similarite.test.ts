@@ -48,4 +48,15 @@ describe('plusSimilaires', () => {
     expect(resultats).toHaveLength(1);
     expect(resultats[0].similarite).toBeCloseTo(1, 5);
   });
+
+  it('reste bornee a 100% meme avec des embeddings bruts, non normalises', () => {
+    // Regression : des vecteurs GAP reels n'ont pas une norme de 1, contrairement
+    // aux fixtures ci-dessus qui l'etaient toutes par construction.
+    const cible = [12, 0, 5];
+    const candidats = [{ id: 'a', embedding: [9, 1, 4] }];
+    const resultats = plusSimilaires(cible, candidats);
+    expect(resultats).toHaveLength(1);
+    expect(resultats[0].similarite).toBeLessThanOrEqual(1);
+    expect(resultats[0].similarite).toBeGreaterThanOrEqual(-1);
+  });
 });

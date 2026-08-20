@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { TriangleAlert } from 'lucide-react';
+import { TriangleAlert, X } from 'lucide-react';
 import { foyersActuels, type Foyer } from '../lib/alerte';
 import { classeParId } from '../lib/classes';
 
@@ -22,19 +22,36 @@ interface Props {
 
 export function AlerteFoyer({ onLocaliser }: Props) {
   const [foyers, setFoyers] = useState<Foyer[]>([]);
+  // Fermeture pour la duree de la session (jusqu'au prochain chargement de
+  // page) : un producteur qui a deja vu l'alerte n'a pas besoin qu'elle
+  // revienne a chaque clic, mais elle ne doit pas non plus disparaitre pour
+  // de bon si un vrai nouveau foyer apparait plus tard.
+  const [fermes, setFermes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     foyersActuels().then(setFoyers);
   }, []);
 
-  if (foyers.length === 0) return null;
+  const visibles = foyers.filter((f) => !fermes.has(f.classeId));
+  if (visibles.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-e2">
-      {foyers.map((foyer) => {
+      {visibles.map((foyer) => {
         const classe = classeParId(foyer.classeId);
         return (
-          <div key={foyer.classeId} className="avis avis--erreur">
+          <div key={foyer.classeId} className="avis avis--erreur relative pr-e6">
+            <button
+              type="button"
+              className="absolute right-e2 top-e2 grid h-7 w-7 shrink-0 place-items-center rounded-full border-0 bg-transparent text-encre-douce hover:bg-white/40"
+              onClick={() =>
+                setFermes((prev) => new Set(prev).add(foyer.classeId))
+              }
+              aria-label="Fermer cette alerte"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+
             <p className="flex items-center gap-e2 font-semibold">
               <TriangleAlert size={18} aria-hidden="true" />
               Foyer possible : {classe?.nom ?? foyer.classeId}

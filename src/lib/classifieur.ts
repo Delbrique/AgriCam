@@ -202,17 +202,17 @@ export function softmaxArgmax(
  * photos, voir lib/similarite.ts). Pure, sans dependance au modele charge.
  * `ArrayLike` plutot que `Float32Array` : accepte aussi bien le vecteur brut
  * que celui relu depuis IndexedDB ou un centroide en simple tableau. */
-export function similariteCosinus(vecteur: ArrayLike<number>, centroide: ArrayLike<number>): number {
-  let norme = 0;
-  for (let k = 0; k < vecteur.length; k += 1) norme += vecteur[k] * vecteur[k];
-  norme = Math.sqrt(norme);
-  if (norme === 0) return 0;
-
-  let similarite = 0;
+export function similariteCosinus(vecteur: ArrayLike<number>, autre: ArrayLike<number>): number {
+  let normeVecteur = 0;
+  let normeAutre = 0;
+  let produit = 0;
   for (let k = 0; k < vecteur.length; k += 1) {
-    similarite += (vecteur[k] / norme) * centroide[k];
+    produit += vecteur[k] * autre[k];
+    normeVecteur += vecteur[k] * vecteur[k];
+    normeAutre += autre[k] * autre[k];
   }
-  return similarite;
+  if (normeVecteur === 0 || normeAutre === 0) return 0;
+  return produit / (Math.sqrt(normeVecteur) * Math.sqrt(normeAutre));
 }
 
 /**

@@ -69,4 +69,24 @@ describe('similariteCosinus', () => {
   it('renvoie 0, sans lever d’erreur, pour un vecteur nul', () => {
     expect(similariteCosinus(new Float32Array([0, 0, 0]), [1, 2, 3])).toBe(0);
   });
+
+  it('reste bornee a [-1, 1] meme quand aucun des deux vecteurs n’est normalise', () => {
+    // Regression : une version passee ne normalisait que le premier vecteur,
+    // ce qui laissait le resultat filer bien au-dela de 1 des que le second
+    // n'etait pas deja de norme 1 (cas reel : deux empreintes brutes issues
+    // du GAP, voir lib/similarite.ts) - jusqu'a afficher "436 % de
+    // ressemblance" dans l'interface.
+    const a = [10, 0, 0];
+    const b = [8, 6, 0]; // norme 10, tres different de 1
+    const s = similariteCosinus(a, b);
+    expect(s).toBeLessThanOrEqual(1);
+    expect(s).toBeGreaterThanOrEqual(-1);
+    expect(s).toBeCloseTo(0.8, 5);
+  });
+
+  it('est symetrique', () => {
+    const a = [10, 0, 0];
+    const b = [8, 6, 0];
+    expect(similariteCosinus(a, b)).toBeCloseTo(similariteCosinus(b, a), 10);
+  });
 });
