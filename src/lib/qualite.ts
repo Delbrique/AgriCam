@@ -88,9 +88,13 @@ function varianceLaplacien(
   return sommeCarres / n - moyenne * moyenne;
 }
 
-export function evaluerQualite(source: CanvasImageSource): Qualite {
-  const { gris, largeur, hauteur } = versGris(source);
-
+/** Calcule les trois indicateurs a partir d'une vignette en niveaux de gris
+ * deja extraite. Pure : aucune dependance au DOM, donc testable sans canvas. */
+export function calculerStats(
+  gris: Float32Array,
+  largeur: number,
+  hauteur: number,
+): { nettete: number; luminance: number; contraste: number } {
   let somme = 0;
   for (let i = 0; i < gris.length; i += 1) somme += gris[i];
   const luminance = somme / gris.length;
@@ -103,11 +107,22 @@ export function evaluerQualite(source: CanvasImageSource): Qualite {
 
   const nettete = varianceLaplacien(gris, largeur, hauteur);
 
-  const base = { nettete, luminance, contraste };
+  return { nettete, luminance, contraste };
+}
+
+/** Applique les seuils de rejet a des indicateurs deja calcules. Pure : c'est
+ * cette fonction, et non evaluerQualite, qu'il faut tester pour verifier les
+ * seuils - versGris() ne peut pas s'executer hors du navigateur. */
+export function evaluerStats(stats: {
+  nettete: number;
+  luminance: number;
+  contraste: number;
+}): Qualite {
+  const { nettete, luminance, contraste } = stats;
 
   if (luminance < SEUIL_SOMBRE) {
     return {
-      ...base,
+      ...stats,
       acceptable: false,
       motif: 'sombre',
       conseil: "Photo trop sombre. Sortez de l'ombre ou approchez le fruit de la lumière.",
@@ -115,7 +130,7 @@ export function evaluerQualite(source: CanvasImageSource): Qualite {
   }
   if (luminance > SEUIL_CLAIR) {
     return {
-      ...base,
+      ...stats,
       acceptable: false,
       motif: 'surexpose',
       conseil:
@@ -124,7 +139,7 @@ export function evaluerQualite(source: CanvasImageSource): Qualite {
   }
   if (contraste < SEUIL_CONTRASTE) {
     return {
-      ...base,
+      ...stats,
       acceptable: false,
       motif: 'monotone',
       conseil: "Aucun détail visible. Cadrez le fruit lui-même, pas le feuillage.",
@@ -132,7 +147,7 @@ export function evaluerQualite(source: CanvasImageSource): Qualite {
   }
   if (nettete < SEUIL_NETTETE) {
     return {
-      ...base,
+      ...stats,
       acceptable: false,
       motif: 'flou',
       conseil:
@@ -140,5 +155,10 @@ export function evaluerQualite(source: CanvasImageSource): Qualite {
     };
   }
 
-  return { ...base, acceptable: true };
+  return { ...stats, acceptable: true };
+}
+
+export function evaluerQualite(source: CanvasImageSource): Qualite {
+  const { gris, largeur, hauteur } = versGris(source);
+  return evaluerStats(calculerStats(gris, largeur, hauteur));
 }

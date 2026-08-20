@@ -214,7 +214,7 @@ Ce n'est pas une fonctionnalité mais un **geste de démonstration**, et c'est p
 
 | Réf. | Exigence | Cible | Mesuré |
 |---|---|---|---|
-| ENF-01 | Exactitude sur le jeu de test | ≥ 90 % | **95,6 %** |
+| ENF-01 | Exactitude sur le jeu de test | ≥ 90 % | **95,89 %** |
 | ENF-02 | Temps d'un diagnostic complet | < 3 s | **647 ms** |
 | ENF-03 | Poids total à télécharger, une seule fois | < 40 Mo | **35,4 Mo** |
 | ENF-04 | Fonctionnement sans réseau après premier chargement | Total | ✅ |
@@ -279,7 +279,7 @@ Quatre pièges rencontrés pendant le développement, tous **silencieux** : aucu
 | Piège | Symptôme | Parade |
 |---|---|---|
 | Double normalisation | Précision effondrée, sans erreur | EfficientNet normalise en interne : pixels transmis bruts, sur [0, 255] |
-| Constantes de normalisation figées | 95,6 % → 80,7 % | `finalize_state()` après chargement des poids |
+| Constantes de normalisation figées | 95,89 % → 80,7 % | `finalize_state()` après chargement des poids |
 | `load_weights(by_name=True)` | Réseau resté aléatoire, silencieux | Chargement par nom explicite, avec décompte des tenseurs |
 | Ordre des classes | Diagnostics faux, confiance normale | Contrôle d'intégrité au démarrage |
 

@@ -165,7 +165,7 @@ Variable d'environnement requise sur Vercel : `GROQ_API_KEY` (Preview **et** Pro
 
 | Indicateur | Mesure |
 |---|---|
-| Exactitude du classifieur (jeu de test) | 95,6 % |
+| Exactitude du classifieur (jeu de test) | 95,89 % |
 | Temps d'un diagnostic complet (navigateur) | ≈ 0,65 s |
 | Poids total à télécharger | ≈ 35 Mo |
 | mAP50 du détecteur (tomate) | 0,72 |

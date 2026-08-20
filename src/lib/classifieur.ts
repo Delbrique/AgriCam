@@ -152,6 +152,61 @@ export function classifieurPret(): boolean {
   return tronc !== null && tete !== null;
 }
 
+/** Moyenne spatiale (Global Average Pooling) : reduit une carte
+ * d'activation (surface x canaux, aplatie) a un seul vecteur de
+ * caracteristiques. Pure, testable sans TF.js ni tronc reel. */
+export function moyenneSpatiale(
+  brut: Float32Array,
+  surface: number,
+  canaux: number,
+): Float32Array {
+  const moyennes = new Float32Array(canaux);
+  for (let p = 0; p < surface; p += 1) {
+    const base = p * canaux;
+    for (let k = 0; k < canaux; k += 1) moyennes[k] += brut[base + k];
+  }
+  for (let k = 0; k < canaux; k += 1) moyennes[k] /= surface;
+  return moyennes;
+}
+
+/** Softmax numeriquement stable, puis indice de la classe la plus probable. */
+export function softmaxArgmax(
+  scores: Float32Array,
+): { probabilites: Float32Array; indice: number } {
+  let max = -Infinity;
+  for (let c = 0; c < scores.length; c += 1) if (scores[c] > max) max = scores[c];
+
+  let total = 0;
+  const probabilites = new Float32Array(scores.length);
+  for (let c = 0; c < scores.length; c += 1) {
+    probabilites[c] = Math.exp(scores[c] - max);
+    total += probabilites[c];
+  }
+  for (let c = 0; c < scores.length; c += 1) probabilites[c] /= total;
+
+  let indice = 0;
+  for (let c = 1; c < scores.length; c += 1) {
+    if (probabilites[c] > probabilites[indice]) indice = c;
+  }
+  return { probabilites, indice };
+}
+
+/** Similarite cosinus entre un vecteur de caracteristiques et le centroide
+ * d'une classe (voir scripts/calculer_profils.py) - le coeur du calcul de
+ * detection hors sujet. Pure, sans dependance au modele charge. */
+export function similariteCosinus(vecteur: Float32Array, centroide: number[]): number {
+  let norme = 0;
+  for (let k = 0; k < vecteur.length; k += 1) norme += vecteur[k] * vecteur[k];
+  norme = Math.sqrt(norme);
+  if (norme === 0) return 0;
+
+  let similarite = 0;
+  for (let k = 0; k < vecteur.length; k += 1) {
+    similarite += (vecteur[k] / norme) * centroide[k];
+  }
+  return similarite;
+}
+
 /**
  * Diagnostique une vignette deja recadree.
  *
@@ -188,13 +243,7 @@ export async function classifier(vignette: CanvasImageSource): Promise<Predictio
 
   const surface = cote * cote;
 
-  // --- Moyenne spatiale ---------------------------------------------------
-  const moyennes = new Float32Array(canaux);
-  for (let p = 0; p < surface; p += 1) {
-    const base = p * canaux;
-    for (let k = 0; k < canaux; k += 1) moyennes[k] += brut[base + k];
-  }
-  for (let k = 0; k < canaux; k += 1) moyennes[k] /= surface;
+  const moyennes = moyenneSpatiale(brut, surface, canaux);
 
   // --- Couche dense -------------------------------------------------------
   const scores = new Float32Array(t.classes);
@@ -206,21 +255,7 @@ export async function classifier(vignette: CanvasImageSource): Promise<Predictio
     scores[c] = s;
   }
 
-  // --- Softmax numeriquement stable --------------------------------------
-  let max = -Infinity;
-  for (let c = 0; c < t.classes; c += 1) if (scores[c] > max) max = scores[c];
-  let total = 0;
-  const probabilites = new Float32Array(t.classes);
-  for (let c = 0; c < t.classes; c += 1) {
-    probabilites[c] = Math.exp(scores[c] - max);
-    total += probabilites[c];
-  }
-  for (let c = 0; c < t.classes; c += 1) probabilites[c] /= total;
-
-  let indice = 0;
-  for (let c = 1; c < t.classes; c += 1) {
-    if (probabilites[c] > probabilites[indice]) indice = c;
-  }
+  const { probabilites, indice } = softmaxArgmax(scores);
 
   // --- Hors sujet : l'image ressemble-t-elle a la classe retenue ? --------
   // Un classifieur "ensemble ferme" repartit TOUJOURS son verdict entre les
@@ -229,21 +264,12 @@ export async function classifier(vignette: CanvasImageSource): Promise<Predictio
   // vecteur de caracteristiques de l'image (deja calcule ci-dessus, avant la
   // couche de decision) au profil moyen de la classe retenue, obtenu sur de
   // vraies images d'entrainement (voir scripts/calculer_profils.py). En
-  //-deca du seuil calibre pour cette classe, l'image ne lui ressemble pas
+  // deca du seuil calibre pour cette classe, l'image ne lui ressemble pas
   // assez pour qu'on lui attribue un diagnostic.
   let horsSujet = false;
   if (profils) {
     const profil = profils.profils[indice];
-    let norme = 0;
-    for (let k = 0; k < canaux; k += 1) norme += moyennes[k] * moyennes[k];
-    norme = Math.sqrt(norme);
-    let similarite = 0;
-    if (norme > 0) {
-      for (let k = 0; k < canaux; k += 1) {
-        similarite += (moyennes[k] / norme) * profil.centroide[k];
-      }
-    }
-    horsSujet = similarite < profil.seuil;
+    horsSujet = similariteCosinus(moyennes, profil.centroide) < profil.seuil;
   }
 
   // --- Carte d'activation de la classe retenue ---------------------------

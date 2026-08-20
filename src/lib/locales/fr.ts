@@ -22,7 +22,7 @@ export const fr: Traductions = {
     boutonDiagnostic: 'Lancer un diagnostic',
     boutonHistorique: 'Voir l’historique',
     chiffres: [
-      { valeur: '95,6', unite: '%', libelle: 'exactitude sur le jeu de test' },
+      { valeur: '95,9', unite: '%', libelle: 'exactitude sur le jeu de test' },
       { valeur: '0,65', unite: 's', libelle: 'par diagnostic' },
       { valeur: '9', unite: '', libelle: 'états reconnus · 3 cultures' },
       { valeur: '100', unite: '%', libelle: 'hors ligne · aucune donnée envoyée' },

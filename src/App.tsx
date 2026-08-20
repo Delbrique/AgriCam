@@ -7,7 +7,7 @@
  */
 
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { Accueil } from './pages/Accueil';
 import { Diagnostic } from './pages/Diagnostic';
 import { Historique } from './pages/Historique';
@@ -16,6 +16,7 @@ import { useTraduction } from './lib/traduction';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSelector } from './components/LanguageSelector';
 import { Assistant } from './components/Assistant';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 /** Chargee a la demande : Leaflet n'a pas a alourdir les trois autres pages,
  * consultees bien plus souvent que la carte. */
@@ -36,6 +37,7 @@ function classeOnglet({ isActive }: { isActive: boolean }) {
 
 export default function App() {
   const { t } = useTraduction();
+  const location = useLocation();
   const [enLigne, setEnLigne] = useState(navigator.onLine);
   const [alerte, setAlerte] = useState<string | null>(null);
 
@@ -106,19 +108,26 @@ export default function App() {
           </p>
         )}
 
-        <Routes>
-          <Route path="/" element={<Accueil />} />
-          <Route path="/diagnostic" element={<Diagnostic />} />
-          <Route path="/historique" element={<Historique />} />
-          <Route
-            path="/carte"
-            element={
-              <Suspense fallback={<p>Chargement de la carte…</p>}>
-                <Carte />
-              </Suspense>
-            }
-          />
-        </Routes>
+        {/* key={pathname} : une erreur de rendu remplace la page par un
+            message plutot que de planter l'app, mais un ErrorBoundary ne se
+            reinitialise jamais tout seul. Le forcer a se remonter a chaque
+            changement de route evite qu'une erreur sur /diagnostic reste
+            affichee apres avoir clique sur "Historique". */}
+        <ErrorBoundary key={location.pathname}>
+          <Routes>
+            <Route path="/" element={<Accueil />} />
+            <Route path="/diagnostic" element={<Diagnostic />} />
+            <Route path="/historique" element={<Historique />} />
+            <Route
+              path="/carte"
+              element={
+                <Suspense fallback={<p>Chargement de la carte…</p>}>
+                  <Carte />
+                </Suspense>
+              }
+            />
+          </Routes>
+        </ErrorBoundary>
       </main>
 
       <Assistant />

@@ -115,7 +115,7 @@ export const CLASSES: Classe[] = [
     id: 'Tomato___Spotted_wilt_Virus',
     culture: 'tomate',
     organe: 'fruit',
-    nom: 'Virus de la maladie bronzee',
+    nom: 'Virus de la maladie bronzée',
     agent: 'Tomato spotted wilt virus, transmis par les thrips',
     gravite: 'grave',
     contagieux: true,

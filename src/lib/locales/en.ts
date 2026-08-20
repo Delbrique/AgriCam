@@ -22,7 +22,7 @@ export const en: Traductions = {
     boutonDiagnostic: 'Start a diagnosis',
     boutonHistorique: 'View history',
     chiffres: [
-      { valeur: '95.6', unite: '%', libelle: 'accuracy on the test set' },
+      { valeur: '95.9', unite: '%', libelle: 'accuracy on the test set' },
       { valeur: '0.65', unite: 's', libelle: 'per diagnosis' },
       { valeur: '9', unite: '', libelle: 'states recognised · 3 crops' },
       { valeur: '100', unite: '%', libelle: 'offline · no data ever sent' },

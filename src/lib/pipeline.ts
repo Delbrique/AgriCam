@@ -113,7 +113,7 @@ function recadrer(source: CanvasImageSource, boite: Boite, marge = 0.12): HTMLCa
  * -> rouge (chaud). Reproduire la meme palette est ce qui donne a la carte de
  * l'app le meme rendu net que la figure Python.
  */
-function couleurJet(v: number): [number, number, number] {
+export function couleurJet(v: number): [number, number, number] {
   const r = Math.max(0, Math.min(1, 1.5 - Math.abs(4 * v - 3)));
   const g = Math.max(0, Math.min(1, 1.5 - Math.abs(4 * v - 2)));
   const b = Math.max(0, Math.min(1, 1.5 - Math.abs(4 * v - 1)));
@@ -174,7 +174,7 @@ function superposerChaleur(
 
 const ORDRE_GRAVITE: Gravite[] = ['sain', 'alerte', 'atteint', 'grave'];
 
-function graviteMax(gravites: Gravite[]): Gravite {
+export function graviteMax(gravites: Gravite[]): Gravite {
   return gravites.reduce(
     (pire, g) => (ORDRE_GRAVITE.indexOf(g) > ORDRE_GRAVITE.indexOf(pire) ? g : pire),
     'sain' as Gravite,
