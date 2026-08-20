@@ -44,6 +44,11 @@ interface Props {
    * aussi, pour rattacher un point depuis son infobulle) : ce composant lui
    * signale juste qu'il faut la relire apres une creation/modification. */
   onParcellesChangees: () => void;
+  /** Incremente a chaque rattachement d'une consultation depuis l'infobulle
+   * de la carte : la liste `parcelles` elle-meme ne change pas dans ce cas
+   * (seule la consultation change de parcelleId), ce compteur est donc le
+   * seul signal qui force ce composant a relire le statut des parcelles. */
+  rattachementsVersion: number;
   onSelectionner: (parcelle: Parcelle) => void;
 }
 
@@ -51,6 +56,7 @@ export function GestionParcelles({
   parcelles,
   positionActuelle,
   onParcellesChangees,
+  rattachementsVersion,
   onSelectionner,
 }: Props) {
   const [statuts, setStatuts] = useState<Record<string, StatutParcelle>>({});
@@ -71,7 +77,7 @@ export function GestionParcelles({
     return () => {
       annule = true;
     };
-  }, [parcelles]);
+  }, [parcelles, rattachementsVersion]);
 
   async function creer() {
     const nomPropre = nom.trim();

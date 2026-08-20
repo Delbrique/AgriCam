@@ -115,6 +115,7 @@ export function CarteFoyers() {
   const [positionActuelle, setPositionActuelle] = useState<L.LatLng | null>(null);
   const [quartier, setQuartier] = useState<string | null>(null);
   const [listeParcelles, setListeParcelles] = useState<Parcelle[]>([]);
+  const [versionRattachements, setVersionRattachements] = useState(0);
 
   useEffect(() => {
     historique().then(setConsultations);
@@ -194,6 +195,7 @@ export function CarteFoyers() {
         setConsultations((liste) =>
           liste ? liste.map((c) => (c.id === id ? { ...c, parcelleId } : c)) : liste,
         );
+        setVersionRattachements((v) => v + 1);
       });
     }
     carte.on('popupopen', surPopupOuvert);
@@ -366,6 +368,7 @@ export function CarteFoyers() {
             : null
         }
         onParcellesChangees={rechargerParcelles}
+        rattachementsVersion={versionRattachements}
         onSelectionner={centrerSurParcelle}
       />
     </div>
