@@ -12,7 +12,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'favicon.svg'],
+      includeAssets: ['icons/*.png', 'favicon.png'],
       manifest: {
         name: 'AgriCam - diagnostic des cultures maraicheres',
         short_name: 'AgriCam',
