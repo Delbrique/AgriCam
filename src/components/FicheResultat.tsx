@@ -18,7 +18,6 @@ import { CLASSES, couleurGravite } from '../lib/classes';
 import type { DiagnosticFruit, Diagnostic } from '../lib/pipeline';
 import { BandeSeverite, PastilleGravite } from './BandeSeverite';
 import { ConduiteATenir } from './ConduiteATenir';
-import { ConseilDetaille } from './ConseilDetaille';
 import { DiagnosticsSimilaires } from './DiagnosticsSimilaires';
 import { PhotoAnnotee } from './PhotoAnnotee';
 
@@ -150,11 +149,17 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
 
         {/* Que faire (bas gauche). Absente si le fruit est incertain ou hors
             sujet : on ne conseille pas sur une hypothese non tranchee, ni sur
-            une image qui n'est meme pas une culture reconnue. Case de taille
-            fixe : ne s'etire pas au contenu, toujours plus long, de
-            Recommandations. */}
+            une image qui n'est meme pas une culture reconnue. Affiche la
+            conduite en dur instantanement, puis se remplace elle-meme par le
+            conseil IA (Groq) des qu'il arrive, si le reseau est la - voir
+            ConduiteATenir.tsx. */}
         {!fruit.incertain && !fruit.horsSujet && (
-          <ConduiteATenir classeId={fruit.classe.id} nomMaladie={fruit.classe.nom} />
+          <ConduiteATenir
+            classe={fruit.classe}
+            confiance={fruit.confiance}
+            horodatage={diagnostic.horodatage}
+            vignetteChaleur={fruit.vignetteChaleur}
+          />
         )}
 
         {/* Carte d'activation : zones analysees (bas droite). Absente si le
@@ -195,20 +200,6 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
           </section>
         )}
       </div>
-
-      {/* Recommandations : conseil detaille (en ligne uniquement), pleine
-          largeur, hors de la grille 2x2 pour ne pas en deregler les hauteurs. */}
-      {!fruit.incertain && !fruit.horsSujet && navigator.onLine && (
-        <section className="carte flex flex-col gap-e3">
-          <p className="intitule">Recommandations</p>
-          <ConseilDetaille
-            classe={fruit.classe}
-            confiance={fruit.confiance}
-            horodatage={diagnostic.horodatage}
-            vignetteChaleur={fruit.vignetteChaleur}
-          />
-        </section>
-      )}
 
       {!fruit.incertain && !fruit.horsSujet && (
         <DiagnosticsSimilaires embedding={fruit.embedding} idAExclure={diagnostic.id} />
