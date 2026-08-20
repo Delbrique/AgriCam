@@ -18,6 +18,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
@@ -30,7 +31,6 @@ import {
 import type { Foyer } from '../lib/alerte';
 import type { Gravite } from '../lib/classes';
 import { GestionParcelles } from './GestionParcelles';
-import { AlerteFoyer } from './AlerteFoyer';
 
 type FiltreCulture = 'toutes' | 'tomate' | 'piment' | 'oignon';
 
@@ -118,6 +118,14 @@ export function CarteFoyers() {
   const [quartier, setQuartier] = useState<string | null>(null);
   const [listeParcelles, setListeParcelles] = useState<Parcelle[]>([]);
   const [versionRattachements, setVersionRattachements] = useState(0);
+
+  // Arrivee depuis la cloche de notifications (voir NotificationsFoyers.tsx) :
+  // consomme une seule fois, sinon le cadrage automatique ci-dessous le
+  // reprendrait a chaque redessin des points.
+  const emplacement = useLocation();
+  const foyerACentrerRef = useRef(
+    (emplacement.state as { foyerACentrer?: Foyer } | null)?.foyerACentrer,
+  );
 
   useEffect(() => {
     historique().then(setConsultations);
@@ -298,12 +306,18 @@ export function CarteFoyers() {
       const limites = L.latLngBounds(points);
       carte.fitBounds(limites.pad(0.3), { maxZoom: 15 });
     }
+
+    // Prioritaire sur le cadrage ci-dessus, mais une seule fois : sans quoi
+    // chaque redessin (changement de filtre, nouveau point) reviendrait
+    // recentrer sur le foyer au lieu de laisser l'utilisateur naviguer.
+    if (foyerACentrerRef.current) {
+      centrerSurFoyer(foyerACentrerRef.current);
+      foyerACentrerRef.current = undefined;
+    }
   }, [filtrees, positionActuelle, quartier, listeParcelles]);
 
   return (
     <div className="flex flex-col gap-e4">
-      <AlerteFoyer onLocaliser={centrerSurFoyer} />
-
       {consultations !== null && geolocalisees.length === 0 && (
         <p className="avis avis--attention">
           Aucun diagnostic géolocalisé pour l&apos;instant. Autorisez le
