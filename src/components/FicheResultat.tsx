@@ -19,10 +19,15 @@ import type { DiagnosticFruit, Diagnostic } from '../lib/pipeline';
 import { BandeSeverite, PastilleGravite } from './BandeSeverite';
 import { ConduiteATenir } from './ConduiteATenir';
 import { ConseilDetaille } from './ConseilDetaille';
+import { DiagnosticsSimilaires } from './DiagnosticsSimilaires';
 import { PhotoAnnotee } from './PhotoAnnotee';
 
 interface Props {
-  diagnostic: Diagnostic;
+  /** En pratique toujours une Consultation deja enregistree (voir
+   * pages/Diagnostic.tsx) : `id` est optionnel dans le type pour ne pas
+   * coupler ce composant a stockage.ts, mais sert a exclure le diagnostic
+   * de ses propres resultats "similaires". */
+  diagnostic: Diagnostic & { id?: string };
   onRecommencer: () => void;
   onCorriger?: (indexFruit: number, classeId: string) => void;
 }
@@ -149,7 +154,7 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
             fixe : ne s'etire pas au contenu, toujours plus long, de
             Recommandations. */}
         {!fruit.incertain && !fruit.horsSujet && (
-          <ConduiteATenir classeId={fruit.classe.id} />
+          <ConduiteATenir classeId={fruit.classe.id} nomMaladie={fruit.classe.nom} />
         )}
 
         {/* Carte d'activation : zones analysees (bas droite). Absente si le
@@ -203,6 +208,10 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
             vignetteChaleur={fruit.vignetteChaleur}
           />
         </section>
+      )}
+
+      {!fruit.incertain && !fruit.horsSujet && (
+        <DiagnosticsSimilaires embedding={fruit.embedding} idAExclure={diagnostic.id} />
       )}
 
       <button className="bouton-principal" onClick={onRecommencer}>

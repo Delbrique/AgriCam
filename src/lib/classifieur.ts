@@ -76,6 +76,11 @@ export interface Prediction {
    * classifieur a quand meme du choisir une classe (softmax oblige), mais
    * elle est trop peu fiable pour etre affichee comme un diagnostic. */
   horsSujet: boolean;
+  /** Vecteur de caracteristiques (sortie du GAP, avant la couche de
+   * decision) - la meme empreinte visuelle qui sert deja a la detection hors
+   * sujet, reutilisee pour rapprocher deux photos qui se ressemblent (voir
+   * lib/similarite.ts). */
+  embedding: Float32Array;
 }
 
 let tronc: tf.GraphModel | null = null;
@@ -191,10 +196,13 @@ export function softmaxArgmax(
   return { probabilites, indice };
 }
 
-/** Similarite cosinus entre un vecteur de caracteristiques et le centroide
- * d'une classe (voir scripts/calculer_profils.py) - le coeur du calcul de
- * detection hors sujet. Pure, sans dependance au modele charge. */
-export function similariteCosinus(vecteur: Float32Array, centroide: number[]): number {
+/** Similarite cosinus entre deux vecteurs de caracteristiques - le coeur du
+ * calcul de detection hors sujet (contre un centroide de classe, voir
+ * scripts/calculer_profils.py) et des diagnostics similaires (entre deux
+ * photos, voir lib/similarite.ts). Pure, sans dependance au modele charge.
+ * `ArrayLike` plutot que `Float32Array` : accepte aussi bien le vecteur brut
+ * que celui relu depuis IndexedDB ou un centroide en simple tableau. */
+export function similariteCosinus(vecteur: ArrayLike<number>, centroide: ArrayLike<number>): number {
   let norme = 0;
   for (let k = 0; k < vecteur.length; k += 1) norme += vecteur[k] * vecteur[k];
   norme = Math.sqrt(norme);
@@ -296,5 +304,6 @@ export async function classifier(vignette: CanvasImageSource): Promise<Predictio
     chaleur,
     chaleurCote: cote,
     horsSujet,
+    embedding: moyennes,
   };
 }

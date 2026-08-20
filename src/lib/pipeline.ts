@@ -30,6 +30,9 @@ export interface DiagnosticFruit {
   /** Vignette recouverte de la carte de chaleur. */
   vignetteChaleur: string;
   probabilites: Float32Array;
+  /** Empreinte visuelle du fruit (voir classifieur.ts) - sert a retrouver
+   * des diagnostics similaires dans l'historique (lib/similarite.ts). */
+  embedding: Float32Array;
 }
 
 export interface Diagnostic {
@@ -252,6 +255,7 @@ export async function diagnostiquer(
       vignette: vignette.toDataURL('image/jpeg', 0.8),
       vignetteChaleur: chaleur.toDataURL('image/jpeg', 0.8),
       probabilites: prediction.probabilites,
+      embedding: prediction.embedding,
     });
   }
 
