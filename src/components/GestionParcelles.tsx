@@ -113,6 +113,14 @@ export function GestionParcelles({
         )}
       </div>
 
+      {parcelles.length > 0 && (
+        <p className="m-0 text-xs text-encre-douce">
+          Pour rattacher un diagnostic à une parcelle : cliquez sur son point
+          coloré sur la carte, puis choisissez la parcelle dans le menu «
+          Parcelle » qui apparaît dans l&apos;infobulle.
+        </p>
+      )}
+
       {creation && (
         <form
           className="carte flex flex-col gap-e3"
