@@ -8,7 +8,8 @@
  */
 
 import { openDB, type IDBPDatabase } from 'idb';
-import type { Diagnostic } from './pipeline';
+import type { Gravite } from './classes';
+import { graviteMax, type Diagnostic } from './pipeline';
 
 const BASE = 'agricam';
 const VERSION = 1;
@@ -123,29 +124,123 @@ export async function parcelles(): Promise<Parcelle[]> {
   return db.getAll('parcelles');
 }
 
+export async function renommerParcelle(id: string, nom: string): Promise<void> {
+  const db = await ouvrir();
+  const p = (await db.get('parcelles', id)) as Parcelle | undefined;
+  if (!p) return;
+  p.nom = nom;
+  await db.put('parcelles', p);
+}
+
+/** Supprime une parcelle et detache les consultations qui y etaient
+ * rattachees, plutot que de les laisser pointer vers un identifiant
+ * fantome. */
+export async function supprimerParcelle(id: string): Promise<void> {
+  const db = await ouvrir();
+  const tx = db.transaction(['parcelles', 'consultations'], 'readwrite');
+  await tx.objectStore('parcelles').delete(id);
+
+  const index = tx.objectStore('consultations').index('parcelleId');
+  let curseur = await index.openCursor(IDBKeyRange.only(id));
+  while (curseur) {
+    const c = curseur.value as Consultation;
+    delete c.parcelleId;
+    await curseur.update(c);
+    curseur = await curseur.continue();
+  }
+  await tx.done;
+}
+
+/** Rattache (ou detache, si `parcelleId` est absent) une consultation deja
+ * enregistree a une parcelle - utilise depuis la fiche de resultat ou la
+ * carte, une fois le diagnostic pose. */
+export async function rattacherConsultation(
+  id: string,
+  parcelleId: string | undefined,
+): Promise<void> {
+  const db = await ouvrir();
+  const c = (await db.get('consultations', id)) as Consultation | undefined;
+  if (!c) return;
+  if (parcelleId) c.parcelleId = parcelleId;
+  else delete c.parcelleId;
+  await db.put('consultations', c);
+}
+
+export interface StatutParcelle {
+  tauxRecent: number | null;
+  nbRecent: number;
+  tauxPrecedent: number | null;
+  nbPrecedent: number;
+  /** Pire gravite parmi les consultations recentes, pour la puce de couleur. */
+  gravitePire: Gravite | null;
+  tendance: 'amelioration' | 'stable' | 'aggravation' | null;
+}
+
+/** En-deca de cet ecart de taux d'infestation entre les deux fenetres, on
+ * affiche "stable" plutot qu'un mouvement qui ne serait que du bruit
+ * d'echantillonnage (une ou deux photos de plus d'un cote ou de l'autre). */
+const SEUIL_TENDANCE = 0.05;
+
 /**
- * Indice de sante d'une parcelle : moyenne du taux d'infestation sur les
- * consultations des trente derniers jours. Une seule photo ne dit rien d'une
- * parcelle ; une serie, si.
+ * Sante d'une parcelle : moyenne du taux d'infestation sur la fenetre
+ * recente, comparee a la fenetre precedente de meme duree. Une seule photo
+ * ne dit rien d'une parcelle ; une serie, si - et une comparaison dans le
+ * temps encore moins qu'un chiffre isole.
+ *
+ * Pure (aucun acces IndexedDB) : `statutParcelle` ci-dessous ne fait que lui
+ * fournir les consultations d'une parcelle donnee, ce qui la rend testable
+ * sans base de donnees simulee.
  */
-export async function indiceParcelle(
+export function calculerStatutParcelle(
+  consultations: Consultation[],
+  maintenant: number,
+  fenetreJours = 30,
+): StatutParcelle {
+  const jour = 24 * 3600 * 1000;
+  const debutRecent = maintenant - fenetreJours * jour;
+  const debutPrecedent = debutRecent - fenetreJours * jour;
+
+  const recentes = consultations.filter((c) => c.horodatage >= debutRecent);
+  const precedentes = consultations.filter(
+    (c) => c.horodatage >= debutPrecedent && c.horodatage < debutRecent,
+  );
+
+  const moyenne = (liste: Consultation[]): number | null =>
+    liste.length > 0
+      ? liste.reduce((s, c) => s + c.tauxInfestation, 0) / liste.length
+      : null;
+
+  const tauxRecent = moyenne(recentes);
+  const tauxPrecedent = moyenne(precedentes);
+
+  let tendance: StatutParcelle['tendance'] = null;
+  if (tauxRecent !== null && tauxPrecedent !== null) {
+    const ecart = tauxRecent - tauxPrecedent;
+    tendance =
+      ecart > SEUIL_TENDANCE ? 'aggravation' : ecart < -SEUIL_TENDANCE ? 'amelioration' : 'stable';
+  }
+
+  return {
+    tauxRecent,
+    nbRecent: recentes.length,
+    tauxPrecedent,
+    nbPrecedent: precedentes.length,
+    gravitePire: recentes.length > 0 ? graviteMax(recentes.map((c) => c.graviteGlobale)) : null,
+    tendance,
+  };
+}
+
+export async function statutParcelle(
   parcelleId: string,
   fenetreJours = 30,
-): Promise<{ taux: number; nbConsultations: number } | null> {
+): Promise<StatutParcelle> {
   const db = await ouvrir();
   const toutes = (await db.getAllFromIndex(
     'consultations',
     'parcelleId',
     parcelleId,
   )) as Consultation[];
-
-  const depuis = Date.now() - fenetreJours * 24 * 3600 * 1000;
-  const retenues = toutes.filter((c) => c.horodatage >= depuis);
-  if (retenues.length === 0) return null;
-
-  const taux =
-    retenues.reduce((s, c) => s + c.tauxInfestation, 0) / retenues.length;
-  return { taux, nbConsultations: retenues.length };
+  return calculerStatutParcelle(toutes, Date.now(), fenetreJours);
 }
 
 /* --- File de synchronisation -------------------------------------------- */

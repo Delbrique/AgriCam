@@ -12,7 +12,7 @@
 import { useEffect, useState } from 'react';
 import { History, ScanEye, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { CLASSES, couleurGravite, type Gravite } from '../lib/classes';
-import { historique, supprimer, type Consultation } from '../lib/stockage';
+import { historique, parcelles, supprimer, type Consultation, type Parcelle } from '../lib/stockage';
 import { BandeSeverite } from '../components/BandeSeverite';
 import { EtatVide } from '../components/EtatVide';
 
@@ -26,9 +26,11 @@ const LIBELLE_GRAVITE: Record<Gravite, string> = {
 export function Historique() {
   const [consultations, setConsultations] = useState<Consultation[] | null>(null);
   const [ouvert, setOuvert] = useState<string | null>(null);
+  const [listeParcelles, setListeParcelles] = useState<Parcelle[]>([]);
 
   useEffect(() => {
     historique().then(setConsultations);
+    parcelles().then(setListeParcelles);
   }, []);
 
   async function retirer(id: string) {
@@ -168,6 +170,13 @@ export function Historique() {
                       ` · ${c.position.latitude.toFixed(3)}, ${c.position.longitude.toFixed(3)}`}
                     {c.sansDetection && ' · pleine image'}
                   </p>
+
+                  {c.parcelleId && (
+                    <p className="donnee m-0 text-xs text-encre-douce">
+                      Parcelle :{' '}
+                      {listeParcelles.find((p) => p.id === c.parcelleId)?.nom ?? '—'}
+                    </p>
+                  )}
 
                   <button className="bouton-second" onClick={() => retirer(c.id)}>
                     Supprimer cette consultation

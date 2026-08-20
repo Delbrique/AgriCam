@@ -20,8 +20,15 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { historique, type Consultation } from '../lib/stockage';
+import {
+  historique,
+  parcelles,
+  rattacherConsultation,
+  type Consultation,
+  type Parcelle,
+} from '../lib/stockage';
 import type { Gravite } from '../lib/classes';
+import { GestionParcelles } from './GestionParcelles';
 
 type FiltreCulture = 'toutes' | 'tomate' | 'piment' | 'oignon';
 
@@ -52,6 +59,20 @@ const CENTRE_DEFAUT: [number, number] = [3.848, 11.502]; // Yaounde, repli si au
 /** Zoom "quartier" : assez precis pour lire les noms de rues, quand la carte
  * n'a que la position actuelle a montrer (pas encore de diagnostic autour). */
 const ZOOM_QUARTIER = 16;
+
+/** Echappe le texte injecte dans les popups Leaflet, construites comme des
+ * chaines HTML : indispensable des qu'un champ vient de l'utilisateur (le
+ * nom d'une parcelle), sous peine d'injection HTML stockee. */
+const ENTITES_HTML: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+function echapperHtml(texte: string): string {
+  return texte.replace(/[&<>"']/g, (c) => ENTITES_HTML[c]);
+}
 
 /** Traduit des coordonnees en nom de lieu lisible, via Nominatim
  * (OpenStreetMap) - meme fournisseur que les tuiles, gratuit, sans cle.
@@ -93,10 +114,21 @@ export function CarteFoyers() {
   const [filtre, setFiltre] = useState<FiltreCulture>('toutes');
   const [positionActuelle, setPositionActuelle] = useState<L.LatLng | null>(null);
   const [quartier, setQuartier] = useState<string | null>(null);
+  const [listeParcelles, setListeParcelles] = useState<Parcelle[]>([]);
 
   useEffect(() => {
     historique().then(setConsultations);
+    rechargerParcelles();
   }, []);
+
+  function rechargerParcelles() {
+    parcelles().then(setListeParcelles);
+  }
+
+  function centrerSurParcelle(p: Parcelle) {
+    if (!p.position || !carteRef.current) return;
+    carteRef.current.setView([p.position.latitude, p.position.longitude], ZOOM_QUARTIER);
+  }
 
   const geolocalisees = (consultations ?? []).filter(
     (c) => c.position && c.fruits.some((f) => !f.horsSujet),
@@ -145,9 +177,31 @@ export function CarteFoyers() {
     carte.on('locationfound', surPositionTrouvee);
     carte.locate({ setView: false, maxZoom: 14 });
 
+    // Rattachement d'une consultation a une parcelle depuis son infobulle :
+    // le <select> est construit en HTML brut (voir l'effet suivant), on lui
+    // branche donc son ecouteur ici, a l'ouverture de la popup qui le
+    // contient - c'est le seul moment ou il existe reellement dans le DOM.
+    function surPopupOuvert(e: L.PopupEvent) {
+      const conteneurPopup = e.popup.getElement();
+      const select = conteneurPopup?.querySelector<HTMLSelectElement>(
+        'select[data-consultation-id]',
+      );
+      if (!select) return;
+      const id = select.dataset.consultationId as string;
+      select.addEventListener('change', async () => {
+        const parcelleId = select.value || undefined;
+        await rattacherConsultation(id, parcelleId);
+        setConsultations((liste) =>
+          liste ? liste.map((c) => (c.id === id ? { ...c, parcelleId } : c)) : liste,
+        );
+      });
+    }
+    carte.on('popupopen', surPopupOuvert);
+
     return () => {
       observateur.disconnect();
       carte.off('locationfound', surPositionTrouvee);
+      carte.off('popupopen', surPopupOuvert);
       carte.remove();
       carteRef.current = null;
       coucheRef.current = null;
@@ -187,6 +241,19 @@ export function CarteFoyers() {
         year: 'numeric',
       });
 
+      const optionsParcelle = listeParcelles
+        .map(
+          (p) =>
+            `<option value="${p.id}"${c.parcelleId === p.id ? ' selected' : ''}>${echapperHtml(p.nom)}</option>`,
+        )
+        .join('');
+      const selecteurParcelle =
+        listeParcelles.length > 0
+          ? `<label style="display:block;margin-top:6px;font-size:12px;">Parcelle` +
+            `<select data-consultation-id="${c.id}" style="display:block;width:100%;margin-top:2px;">` +
+            `<option value="">— aucune —</option>${optionsParcelle}</select></label>`
+          : '';
+
       L.circleMarker([latitude, longitude], {
         radius: 9,
         color: '#ffffff',
@@ -195,8 +262,9 @@ export function CarteFoyers() {
         fillOpacity: 0.9,
       })
         .bindPopup(
-          `<strong>${principal.classe.nom}</strong><br>` +
-            `${LIBELLE_GRAVITE[c.graviteGlobale]} &middot; ${date}`,
+          `<strong>${echapperHtml(principal.classe.nom)}</strong><br>` +
+            `${LIBELLE_GRAVITE[c.graviteGlobale]} &middot; ${date}` +
+            selecteurParcelle,
         )
         .addTo(couche);
     });
@@ -216,7 +284,7 @@ export function CarteFoyers() {
       const limites = L.latLngBounds(points);
       carte.fitBounds(limites.pad(0.3), { maxZoom: 15 });
     }
-  }, [filtrees, positionActuelle, quartier]);
+  }, [filtrees, positionActuelle, quartier, listeParcelles]);
 
   return (
     <div className="flex flex-col gap-e4">
@@ -289,6 +357,17 @@ export function CarteFoyers() {
           Aucun diagnostic géolocalisé pour cette culture.
         </p>
       )}
+
+      <GestionParcelles
+        parcelles={listeParcelles}
+        positionActuelle={
+          positionActuelle
+            ? { latitude: positionActuelle.lat, longitude: positionActuelle.lng }
+            : null
+        }
+        onParcellesChangees={rechargerParcelles}
+        onSelectionner={centrerSurParcelle}
+      />
     </div>
   );
 }
