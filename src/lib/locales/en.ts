@@ -21,17 +21,14 @@ export const en: Traductions = {
       'AgriCam helps tomato, pepper and onion growers identify diseases in their harvest, see what the diagnosis is based on, and know what to do next — with no internet connection.',
     boutonDiagnostic: 'Start a diagnosis',
     boutonHistorique: 'View history',
-    chiffres: [
-      { valeur: '95.9', unite: '%', libelle: 'accuracy on the test set' },
-      { valeur: '0', unite: 's', libelle: 'per diagnosis' },
-      { valeur: '9', unite: '', libelle: 'states recognised · 3 crops' },
-      { valeur: '0', unite: 'bytes sent', libelle: 'no photo ever leaves your phone' },
-    ],
+    diagnosticsLibelle: 'diagnoses run on this device',
+    fruitsLibelle: 'fruit analysed in total',
+    infestationLibelle: 'infestation rate detected',
     dureeLibelle: 'per diagnosis, measured on this device',
     dureeVide: 'no diagnosis run on this device yet',
     reconnuTitre: 'What the app recognises',
     reconnuNote:
-      'Nine health states on the harvested organ — the fruit, or the bulb for onion.',
+      'Nine health states on the harvested organ — the fruit, or the bulb for onion. Measured accuracy: 95.9% on the test set.',
     cultures: {
       tomate: { nom: 'Tomato', note: '5 states · automatic detection' },
       piment: { nom: 'Pepper', note: '2 states' },

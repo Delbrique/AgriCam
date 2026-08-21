@@ -18,7 +18,7 @@ import { historique } from '../lib/stockage';
 import { InstallApp } from '../components/InstallApp';
 import {
   Camera, ScanEye, Crop, Stethoscope, Flame, ListChecks,
-  Target, Timer, Layers, WifiOff,
+  History, Timer, TriangleAlert, WifiOff,
   Grid2x2, Eye, ShieldQuestion,
 } from 'lucide-react';
 
@@ -53,24 +53,44 @@ function texteGravite(g: string): string {
 const CULTURES: Classe['culture'][] = ['tomate', 'piment', 'oignon'];
 
 const ICONES_ETAPES = [Camera, ScanEye, Crop, Stethoscope, Flame, ListChecks];
-const ICONES_CHIFFRES = [Target, Timer, Layers, WifiOff];
+const ICONES_CHIFFRES = [History, ScanEye, Timer, TriangleAlert];
 const ICONES_DISTINCTIONS = [WifiOff, Grid2x2, Eye, ShieldQuestion];
 
 export function Accueil() {
   const { t, langue } = useTraduction();
-  // Duree moyenne d'un diagnostic : mesuree pour de vrai sur cet appareil
-  // (dureeMs, calcule dans lib/pipeline.ts a chaque diagnostic), plutot
-  // qu'un chiffre fixe invente - la latence reelle varie enormement d'un
-  // telephone a l'autre. `null` tant qu'aucun diagnostic n'a encore ete
-  // fait ici : jamais de nombre invente pour combler l'attente.
+  // Les 4 chiffres sont mesures pour de vrai sur CET appareil, a partir de
+  // l'historique local (voir lib/stockage.ts) - jamais des valeurs figees.
+  // `null` tant que l'historique n'a pas encore ete lu ou qu'il est vide :
+  // jamais un nombre invente pour combler l'attente.
+  const [nbDiagnostics, setNbDiagnostics] = useState<number | null>(null);
+  const [nbFruits, setNbFruits] = useState(0);
   const [dureeMoyenneS, setDureeMoyenneS] = useState<number | null>(null);
+  const [tauxInfestation, setTauxInfestation] = useState<number | null>(null);
 
   useEffect(() => {
     historique().then((consultations) => {
+      setNbDiagnostics(consultations.length);
       if (consultations.length === 0) return;
-      const moyenneMs =
-        consultations.reduce((s, c) => s + c.dureeMs, 0) / consultations.length;
-      setDureeMoyenneS(moyenneMs / 1000);
+
+      let totalFruits = 0;
+      let totalDureeMs = 0;
+      let totalSurs = 0;
+      let totalAtteints = 0;
+      consultations.forEach((c) => {
+        totalFruits += c.fruits.length;
+        totalDureeMs += c.dureeMs;
+        c.fruits.forEach((f) => {
+          if (f.incertain || f.horsSujet) return;
+          totalSurs += 1;
+          if (f.classe.gravite === 'atteint' || f.classe.gravite === 'grave') {
+            totalAtteints += 1;
+          }
+        });
+      });
+
+      setNbFruits(totalFruits);
+      setDureeMoyenneS(totalDureeMs / consultations.length / 1000);
+      setTauxInfestation(totalSurs > 0 ? totalAtteints / totalSurs : 0);
     });
   }, []);
 
@@ -124,48 +144,60 @@ export function Accueil() {
 
       {/* ================= Chiffres ================= */}
       {/* Format carte, comme les indicateurs d'AgriScan : tuiles autonomes,
-          pastille colorée à gauche. Mais les valeurs sont mesurées, pas des
-          mots-clés — elles prouvent ce que l'accroche affirme. */}
+          pastille colorée à gauche. Les 4 valeurs sont mesurées EN DIRECT sur
+          l'historique de cet appareil (voir l'effet ci-dessus) : jamais des
+          chiffres figes, elles grandissent a mesure que l'app est utilisee. */}
       <section className="grid grid-cols-1 gap-e3 bp520:grid-cols-2 bp900:grid-cols-4">
-        {t.accueil.chiffres
-          .map((chiffre, i) => {
-            // Index 1 : duree moyenne, remplacee par la vraie mesure de cet
-            // appareil des qu'elle existe (voir l'effet ci-dessus).
-            if (i !== 1) return chiffre;
-            if (dureeMoyenneS === null) {
-              return { valeur: '—', unite: '', libelle: t.accueil.dureeVide };
-            }
-            return {
-              valeur: dureeMoyenneS.toLocaleString(langue === 'fr' ? 'fr-FR' : 'en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }),
-              unite: 's',
-              libelle: t.accueil.dureeLibelle,
-            };
-          })
-          .map(({ valeur, unite, libelle }, i) => {
-            const Icone = ICONES_CHIFFRES[i];
-            return (
-              <div key={libelle} className="carte flex items-center gap-e3">
-                <span
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sain-fond text-sain"
-                  aria-hidden="true"
-                >
-                  <Icone size={22} strokeWidth={1.75} />
+        {[
+          {
+            valeur: nbDiagnostics === null ? '—' : String(nbDiagnostics),
+            unite: '',
+            libelle: t.accueil.diagnosticsLibelle,
+          },
+          {
+            valeur: nbDiagnostics === null ? '—' : String(nbFruits),
+            unite: '',
+            libelle: t.accueil.fruitsLibelle,
+          },
+          dureeMoyenneS === null
+            ? { valeur: '—', unite: '', libelle: t.accueil.dureeVide }
+            : {
+                valeur: dureeMoyenneS.toLocaleString(langue === 'fr' ? 'fr-FR' : 'en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }),
+                unite: 's',
+                libelle: t.accueil.dureeLibelle,
+              },
+          tauxInfestation === null
+            ? { valeur: '—', unite: '', libelle: t.accueil.dureeVide }
+            : {
+                valeur: String(Math.round(tauxInfestation * 100)),
+                unite: '%',
+                libelle: t.accueil.infestationLibelle,
+              },
+        ].map(({ valeur, unite, libelle }, i) => {
+          const Icone = ICONES_CHIFFRES[i];
+          return (
+            <div key={i} className="carte flex items-center gap-e3">
+              <span
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sain-fond text-sain"
+                aria-hidden="true"
+              >
+                <Icone size={22} strokeWidth={1.75} />
+              </span>
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="donnee flex items-baseline gap-1 text-xl font-bold leading-none tracking-[-0.02em] text-encre">
+                  {valeur}
+                  {unite && (
+                    <span className="text-[0.5em] font-bold text-encre-douce">{unite}</span>
+                  )}
                 </span>
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="donnee flex items-baseline gap-1 text-xl font-bold leading-none tracking-[-0.02em] text-encre">
-                    {valeur}
-                    {unite && (
-                      <span className="text-[0.5em] font-bold text-encre-douce">{unite}</span>
-                    )}
-                  </span>
-                  <span className="text-sm leading-[1.3] text-encre-douce">{libelle}</span>
-                </div>
+                <span className="text-sm leading-[1.3] text-encre-douce">{libelle}</span>
               </div>
-            );
-          })}
+            </div>
+          );
+        })}
       </section>
 
       {/* ================= Ce qui est reconnu ================= */}

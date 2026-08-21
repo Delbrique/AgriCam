@@ -41,12 +41,18 @@ export interface Traductions {
     accroche: string;
     boutonDiagnostic: string;
     boutonHistorique: string;
-    chiffres: { valeur: string; unite: string; libelle: string }[];
+    /** Les 4 tuiles "Chiffres" sont entierement calculees dans Accueil.tsx a
+     * partir de l'historique local (nombre de diagnostics, fruits analyses,
+     * duree moyenne, taux d'infestation) : ce ne sont que leurs libelles,
+     * jamais des valeurs figees. */
+    diagnosticsLibelle: string;
+    fruitsLibelle: string;
+    infestationLibelle: string;
     /** Libelle du chiffre "duree moyenne" une fois une vraie mesure disponible
-     * sur cet appareil (voir Accueil.tsx - remplace chiffres[1] a l'affichage). */
+     * sur cet appareil (voir Accueil.tsx). */
     dureeLibelle: string;
-    /** Affiche a la place du chiffre "duree moyenne" tant qu'aucun diagnostic
-     * n'a encore ete fait sur cet appareil : jamais de nombre invente. */
+    /** Affiche a la place d'un chiffre tant qu'aucun diagnostic n'a encore
+     * ete fait sur cet appareil : jamais de nombre invente. */
     dureeVide: string;
     reconnuTitre: string;
     reconnuNote: string;

@@ -21,17 +21,14 @@ export const fr: Traductions = {
       'AgriCam aide les producteurs de tomate, de piment et d’oignon à identifier les maladies de leur récolte, à voir sur quoi repose le diagnostic, et à savoir quoi faire — sans connexion internet.',
     boutonDiagnostic: 'Lancer un diagnostic',
     boutonHistorique: 'Voir l’historique',
-    chiffres: [
-      { valeur: '95,9', unite: '%', libelle: 'exactitude sur le jeu de test' },
-      { valeur: '0', unite: 's', libelle: 'par diagnostic' },
-      { valeur: '9', unite: '', libelle: 'états reconnus · 3 cultures' },
-      { valeur: '0', unite: 'octet transmis', libelle: 'aucune photo ne quitte votre téléphone' },
-    ],
+    diagnosticsLibelle: 'diagnostics effectués sur cet appareil',
+    fruitsLibelle: 'fruits analysés au total',
+    infestationLibelle: 'taux d’infestation détecté',
     dureeLibelle: 'par diagnostic, mesuré sur cet appareil',
     dureeVide: 'pas encore de diagnostic sur cet appareil',
     reconnuTitre: 'Ce que l’application reconnaît',
     reconnuNote:
-      'Neuf états sanitaires sur l’organe récolté — le fruit, ou le bulbe pour l’oignon.',
+      'Neuf états sanitaires sur l’organe récolté — le fruit, ou le bulbe pour l’oignon. Exactitude mesurée à 95,9 % sur le jeu de test.',
     cultures: {
       tomate: { nom: 'Tomate', note: '5 états · repérage automatique' },
       piment: { nom: 'Piment', note: '2 états' },
