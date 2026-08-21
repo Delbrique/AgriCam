@@ -34,16 +34,6 @@ export const en: Traductions = {
       piment: { nom: 'Pepper', note: '2 states' },
       oignon: { nom: 'Onion', note: '2 states · bulb' },
     },
-    etapesTitre: 'How it works',
-    etapesNote: 'Six steps, all run on your phone.',
-    etapes: [
-      { titre: 'Photo', texte: 'Frame the fruit. The picture never leaves your phone.' },
-      { titre: 'Check', texte: 'Sharpness and light are checked. A blurry photo is rejected, with guidance on what to fix.' },
-      { titre: 'Detection', texte: 'The detector finds each fruit and crops it out. The diagnosis is made per fruit, not on the whole scene.' },
-      { titre: 'Diagnosis', texte: 'Each fruit is classified. Below the confidence threshold, the app refuses to decide.' },
-      { titre: 'Explanation', texte: 'A heat map shows the areas that drove the decision.' },
-      { titre: 'Action', texte: 'The steps to take today — and what not to do.' },
-    ],
     distinctionsTitre: 'What sets AgriCam apart',
     distinctions: [
       { titre: 'No server', texte: 'Both networks run in the browser. Once loaded, everything works in airplane mode. Your photo is never sent anywhere.' },

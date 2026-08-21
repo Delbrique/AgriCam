@@ -17,9 +17,8 @@ import { useTraduction } from '../lib/traduction';
 import { historique } from '../lib/stockage';
 import { InstallApp } from '../components/InstallApp';
 import {
-  Camera, ScanEye, Crop, Stethoscope, Flame, ListChecks,
-  History, Timer, TriangleAlert, WifiOff,
-  Grid2x2, Eye, ShieldQuestion,
+  ScanEye, History, Timer, TriangleAlert,
+  WifiOff, Grid2x2, Eye, ShieldQuestion,
 } from 'lucide-react';
 
 /**
@@ -52,7 +51,6 @@ function texteGravite(g: string): string {
 
 const CULTURES: Classe['culture'][] = ['tomate', 'piment', 'oignon'];
 
-const ICONES_ETAPES = [Camera, ScanEye, Crop, Stethoscope, Flame, ListChecks];
 const ICONES_CHIFFRES = [History, ScanEye, Timer, TriangleAlert];
 const ICONES_DISTINCTIONS = [WifiOff, Grid2x2, Eye, ShieldQuestion];
 
@@ -242,33 +240,6 @@ export function Accueil() {
             );
           })}
         </div>
-      </section>
-
-      {/* ================= Etapes ================= */}
-      <section className="flex flex-col gap-e4">
-        <h2 className="text-xl tracking-[-0.025em]">{t.accueil.etapesTitre}</h2>
-        <p className="-mt-e3">{t.accueil.etapesNote}</p>
-
-        <ol className="grid list-none gap-e3 m-0 p-0 bp560:grid-cols-2 bp1000:grid-cols-5">
-          {t.accueil.etapes.map(({ titre, texte }, i) => {
-            const Icone = ICONES_ETAPES[i];
-            return (
-              <li key={titre} className="carte">
-                <div className="mb-e4 flex items-center justify-between">
-                  <span
-                    className="grid h-11 w-11 place-items-center rounded-xl bg-sain-fond text-sain"
-                    aria-hidden="true"
-                  >
-                    <Icone size={22} strokeWidth={1.75} />
-                  </span>
-                  <span className="donnee text-[2rem] font-bold leading-none text-trait">{i + 1}</span>
-                </div>
-                <h3 className="mb-e2 text-md">{titre}</h3>
-                <p className="m-0 text-sm leading-[1.5] text-encre-douce">{texte}</p>
-              </li>
-            );
-          })}
-        </ol>
       </section>
 
       {/* ================= Distinctions ================= */}

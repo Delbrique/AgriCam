@@ -34,16 +34,6 @@ export const fr: Traductions = {
       piment: { nom: 'Piment', note: '2 états' },
       oignon: { nom: 'Oignon', note: '2 états · bulbe' },
     },
-    etapesTitre: 'Comment ça marche',
-    etapesNote: 'Six étapes, toutes exécutées sur votre téléphone.',
-    etapes: [
-      { titre: 'Photo', texte: 'Cadrez le fruit. L’image ne quitte pas votre téléphone.' },
-      { titre: 'Contrôle', texte: 'Netteté et lumière vérifiées. Une photo floue est refusée, avec le geste à faire.' },
-      { titre: 'Repérage', texte: 'Le détecteur trouve chaque fruit et le découpe. Le diagnostic porte sur le fruit, pas sur la scène.' },
-      { titre: 'Diagnostic', texte: 'Chaque fruit est classé. Sous le seuil de confiance, l’application refuse de trancher.' },
-      { titre: 'Explication', texte: 'Une carte de chaleur montre les zones qui ont motivé la décision.' },
-      { titre: 'Action', texte: 'Les gestes à poser aujourd’hui — et ce qu’il ne faut surtout pas faire.' },
-    ],
     distinctionsTitre: 'Ce qui distingue AgriCam',
     distinctions: [
       { titre: 'Aucun serveur', texte: 'Les deux réseaux tournent dans le navigateur. Une fois chargés, tout fonctionne en mode avion. Votre photo n’est envoyée nulle part.' },

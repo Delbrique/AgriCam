@@ -61,9 +61,6 @@ export interface Traductions {
       piment: { nom: string; note: string };
       oignon: { nom: string; note: string };
     };
-    etapesTitre: string;
-    etapesNote: string;
-    etapes: { titre: string; texte: string }[];
     distinctionsTitre: string;
     distinctions: { titre: string; texte: string }[];
     finalTitre: string;
