@@ -148,6 +148,16 @@ export function couleurGravite(g: Gravite): string {
   }[g];
 }
 
+/** Memes teintes que couleurGravite, en hexadecimal fige : necessaire pour
+ * tout rendu hors de la cascade CSS normale (Leaflet, Recharts, jsPDF), ou
+ * var(--x) ne serait pas resolu. A tenir synchronise avec tokens.css. */
+export const COULEUR_GRAVITE_HEX: Record<Gravite, string> = {
+  sain: '#1f7a4d',
+  alerte: '#d98a04',
+  atteint: '#b3411a',
+  grave: '#6e1f14',
+};
+
 /**
  * Seuil de confiance en deca duquel on refuse de trancher.
  *

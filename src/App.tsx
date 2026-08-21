@@ -1,16 +1,16 @@
 /**
  * Coque de l'application : en-tete, routes, navigation.
  *
- * Quatre pages. L'accueil presente le projet a qui arrive sans contexte ; les
- * trois autres servent l'usage reel. La navigation reste en bas, a portee de
+ * Deux pages. Le tableau de bord est devenu l'ecran d'accueil : il fusionne
+ * l'ancien historique et l'ancienne carte, pour ne plus disperser le suivi
+ * sur trois onglets differents. La navigation reste en bas, a portee de
  * pouce, parce que l'outil s'utilise debout, une main occupee par le fruit.
  */
 
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
-import { Accueil } from './pages/Accueil';
+import { TableauDeBord } from './pages/TableauDeBord';
 import { Diagnostic } from './pages/Diagnostic';
-import { Historique } from './pages/Historique';
 import { verifierReferentiel } from './lib/classes';
 import { useTraduction } from './lib/traduction';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -18,10 +18,6 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { Assistant } from './components/Assistant';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NotificationsFoyers } from './components/NotificationsFoyers';
-
-/** Chargee a la demande : Leaflet n'a pas a alourdir les trois autres pages,
- * consultees bien plus souvent que la carte. */
-const Carte = lazy(() => import('./pages/Carte').then((m) => ({ default: m.Carte })));
 
 /** Classes de chaque onglet de navigation, calculees selon l'etat actif
     plutot qu'empilees en conflit : mobile = barre basse sur fond "carte"
@@ -43,10 +39,8 @@ export default function App() {
   const [alerte, setAlerte] = useState<string | null>(null);
 
   const ONGLETS: [string, string][] = [
-    ['/', t.chrome.nav.accueil],
+    ['/', t.chrome.nav.tableauDeBord],
     ['/diagnostic', t.chrome.nav.diagnostic],
-    ['/historique', t.chrome.nav.historique],
-    ['/carte', t.chrome.nav.carte],
   ];
 
   useEffect(() => {
@@ -82,7 +76,7 @@ export default function App() {
             en barre basse fixe, à portée de pouce ; sur grand écran elle reste
             en ligne. Un seul élément dans le DOM, donc un seul ordre de
             tabulation au clavier. */}
-        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-trait bg-carte pb-[env(safe-area-inset-bottom)] bp860:static bp860:grid-cols-none bp860:flex bp860:gap-e5 bp860:border-t-0 bp860:bg-transparent bp860:pb-0">
+        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-2 border-t border-trait bg-carte pb-[env(safe-area-inset-bottom)] bp860:static bp860:grid-cols-none bp860:flex bp860:gap-e5 bp860:border-t-0 bp860:bg-transparent bp860:pb-0">
           {ONGLETS.map(([chemin, libelle]) => (
             <NavLink key={chemin} to={chemin} end={chemin === '/'} className={classeOnglet}>
               {libelle}
@@ -114,20 +108,11 @@ export default function App() {
             message plutot que de planter l'app, mais un ErrorBoundary ne se
             reinitialise jamais tout seul. Le forcer a se remonter a chaque
             changement de route evite qu'une erreur sur /diagnostic reste
-            affichee apres avoir clique sur "Historique". */}
+            affichee apres avoir clique sur "Tableau de bord". */}
         <ErrorBoundary key={location.pathname}>
           <Routes>
-            <Route path="/" element={<Accueil />} />
+            <Route path="/" element={<TableauDeBord />} />
             <Route path="/diagnostic" element={<Diagnostic />} />
-            <Route path="/historique" element={<Historique />} />
-            <Route
-              path="/carte"
-              element={
-                <Suspense fallback={<p>Chargement de la carte…</p>}>
-                  <Carte />
-                </Suspense>
-              }
-            />
           </Routes>
         </ErrorBoundary>
       </main>

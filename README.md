@@ -39,8 +39,8 @@ Projet de fin de cycle (Bachelor IA & Big Data). Pensé pour le petit producteur
 | **Diagnostic** | Détection multi-fruits, taux d'infestation, carte de chaleur, seuil de confiance, détection hors sujet, correction manuelle du producteur |
 | **Conduite à tenir** | Fiche par maladie (urgence, gestes, à éviter, prévention), disponible **hors ligne** |
 | **Conseil détaillé** | Généré par Groq (llama-3.3-70b) en ligne, mis en forme, exportable en **PDF** (Times New Roman, justifié, mise en page soignée) |
-| **Historique** | Liste des consultations, statistiques, détail par photo, suppression |
-| **Carte des foyers** | Carte personnelle (Leaflet + OpenStreetMap) des diagnostics géolocalisés, position actuelle avec géocodage inverse, filtre par culture |
+| **Tableau de bord** | Page d'accueil : KPI calculés en direct sur l'historique local (par période), répartition des maladies/cultures, derniers diagnostics, évolution temporelle, recommandations agrégées, export CSV/PDF |
+| **Carte des foyers** | Carte personnelle (Leaflet + OpenStreetMap) des diagnostics géolocalisés, position actuelle avec géocodage inverse, filtre par culture, parcelles et alertes de propagation — intégrée au tableau de bord |
 | **Sensibilisation** | Astuce du jour générée par Groq sur une maladie aléatoire parmi les 3 cultures, avec repli local hors ligne |
 | **Assistant** | Icône flottante déplaçable, chatbot cantonné au périmètre de l'app (diagnostics, recommandations, usage), avec upload d'images (modèle Groq vision) et de documents PDF/DOCX/texte |
 | **Hors ligne** | PWA installable, service worker avec précache des modèles (~35 Mo), repli de navigation hors ligne |
@@ -146,13 +146,13 @@ src/
     CarteFoyers           carte des foyers géolocalisés
     Assistant              icône flottante déplaçable + chat
 
-  pages/                  Accueil, Diagnostic, Historique, Carte
+  pages/                  TableauDeBord (accueil), Diagnostic
   data/                   conduites à tenir et astuces, écrites en dur (repli hors ligne)
 ```
 
 ## Déploiement
 
-Hébergé sur Vercel. `vercel.json` ajoute la règle de réécriture nécessaire au routage côté client (sans elle, toute navigation directe vers `/diagnostic` ou `/historique` renvoie une 404).
+Hébergé sur Vercel. `vercel.json` ajoute la règle de réécriture nécessaire au routage côté client (sans elle, toute navigation directe vers `/diagnostic` renvoie une 404).
 
 ```bash
 vercel deploy          # preview

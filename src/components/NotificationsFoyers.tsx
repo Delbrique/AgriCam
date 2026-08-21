@@ -53,10 +53,10 @@ export function NotificationsFoyers() {
 
   function localiser(foyer: Foyer) {
     setOuvert(false);
-    // La carte lit cet etat de navigation a son montage pour se recentrer
-    // sur le foyer, sans avoir besoin d'une reference partagee vers Leaflet
-    // (voir pages/Carte.tsx / components/CarteFoyers.tsx).
-    navigate('/carte', { state: { foyerACentrer: foyer } });
+    // La carte (dans le tableau de bord, voir pages/TableauDeBord.tsx) lit
+    // cet etat de navigation a son montage pour se recentrer sur le foyer,
+    // sans avoir besoin d'une reference partagee vers Leaflet.
+    navigate('/', { state: { foyerACentrer: foyer } });
   }
 
   return (

@@ -1,0 +1,342 @@
+/**
+ * Tableau de bord.
+ *
+ * Page d'accueil de l'application : fusionne les anciennes pages Historique
+ * et Carte (voir composants ListeDiagnostics et CarteFoyers). Tout est
+ * calcule EN DIRECT depuis l'historique local (voir lib/tableauDeBord.ts) -
+ * aucune donnee inventee (pas de meteo, pas de parcelles en hectares, pas de
+ * tendance regionale), aucun appel reseau bloquant : la page reste
+ * entierement fonctionnelle hors ligne, avec un etat vide honnete tant que
+ * l'historique est vide (chaque section degrade proprement d'elle-meme).
+ */
+
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Bug,
+  Download,
+  FileDown,
+  Percent,
+  ScanEye,
+  ShieldAlert,
+  type LucideIcon,
+} from 'lucide-react';
+import {
+  historique,
+  parcelles as chargerParcelles,
+  type Consultation,
+  type Parcelle,
+} from '../lib/stockage';
+import { classifieurPret } from '../lib/classifieur';
+import { detecteurPret } from '../lib/detecteur';
+import { prechargerModeles } from '../lib/pipeline';
+import {
+  calculerKpis,
+  filtrerParPeriode,
+  filtrerPeriodePrecedente,
+  recommandationsCritiques,
+  repartitionCultures,
+  repartitionMaladies,
+  serieTemporelle,
+  type Periode,
+} from '../lib/tableauDeBord';
+import { exporterCsv, exporterPdf } from '../lib/export';
+import { InstallApp } from '../components/InstallApp';
+import { CarteFoyers } from '../components/CarteFoyers';
+import { DonutMaladies } from '../components/DonutMaladies';
+import { BarresCultures } from '../components/BarresCultures';
+import { CourbeEvolution } from '../components/CourbeEvolution';
+import { ListeDiagnostics } from '../components/ListeDiagnostics';
+import { PanneauRecommandations } from '../components/PanneauRecommandations';
+import { PerformanceModele } from '../components/PerformanceModele';
+import { LanguageSelector } from '../components/LanguageSelector';
+
+const PERIODES: { valeur: Periode; libelle: string }[] = [
+  { valeur: 'jour', libelle: 'Jour' },
+  { valeur: 'semaine', libelle: 'Semaine' },
+  { valeur: 'mois', libelle: 'Mois' },
+  { valeur: 'tout', libelle: 'Tout' },
+];
+
+/** Variation en pourcentage vs la periode precedente de meme duree, ou
+ * `null` quand elle n'a pas de sens (periode "tout", periode precedente
+ * vide, ou variation nulle - inutile d'afficher "+0 %"). */
+function variation(actuel: number, precedent: number | null | undefined): string | null {
+  if (precedent === null || precedent === undefined) return null;
+  if (precedent === 0) return actuel > 0 ? '+100 % vs période précédente' : null;
+  const pct = Math.round(((actuel - precedent) / precedent) * 100);
+  if (pct === 0) return null;
+  return `${pct > 0 ? '+' : ''}${pct} % vs période précédente`;
+}
+
+export function TableauDeBord() {
+  const [consultations, setConsultations] = useState<Consultation[] | null>(null);
+  const [listeParcelles, setListeParcelles] = useState<Parcelle[]>([]);
+  const [periode, setPeriode] = useState<Periode>('semaine');
+  const [modelePret, setModelePret] = useState(false);
+  const [chargementModele, setChargementModele] = useState(false);
+
+  useEffect(() => {
+    historique().then(setConsultations);
+    chargerParcelles().then(setListeParcelles);
+  }, []);
+
+  // Amorce le telechargement du modele des l'arrivee sur le tableau de bord
+  // (devenu la page d'accueil) plutot que d'attendre la page Diagnostic :
+  // le badge de statut ci-dessous ne veut rien dire tant que ce n'est pas
+  // tente au moins une fois.
+  useEffect(() => {
+    if (classifieurPret() && detecteurPret()) {
+      setModelePret(true);
+      return;
+    }
+    if (!navigator.onLine) return;
+    setChargementModele(true);
+    prechargerModeles()
+      .then(() => setModelePret(true))
+      .catch(() => {
+        /* silencieux : signale au premier diagnostic, comme avant */
+      })
+      .finally(() => setChargementModele(false));
+  }, []);
+
+  function recharger() {
+    historique().then(setConsultations);
+  }
+
+  const maintenant = Date.now();
+  const toutes = consultations ?? [];
+
+  const periodeActuelle = useMemo(
+    () => filtrerParPeriode(toutes, periode, maintenant),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [toutes, periode],
+  );
+  const periodePrecedenteConsultations = useMemo(
+    () => filtrerPeriodePrecedente(toutes, periode, maintenant),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [toutes, periode],
+  );
+
+  const kpis = useMemo(() => calculerKpis(periodeActuelle), [periodeActuelle]);
+  const kpisPrecedents = useMemo(
+    () => (periodePrecedenteConsultations ? calculerKpis(periodePrecedenteConsultations) : null),
+    [periodePrecedenteConsultations],
+  );
+  const donutMaladies = useMemo(() => repartitionMaladies(periodeActuelle), [periodeActuelle]);
+  const barresCultures = useMemo(() => repartitionCultures(periodeActuelle), [periodeActuelle]);
+  const serie = useMemo(() => serieTemporelle(periodeActuelle), [periodeActuelle]);
+  const recommandations = useMemo(
+    () => recommandationsCritiques(periodeActuelle),
+    [periodeActuelle],
+  );
+
+  if (consultations === null) {
+    return <p>Lecture du tableau de bord…</p>;
+  }
+
+  const maintenantDate = new Date();
+  const salutation = maintenantDate.getHours() < 18 ? 'Bonjour' : 'Bonsoir';
+
+  return (
+    <div className="flex flex-col gap-e6">
+      {/* ================= En-tete ================= */}
+      <section className="flex flex-col gap-e3">
+        <div className="flex flex-wrap items-start justify-between gap-e3">
+          <div>
+            <h1 className="m-0 text-2xl">{salutation}</h1>
+            <p className="m-0 text-sm capitalize text-encre-douce">
+              {maintenantDate.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-e3">
+            <span
+              className="whitespace-nowrap rounded-full px-e3 py-e1 text-xs font-bold"
+              style={{
+                background: modelePret ? 'var(--sain-fond)' : 'var(--alerte-fond)',
+                color: modelePret ? 'var(--sain)' : 'var(--alerte)',
+              }}
+            >
+              {modelePret
+                ? '🟢 Hors ligne prêt'
+                : chargementModele
+                  ? '🟠 Modèle en préparation…'
+                  : '🟠 Modèle pas encore en cache'}
+            </span>
+            <Link
+              to="/diagnostic"
+              className="inline-grid min-h-cible place-items-center whitespace-nowrap rounded bg-encre px-e5 font-semibold text-papier no-underline hover:brightness-110"
+            >
+              + Nouveau diagnostic
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-e2">
+          {PERIODES.map(({ valeur, libelle }) => (
+            <button
+              key={valeur}
+              className={
+                periode === valeur
+                  ? 'min-h-[36px] rounded border border-encre bg-encre px-e3 text-sm font-semibold text-papier'
+                  : 'min-h-[36px] rounded border border-trait bg-transparent px-e3 text-sm font-semibold text-encre hover:bg-trait/30'
+              }
+              onClick={() => setPeriode(valeur)}
+              aria-pressed={periode === valeur}
+            >
+              {libelle}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <InstallApp />
+
+      {/* ================= KPI ================= */}
+      <section className="grid grid-cols-1 gap-e3 bp520:grid-cols-2 bp900:grid-cols-4">
+        <CarteKpi
+          icone={ScanEye}
+          valeur={String(kpis.nbDiagnostics)}
+          libelle="diagnostics effectués"
+          tendance={variation(kpis.nbDiagnostics, kpisPrecedents?.nbDiagnostics)}
+        />
+        <CarteKpi
+          icone={Percent}
+          valeur={kpis.tauxSain !== null ? `${Math.round(kpis.tauxSain * 100)} %` : '—'}
+          libelle="plants sains"
+        />
+        <CarteKpi
+          icone={ShieldAlert}
+          valeur={String(kpis.nbAlertesCritiques)}
+          libelle="alertes critiques"
+          tendance={variation(kpis.nbAlertesCritiques, kpisPrecedents?.nbAlertesCritiques)}
+        />
+        <CarteKpi
+          icone={Bug}
+          valeur={kpis.maladiePredominante?.classe.nom ?? '—'}
+          libelle="maladie prédominante"
+          petit
+        />
+      </section>
+
+      {/* ================= Etat sanitaire ================= */}
+      <section className="flex flex-col gap-e4">
+        <h2 className="text-xl tracking-[-0.025em]">État sanitaire</h2>
+        <div className="grid gap-e4 bp860:grid-cols-2">
+          <div className="carte flex flex-col gap-e3">
+            <p className="intitule">Répartition des maladies</p>
+            <DonutMaladies donnees={donutMaladies} />
+          </div>
+          <div className="carte flex flex-col gap-e3">
+            <p className="intitule">Cultures diagnostiquées</p>
+            <BarresCultures donnees={barresCultures} />
+          </div>
+        </div>
+      </section>
+
+      {/* ================= Derniers diagnostics ================= */}
+      <section className="flex flex-col gap-e4">
+        <h2 className="text-xl tracking-[-0.025em]">Derniers diagnostics</h2>
+        <ListeDiagnostics
+          consultations={periodeActuelle}
+          parcelles={listeParcelles}
+          onConsultationSupprimee={recharger}
+        />
+      </section>
+
+      {/* ================= Carte des diagnostics ================= */}
+      <section className="flex flex-col gap-e4">
+        <h2 className="text-xl tracking-[-0.025em]">Carte des diagnostics</h2>
+        <CarteFoyers />
+      </section>
+
+      {/* ================= Evolution temporelle ================= */}
+      <section className="carte flex flex-col gap-e3">
+        <p className="intitule">Évolution temporelle</p>
+        <CourbeEvolution serie={serie} />
+      </section>
+
+      {/* ================= Recommandations ================= */}
+      <section className="flex flex-col gap-e4">
+        <h2 className="text-xl tracking-[-0.025em]">Recommandations</h2>
+        <PanneauRecommandations recommandations={recommandations} />
+      </section>
+
+      {/* ================= Performance & appareil ================= */}
+      <PerformanceModele nbDiagnostics={consultations.length} />
+
+      {/* ================= Actions rapides ================= */}
+      <section className="carte flex flex-wrap items-center gap-e3">
+        <Link
+          to="/diagnostic"
+          className="inline-grid min-h-cible place-items-center whitespace-nowrap rounded bg-encre px-e5 font-semibold text-papier no-underline hover:brightness-110"
+        >
+          + Nouveau diagnostic
+        </Link>
+        <button
+          type="button"
+          className="bouton-second flex items-center gap-e2"
+          onClick={() => exporterCsv(consultations)}
+          disabled={consultations.length === 0}
+        >
+          <Download size={16} aria-hidden="true" />
+          Exporter en CSV
+        </button>
+        <button
+          type="button"
+          className="bouton-second flex items-center gap-e2"
+          onClick={() => exporterPdf(consultations)}
+          disabled={consultations.length === 0}
+        >
+          <FileDown size={16} aria-hidden="true" />
+          Exporter en PDF
+        </button>
+        <LanguageSelector />
+      </section>
+    </div>
+  );
+}
+
+function CarteKpi({
+  icone: Icone,
+  valeur,
+  libelle,
+  tendance,
+  petit,
+}: {
+  icone: LucideIcon;
+  valeur: string;
+  libelle: string;
+  tendance?: string | null;
+  petit?: boolean;
+}) {
+  return (
+    <div className="carte flex items-center gap-e3">
+      <span
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sain-fond text-sain"
+        aria-hidden="true"
+      >
+        <Icone size={22} strokeWidth={1.75} />
+      </span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span
+          className={
+            petit
+              ? 'donnee truncate text-md font-bold leading-tight tracking-[-0.02em] text-encre'
+              : 'donnee truncate text-xl font-bold leading-none tracking-[-0.02em] text-encre'
+          }
+        >
+          {valeur}
+        </span>
+        <span className="text-sm leading-[1.3] text-encre-douce">{libelle}</span>
+        {tendance && <span className="donnee text-xs text-encre-douce">{tendance}</span>}
+      </div>
+    </div>
+  );
+}

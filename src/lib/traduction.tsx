@@ -1,8 +1,9 @@
 /**
  * Systeme de traduction maison (FR/EN), sans i18next : l'application ne
- * traduit pour l'instant que le chrome (en-tete/navigation) et la page
- * d'accueil, un volume qui ne justifie pas une dependance supplementaire sur
- * une PWA qui charge deja des modeles tfjs/onnx lourds.
+ * traduit pour l'instant que le chrome (en-tete/navigation), un volume qui
+ * ne justifie pas une dependance supplementaire sur une PWA qui charge deja
+ * des modeles tfjs/onnx lourds. Le tableau de bord et le diagnostic restent
+ * en francais uniquement, comme avant eux l'historique et la carte.
  *
  * `t` expose directement l'objet de traduction de la langue active : les
  * appelants ecrivent `t.accueil.titre` plutot que `t('accueil.titre')`, ce qui
@@ -26,46 +27,12 @@ export interface Traductions {
     marque: string;
     sousTitre: string;
     nav: {
-      accueil: string;
+      tableauDeBord: string;
       diagnostic: string;
-      historique: string;
-      carte: string;
     };
     enLigne: string;
     horsLigne: string;
     modeleIncompatible: string;
-  };
-  accueil: {
-    etiquette: string;
-    titre: string;
-    accroche: string;
-    boutonDiagnostic: string;
-    boutonHistorique: string;
-    /** Les 4 tuiles "Chiffres" sont entierement calculees dans Accueil.tsx a
-     * partir de l'historique local (nombre de diagnostics, fruits analyses,
-     * duree moyenne, taux d'infestation) : ce ne sont que leurs libelles,
-     * jamais des valeurs figees. */
-    diagnosticsLibelle: string;
-    fruitsLibelle: string;
-    infestationLibelle: string;
-    /** Libelle du chiffre "duree moyenne" une fois une vraie mesure disponible
-     * sur cet appareil (voir Accueil.tsx). */
-    dureeLibelle: string;
-    /** Affiche a la place d'un chiffre tant qu'aucun diagnostic n'a encore
-     * ete fait sur cet appareil : jamais de nombre invente. */
-    dureeVide: string;
-    reconnuTitre: string;
-    reconnuNote: string;
-    cultures: {
-      tomate: { nom: string; note: string };
-      piment: { nom: string; note: string };
-      oignon: { nom: string; note: string };
-    };
-    distinctionsTitre: string;
-    distinctions: { titre: string; texte: string }[];
-    finalTitre: string;
-    finalTexte: string;
-    finalBouton: string;
   };
 }
 

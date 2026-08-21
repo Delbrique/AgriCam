@@ -29,7 +29,7 @@ import {
   type Parcelle,
 } from '../lib/stockage';
 import type { Foyer } from '../lib/alerte';
-import type { Gravite } from '../lib/classes';
+import { COULEUR_GRAVITE_HEX, type Gravite } from '../lib/classes';
 import { GestionParcelles } from './GestionParcelles';
 
 type FiltreCulture = 'toutes' | 'tomate' | 'piment' | 'oignon';
@@ -40,15 +40,6 @@ const FILTRES: { valeur: FiltreCulture; libelle: string }[] = [
   { valeur: 'piment', libelle: 'Piment' },
   { valeur: 'oignon', libelle: 'Oignon' },
 ];
-
-/** Couleurs fixes (pas les variables CSS de tokens.css) : Leaflet ecrit ces
- * valeurs directement en attribut SVG, ou var(--x) ne serait pas resolu. */
-const COULEUR_GRAVITE_HEX: Record<Gravite, string> = {
-  sain: '#1f7a4d',
-  alerte: '#d98a04',
-  atteint: '#b3411a',
-  grave: '#6e1f14',
-};
 
 const LIBELLE_GRAVITE: Record<Gravite, string> = {
   sain: 'Sain',
@@ -119,13 +110,21 @@ export function CarteFoyers() {
   const [listeParcelles, setListeParcelles] = useState<Parcelle[]>([]);
   const [versionRattachements, setVersionRattachements] = useState(0);
 
-  // Arrivee depuis la cloche de notifications (voir NotificationsFoyers.tsx) :
-  // consomme une seule fois, sinon le cadrage automatique ci-dessous le
-  // reprendrait a chaque redessin des points.
+  // Arrivee depuis la cloche de notifications (voir NotificationsFoyers.tsx).
+  // La carte etant desormais toujours montee sur le tableau de bord (au lieu
+  // d'une page /carte dediee), un clic depuis la cloche alors qu'on est deja
+  // sur cette page ne remonte pas le composant : sans cet effet, le nouvel
+  // etat de navigation serait ignore. Consomme puis efface, sinon le
+  // cadrage automatique ci-dessous le reprendrait a chaque redessin.
   const emplacement = useLocation();
-  const foyerACentrerRef = useRef(
+  const foyerACentrerRef = useRef<Foyer | undefined>(
     (emplacement.state as { foyerACentrer?: Foyer } | null)?.foyerACentrer,
   );
+
+  useEffect(() => {
+    const foyer = (emplacement.state as { foyerACentrer?: Foyer } | null)?.foyerACentrer;
+    if (foyer) foyerACentrerRef.current = foyer;
+  }, [emplacement.state]);
 
   useEffect(() => {
     historique().then(setConsultations);
@@ -314,7 +313,7 @@ export function CarteFoyers() {
       centrerSurFoyer(foyerACentrerRef.current);
       foyerACentrerRef.current = undefined;
     }
-  }, [filtrees, positionActuelle, quartier, listeParcelles]);
+  }, [filtrees, positionActuelle, quartier, listeParcelles, emplacement.state]);
 
   return (
     <div className="flex flex-col gap-e4">
