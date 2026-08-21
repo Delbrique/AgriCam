@@ -77,12 +77,37 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(4px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        // Meme principe que "entree", mais un peu plus ample : utilisee au
+        // premier defilement d'une section dans la vue (voir
+        // ApparitionAuDefilement.tsx), pas a chaque changement de contenu.
+        monteeEntree: {
+          '0%': { opacity: '0', transform: 'translateY(14px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        // Halo doux, pour un moment de satisfaction bref (ex. badge "pret
+        // hors ligne" qui vient de passer au vert) - pas une boucle infinie.
+        lueur: {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(31, 122, 77, 0)' },
+          '50%': { boxShadow: '0 0 0 6px rgba(31, 122, 77, 0.18)' },
+        },
+        // Petit balancement de cloche, pour signaler une nouvelle alerte
+        // sans etre aussi insistant qu'un clignotement.
+        sonnerie: {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '20%': { transform: 'rotate(-12deg)' },
+          '40%': { transform: 'rotate(10deg)' },
+          '60%': { transform: 'rotate(-6deg)' },
+          '80%': { transform: 'rotate(4deg)' },
+        },
       },
       animation: {
         // Petite transition d'apparition, utilisee avec key={...} pour
         // rejouer l'animation a chaque changement de contenu (ex. l'astuce
         // de sensibilisation quand Groq remplace le repli local).
         entree: 'entree 420ms ease-out',
+        'montee-entree': 'monteeEntree 560ms cubic-bezier(0.16, 1, 0.3, 1)',
+        lueur: 'lueur 1.8s ease-out 2',
+        sonnerie: 'sonnerie 700ms ease-in-out 1',
       },
       // Paliers reellement utilises par le CSS existant, en plus des
       // breakpoints par defaut de Tailwind (sm/md/lg/xl/2xl) - conserves

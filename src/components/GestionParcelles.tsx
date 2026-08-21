@@ -201,7 +201,10 @@ export function GestionParcelles({
           const enRenommage = renommageId === p.id;
 
           return (
-            <li key={p.id} className="carte flex flex-col gap-e2 p-e3">
+            <li
+              key={p.id}
+              className="carte flex flex-col gap-e2 p-e3 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-encre hover:shadow-lg"
+            >
               <div className="flex items-center gap-e2">
                 <span
                   className="h-[10px] w-[10px] shrink-0 rounded-full"

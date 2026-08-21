@@ -38,10 +38,13 @@ import {
   repartitionCultures,
   repartitionMaladies,
   serieTemporelle,
+  type KpiTableauDeBord,
   type Periode,
 } from '../lib/tableauDeBord';
 import { exporterCsv, exporterPdf } from '../lib/export';
 import { InstallApp } from '../components/InstallApp';
+import { ApparitionAuDefilement } from '../components/ApparitionAuDefilement';
+import { CompteurAnime } from '../components/CompteurAnime';
 import { CarteFoyers } from '../components/CarteFoyers';
 import { DonutMaladies } from '../components/DonutMaladies';
 import { BarresCultures } from '../components/BarresCultures';
@@ -67,6 +70,30 @@ function variation(actuel: number, precedent: number | null | undefined): string
   const pct = Math.round(((actuel - precedent) / precedent) * 100);
   if (pct === 0) return null;
   return `${pct > 0 ? '+' : ''}${pct} % vs période précédente`;
+}
+
+function salutationSelonHeure(heure: number): string {
+  if (heure < 5) return 'Bonne nuit';
+  if (heure < 12) return 'Bonjour';
+  if (heure < 18) return 'Bon après-midi';
+  return 'Bonsoir';
+}
+
+/** Une phrase d'humeur, uniquement quand elle dit quelque chose de reel :
+ * jamais de fausse note enjouee sur un historique encore vide (deja
+ * annonce ailleurs), et priorite aux alertes sur le ton positif. */
+function messageEtat(kpis: KpiTableauDeBord): { texte: string; ton: 'positif' | 'alerte' } | null {
+  if (kpis.nbDiagnostics === 0) return null;
+  if (kpis.nbAlertesCritiques > 0) {
+    return {
+      texte: `${kpis.nbAlertesCritiques} alerte${kpis.nbAlertesCritiques > 1 ? 's' : ''} critique${kpis.nbAlertesCritiques > 1 ? 's' : ''} à vérifier`,
+      ton: 'alerte',
+    };
+  }
+  if (kpis.tauxSain !== null && kpis.tauxSain >= 0.8) {
+    return { texte: 'Vos cultures se portent bien', ton: 'positif' };
+  }
+  return null;
 }
 
 export function TableauDeBord() {
@@ -136,7 +163,8 @@ export function TableauDeBord() {
   }
 
   const maintenantDate = new Date();
-  const salutation = maintenantDate.getHours() < 18 ? 'Bonjour' : 'Bonsoir';
+  const salutation = salutationSelonHeure(maintenantDate.getHours());
+  const humeur = messageEtat(kpis);
 
   return (
     <div className="flex flex-col gap-e6">
@@ -144,7 +172,7 @@ export function TableauDeBord() {
       <section className="flex flex-col gap-e3">
         <div className="flex flex-wrap items-start justify-between gap-e3">
           <div>
-            <h1 className="m-0 text-2xl">{salutation}</h1>
+            <h1 className="m-0 text-2xl">{salutation} 👋</h1>
             <p className="m-0 text-sm capitalize text-encre-douce">
               {maintenantDate.toLocaleDateString('fr-FR', {
                 weekday: 'long',
@@ -153,11 +181,20 @@ export function TableauDeBord() {
                 year: 'numeric',
               })}
             </p>
+            {humeur && (
+              <p
+                key={humeur.texte}
+                className="m-0 mt-e1 animate-entree text-sm font-semibold"
+                style={{ color: humeur.ton === 'alerte' ? 'var(--atteint)' : 'var(--sain)' }}
+              >
+                {humeur.ton === 'alerte' ? '⚠️' : '🌱'} {humeur.texte}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-e3">
             <span
-              className="whitespace-nowrap rounded-full px-e3 py-e1 text-xs font-bold"
+              className={`whitespace-nowrap rounded-full px-e3 py-e1 text-xs font-bold ${modelePret ? 'animate-lueur' : ''}`}
               style={{
                 background: modelePret ? 'var(--sain-fond)' : 'var(--alerte-fond)',
                 color: modelePret ? 'var(--sain)' : 'var(--alerte)',
@@ -171,7 +208,7 @@ export function TableauDeBord() {
             </span>
             <Link
               to="/diagnostic"
-              className="inline-grid min-h-cible place-items-center whitespace-nowrap rounded bg-encre px-e5 font-semibold text-papier no-underline hover:brightness-110"
+              className="inline-grid min-h-cible place-items-center whitespace-nowrap rounded bg-encre px-e5 font-semibold text-papier no-underline transition-transform duration-150 hover:scale-105 hover:brightness-110 active:scale-100"
             >
               + Nouveau diagnostic
             </Link>
@@ -200,33 +237,42 @@ export function TableauDeBord() {
 
       {/* ================= KPI ================= */}
       <section className="grid grid-cols-1 gap-e3 bp520:grid-cols-2 bp900:grid-cols-4">
-        <CarteKpi
-          icone={ScanEye}
-          valeur={String(kpis.nbDiagnostics)}
-          libelle="diagnostics effectués"
-          tendance={variation(kpis.nbDiagnostics, kpisPrecedents?.nbDiagnostics)}
-        />
-        <CarteKpi
-          icone={Percent}
-          valeur={kpis.tauxSain !== null ? `${Math.round(kpis.tauxSain * 100)} %` : '—'}
-          libelle="plants sains"
-        />
-        <CarteKpi
-          icone={ShieldAlert}
-          valeur={String(kpis.nbAlertesCritiques)}
-          libelle="alertes critiques"
-          tendance={variation(kpis.nbAlertesCritiques, kpisPrecedents?.nbAlertesCritiques)}
-        />
-        <CarteKpi
-          icone={Bug}
-          valeur={kpis.maladiePredominante?.classe.nom ?? '—'}
-          libelle="maladie prédominante"
-          petit
-        />
+        <ApparitionAuDefilement delai={0}>
+          <CarteKpi
+            icone={ScanEye}
+            valeurNumerique={kpis.nbDiagnostics}
+            libelle="diagnostics effectués"
+            tendance={variation(kpis.nbDiagnostics, kpisPrecedents?.nbDiagnostics)}
+          />
+        </ApparitionAuDefilement>
+        <ApparitionAuDefilement delai={80}>
+          <CarteKpi
+            icone={Percent}
+            valeurNumerique={kpis.tauxSain !== null ? Math.round(kpis.tauxSain * 100) : undefined}
+            suffixe=" %"
+            libelle="plants sains"
+          />
+        </ApparitionAuDefilement>
+        <ApparitionAuDefilement delai={160}>
+          <CarteKpi
+            icone={ShieldAlert}
+            valeurNumerique={kpis.nbAlertesCritiques}
+            libelle="alertes critiques"
+            tendance={variation(kpis.nbAlertesCritiques, kpisPrecedents?.nbAlertesCritiques)}
+          />
+        </ApparitionAuDefilement>
+        <ApparitionAuDefilement delai={240}>
+          <CarteKpi
+            icone={Bug}
+            valeur={kpis.maladiePredominante?.classe.nom ?? '—'}
+            libelle="maladie prédominante"
+            petit
+          />
+        </ApparitionAuDefilement>
       </section>
 
       {/* ================= Etat sanitaire ================= */}
-      <section className="flex flex-col gap-e4">
+      <ApparitionAuDefilement className="flex flex-col gap-e4">
         <h2 className="text-xl tracking-[-0.025em]">État sanitaire</h2>
         <div className="grid gap-e4 bp860:grid-cols-2">
           <div className="carte flex flex-col gap-e3">
@@ -238,44 +284,46 @@ export function TableauDeBord() {
             <BarresCultures donnees={barresCultures} />
           </div>
         </div>
-      </section>
+      </ApparitionAuDefilement>
 
       {/* ================= Derniers diagnostics ================= */}
-      <section className="flex flex-col gap-e4">
+      <ApparitionAuDefilement className="flex flex-col gap-e4">
         <h2 className="text-xl tracking-[-0.025em]">Derniers diagnostics</h2>
         <ListeDiagnostics
           consultations={periodeActuelle}
           parcelles={listeParcelles}
           onConsultationSupprimee={recharger}
         />
-      </section>
+      </ApparitionAuDefilement>
 
       {/* ================= Carte des diagnostics ================= */}
-      <section className="flex flex-col gap-e4">
+      <ApparitionAuDefilement className="flex flex-col gap-e4">
         <h2 className="text-xl tracking-[-0.025em]">Carte des diagnostics</h2>
         <CarteFoyers />
-      </section>
+      </ApparitionAuDefilement>
 
       {/* ================= Evolution temporelle ================= */}
-      <section className="carte flex flex-col gap-e3">
+      <ApparitionAuDefilement className="carte flex flex-col gap-e3">
         <p className="intitule">Évolution temporelle</p>
         <CourbeEvolution serie={serie} />
-      </section>
+      </ApparitionAuDefilement>
 
       {/* ================= Recommandations ================= */}
-      <section className="flex flex-col gap-e4">
+      <ApparitionAuDefilement className="flex flex-col gap-e4">
         <h2 className="text-xl tracking-[-0.025em]">Recommandations</h2>
         <PanneauRecommandations recommandations={recommandations} />
-      </section>
+      </ApparitionAuDefilement>
 
       {/* ================= Performance & appareil ================= */}
-      <PerformanceModele nbDiagnostics={consultations.length} />
+      <ApparitionAuDefilement>
+        <PerformanceModele nbDiagnostics={consultations.length} />
+      </ApparitionAuDefilement>
 
       {/* ================= Actions rapides ================= */}
       <section className="carte flex flex-wrap items-center gap-e3">
         <Link
           to="/diagnostic"
-          className="inline-grid min-h-cible place-items-center whitespace-nowrap rounded bg-encre px-e5 font-semibold text-papier no-underline hover:brightness-110"
+          className="inline-grid min-h-cible place-items-center whitespace-nowrap rounded bg-encre px-e5 font-semibold text-papier no-underline transition-transform duration-150 hover:scale-105 hover:brightness-110 active:scale-100"
         >
           + Nouveau diagnostic
         </Link>
@@ -306,18 +354,29 @@ export function TableauDeBord() {
 function CarteKpi({
   icone: Icone,
   valeur,
+  valeurNumerique,
+  suffixe = '',
   libelle,
   tendance,
   petit,
 }: {
   icone: LucideIcon;
-  valeur: string;
+  /** Texte fixe (ex. un nom de maladie) - ignore si valeurNumerique est fourni. */
+  valeur?: string;
+  /** Anime en comptage de 0 jusqu'a cette valeur (voir CompteurAnime.tsx) -
+   * `undefined` retombe sur `valeur`, pour les cas indetermines ("—"). */
+  valeurNumerique?: number;
+  suffixe?: string;
   libelle: string;
   tendance?: string | null;
   petit?: boolean;
 }) {
+  const classeValeur = petit
+    ? 'donnee truncate text-md font-bold leading-tight tracking-[-0.02em] text-encre'
+    : 'donnee truncate text-xl font-bold leading-none tracking-[-0.02em] text-encre';
+
   return (
-    <div className="carte flex items-center gap-e3">
+    <div className="carte-vivante flex items-center gap-e3">
       <span
         className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sain-fond text-sain"
         aria-hidden="true"
@@ -325,14 +384,12 @@ function CarteKpi({
         <Icone size={22} strokeWidth={1.75} />
       </span>
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span
-          className={
-            petit
-              ? 'donnee truncate text-md font-bold leading-tight tracking-[-0.02em] text-encre'
-              : 'donnee truncate text-xl font-bold leading-none tracking-[-0.02em] text-encre'
-          }
-        >
-          {valeur}
+        <span className={classeValeur}>
+          {valeurNumerique !== undefined ? (
+            <CompteurAnime valeur={valeurNumerique} suffixe={suffixe} />
+          ) : (
+            (valeur ?? '—')
+          )}
         </span>
         <span className="text-sm leading-[1.3] text-encre-douce">{libelle}</span>
         {tendance && <span className="donnee text-xs text-encre-douce">{tendance}</span>}

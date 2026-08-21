@@ -154,7 +154,10 @@ export function ListeDiagnostics({ consultations, parcelles, onConsultationSuppr
             const parcelle = parcelles.find((p) => p.id === c.parcelleId);
 
             return (
-              <li key={c.id} className="overflow-hidden rounded-lg border border-trait bg-carte">
+              <li
+                key={c.id}
+                className="overflow-hidden rounded-lg border border-trait bg-carte transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-encre hover:shadow-lg"
+              >
                 <button
                   className="flex w-full items-stretch gap-e3 rounded-none border-0 bg-transparent p-e3 text-left"
                   onClick={() => setOuvert(deplie ? null : c.id)}

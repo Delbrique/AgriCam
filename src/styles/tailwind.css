@@ -87,6 +87,21 @@
     @apply bg-carte border border-trait rounded-lg p-e4 shadow-carte;
   }
 
+  /* Meme carte, mais qui repond au toucher : une legere levee au survol et
+     un tassement au clic, pour que les elements cliquables (tuiles KPI,
+     lignes de diagnostic, parcelles) se sentent vivants sans rien changer
+     a leur contenu. */
+  .carte-vivante {
+    @apply bg-carte border border-trait rounded-lg p-e4 shadow-carte transition-all duration-200 ease-out;
+  }
+  .carte-vivante:hover {
+    @apply -translate-y-0.5 shadow-lg;
+    border-color: var(--encre);
+  }
+  .carte-vivante:active {
+    @apply translate-y-0;
+  }
+
   .bouton-principal {
     @apply bg-encre text-papier px-e5 font-semibold w-full;
   }

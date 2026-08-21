@@ -19,11 +19,18 @@ export function NotificationsFoyers() {
   const [foyers, setFoyers] = useState<Foyer[]>([]);
   const [fermes, setFermes] = useState<Set<string>>(new Set());
   const [ouvert, setOuvert] = useState(false);
+  const [sonner, setSonner] = useState(false);
   const conteneurRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    foyersActuels().then(setFoyers);
+    foyersActuels().then((trouves) => {
+      setFoyers(trouves);
+      // Un petit signe au chargement, si l'application a deja quelque chose
+      // a signaler : plus discret qu'un badge fixe, ca attire l'oeil une
+      // fois puis se tait.
+      if (trouves.length > 0) setSonner(true);
+    });
   }, []);
 
   // Ferme le panneau sur un clic exterieur ou Echap - comportement attendu
@@ -71,8 +78,13 @@ export function NotificationsFoyers() {
             : 'Notifications'
         }
         aria-expanded={ouvert}
+        onAnimationEnd={() => setSonner(false)}
       >
-        <Bell className="h-5 w-5" aria-hidden="true" />
+        <Bell
+          className={`h-5 w-5 ${sonner ? 'animate-sonnerie' : ''}`}
+          style={{ transformOrigin: 'top center' }}
+          aria-hidden="true"
+        />
         {visibles.length > 0 && (
           <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-atteint px-1 text-[10px] font-bold leading-none text-white">
             {visibles.length}
