@@ -3,7 +3,7 @@
  * du tableau de bord. Alimente par repartitionCultures (lib/tableauDeBord.ts).
  */
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { StatCulture } from '../lib/tableauDeBord';
 
 const LIBELLE_CULTURE: Record<StatCulture['culture'], string> = {
@@ -44,12 +44,12 @@ export function BarresCultures({ donnees }: Props) {
             tick={{ fontSize: 13, fill: 'var(--encre)' }}
           />
           <Tooltip
-            formatter={(valeur, cle) => {
+            formatter={(valeur, nom) => {
+              // `nom` reprend deja le libelle lisible passe via `name` sur
+              // chaque <Bar> ci-dessous - inutile (et c'etait le bug ici) de
+              // le re-deviner a partir d'une cle technique.
               const nombre = Number(valeur) || 0;
-              return [
-                `${nombre} fruit${nombre > 1 ? 's' : ''}`,
-                cle === 'atteints' ? 'atteints/graves' : 'diagnostiqués',
-              ];
+              return [`${nombre} fruit${nombre > 1 ? 's' : ''}`, nom];
             }}
             contentStyle={{
               background: 'var(--carte)',
@@ -58,8 +58,9 @@ export function BarresCultures({ donnees }: Props) {
               fontSize: 13,
             }}
           />
-          <Bar dataKey="nombre" fill="var(--sain)" radius={[0, 4, 4, 0]} name="diagnostiqués" />
-          <Bar dataKey="atteints" fill="var(--atteint)" radius={[0, 4, 4, 0]} name="atteints/graves" />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <Bar dataKey="nombre" fill="var(--sain)" radius={[0, 4, 4, 0]} name="Diagnostiqués" />
+          <Bar dataKey="atteints" fill="var(--atteint)" radius={[0, 4, 4, 0]} name="Atteints/graves" />
         </BarChart>
       </ResponsiveContainer>
     </div>
