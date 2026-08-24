@@ -35,23 +35,12 @@ function classeOnglet({ isActive }: { isActive: boolean }) {
 export default function App() {
   const { t } = useTraduction();
   const location = useLocation();
-  const [enLigne, setEnLigne] = useState(navigator.onLine);
   const [alerte, setAlerte] = useState<string | null>(null);
 
   const ONGLETS: [string, string][] = [
     ['/', t.chrome.nav.tableauDeBord],
     ['/diagnostic', t.chrome.nav.diagnostic],
   ];
-
-  useEffect(() => {
-    const majEtat = () => setEnLigne(navigator.onLine);
-    window.addEventListener('online', majEtat);
-    window.addEventListener('offline', majEtat);
-    return () => {
-      window.removeEventListener('online', majEtat);
-      window.removeEventListener('offline', majEtat);
-    };
-  }, []);
 
   // Controle d'integrite : le referentiel de classes de l'application doit
   // correspondre exactement a celui livre avec les poids. Une divergence
@@ -97,12 +86,6 @@ export default function App() {
           <NotificationsFoyers />
           <ThemeToggle />
           <LanguageSelector />
-          <span
-            className="whitespace-nowrap rounded-sm bg-white/[0.14] px-e2 py-e1 font-donnee text-xs font-bold uppercase tracking-[0.08em] data-[hors=true]:bg-alerte data-[hors=true]:text-encre"
-            data-hors={!enLigne}
-          >
-            {enLigne ? t.chrome.enLigne : t.chrome.horsLigne}
-          </span>
         </div>
       </header>
 

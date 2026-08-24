@@ -30,8 +30,6 @@ export interface Traductions {
       tableauDeBord: string;
       diagnostic: string;
     };
-    enLigne: string;
-    horsLigne: string;
     modeleIncompatible: string;
   };
 }

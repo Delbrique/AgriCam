@@ -52,7 +52,6 @@ import { CourbeEvolution } from '../components/CourbeEvolution';
 import { ListeDiagnostics } from '../components/ListeDiagnostics';
 import { SyntheseTableauDeBord } from '../components/SyntheseTableauDeBord';
 import { BoutonMiseAJour } from '../components/BoutonMiseAJour';
-import { LanguageSelector } from '../components/LanguageSelector';
 
 const PERIODES: { valeur: Periode; libelle: string }[] = [
   { valeur: 'jour', libelle: 'Jour' },
@@ -100,8 +99,6 @@ export function TableauDeBord() {
   const [consultations, setConsultations] = useState<Consultation[] | null>(null);
   const [listeParcelles, setListeParcelles] = useState<Parcelle[]>([]);
   const [periode, setPeriode] = useState<Periode>('semaine');
-  const [modelePret, setModelePret] = useState(false);
-  const [chargementModele, setChargementModele] = useState(false);
 
   useEffect(() => {
     historique().then(setConsultations);
@@ -110,21 +107,13 @@ export function TableauDeBord() {
 
   // Amorce le telechargement du modele des l'arrivee sur le tableau de bord
   // (devenu la page d'accueil) plutot que d'attendre la page Diagnostic :
-  // le badge de statut ci-dessous ne veut rien dire tant que ce n'est pas
-  // tente au moins une fois.
+  // au moins une tentative aura eu lieu avant que le producteur y arrive.
   useEffect(() => {
-    if (classifieurPret() && detecteurPret()) {
-      setModelePret(true);
-      return;
-    }
+    if (classifieurPret() && detecteurPret()) return;
     if (!navigator.onLine) return;
-    setChargementModele(true);
-    prechargerModeles()
-      .then(() => setModelePret(true))
-      .catch(() => {
-        /* silencieux : signale au premier diagnostic, comme avant */
-      })
-      .finally(() => setChargementModele(false));
+    prechargerModeles().catch(() => {
+      /* silencieux : signale au premier diagnostic, comme avant */
+    });
   }, []);
 
   function recharger() {
@@ -193,19 +182,6 @@ export function TableauDeBord() {
           </div>
 
           <div className="flex items-center gap-e3">
-            <span
-              className={`whitespace-nowrap rounded-full px-e3 py-e1 text-xs font-bold ${modelePret ? 'animate-lueur' : ''}`}
-              style={{
-                background: modelePret ? 'var(--sain-fond)' : 'var(--alerte-fond)',
-                color: modelePret ? 'var(--sain)' : 'var(--alerte)',
-              }}
-            >
-              {modelePret
-                ? '🟢 Hors ligne prêt'
-                : chargementModele
-                  ? '🟠 Modèle en préparation…'
-                  : '🟠 Modèle pas encore en cache'}
-            </span>
             <Link
               to="/diagnostic"
               className="inline-grid min-h-cible place-items-center whitespace-nowrap rounded bg-encre px-e5 font-semibold text-papier no-underline transition-transform duration-150 hover:scale-105 hover:brightness-110 active:scale-100"
@@ -358,7 +334,6 @@ export function TableauDeBord() {
           Exporter en PDF
         </button>
         <BoutonMiseAJour />
-        <LanguageSelector />
       </section>
     </div>
   );

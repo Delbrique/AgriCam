@@ -8,8 +8,6 @@ export const fr: Traductions = {
       tableauDeBord: 'Tableau de bord',
       diagnostic: 'Diagnostic',
     },
-    enLigne: 'En ligne',
-    horsLigne: 'Hors ligne',
     modeleIncompatible: 'Modèle incompatible.',
   },
 };

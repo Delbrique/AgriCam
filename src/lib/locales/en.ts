@@ -8,8 +8,6 @@ export const en: Traductions = {
       tableauDeBord: 'Dashboard',
       diagnostic: 'Diagnosis',
     },
-    enLigne: 'Online',
-    horsLigne: 'Offline',
     modeleIncompatible: 'Incompatible model.',
   },
 };
