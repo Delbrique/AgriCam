@@ -56,8 +56,17 @@ export default function App() {
   // Controle d'integrite : le referentiel de classes de l'application doit
   // correspondre exactement a celui livre avec les poids. Une divergence
   // rendrait tous les diagnostics faux sans lever la moindre erreur.
-  useEffect(() => {
+  // verifierReferentiel() reessaie deja 2 fois en cas d'echec reseau (voir
+  // classes.ts) ; ce bouton couvre le residu - une connexion vraiment
+  // coupee plus longtemps qu'une poignee de secondes.
+  function verifier() {
+    setAlerte(null);
     verifierReferentiel().catch((e: Error) => setAlerte(e.message));
+  }
+
+  useEffect(() => {
+    verifier();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -99,9 +108,14 @@ export default function App() {
 
       <main className="flex w-full flex-col gap-e4 px-[var(--pad-page)] pb-[calc(var(--cible)_+_env(safe-area-inset-bottom)_+_var(--e5))] pt-e4 bp860:pb-e7">
         {alerte && (
-          <p className="avis avis--erreur">
-            <strong>{t.chrome.modeleIncompatible}</strong> {alerte}
-          </p>
+          <div className="avis avis--erreur">
+            <p className="m-0">
+              <strong>{t.chrome.modeleIncompatible}</strong> {alerte}
+            </p>
+            <button className="bouton-second self-start" onClick={verifier}>
+              Réessayer
+            </button>
+          </div>
         )}
 
         {/* key={pathname} : une erreur de rendu remplace la page par un

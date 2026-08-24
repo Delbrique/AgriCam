@@ -206,27 +206,51 @@ export class ReferentielDivergent extends Error {
   }
 }
 
-export async function verifierReferentiel(): Promise<void> {
+function attendre(ms: number): Promise<void> {
+  return new Promise((resoudre) => setTimeout(resoudre, ms));
+}
+
+/** Tente de recuperer classes.json, avec deux nouvelles tentatives en cas
+ * d'echec reseau ou de reponse non disponible - une connexion mobile
+ * flechit un instant bien plus souvent qu'un deploiement n'est reellement
+ * incomplet. Sans retry, un simple accroc LTE affichait aux producteurs un
+ * message ecrit pour un developpeur ("Relancez les scripts d'export...").
+ * Le type de contenu et le JSON, eux, ne sont pas des soucis reseau : une
+ * mauvaise reponse la n'a aucune chance de passer au prochain essai. */
+async function recupererClassesJson(tentative = 0): Promise<unknown> {
   let reponse: Response;
   try {
     reponse = await fetch('/models/classes.json', { cache: 'no-cache' });
   } catch {
+    if (tentative < 2) {
+      await attendre(700 * (tentative + 1));
+      return recupererClassesJson(tentative + 1);
+    }
     throw new ModelesAbsents();
   }
 
-  if (!reponse.ok) throw new ModelesAbsents();
+  if (!reponse.ok) {
+    if (tentative < 2) {
+      await attendre(700 * (tentative + 1));
+      return recupererClassesJson(tentative + 1);
+    }
+    throw new ModelesAbsents();
+  }
 
   // Le serveur de developpement renvoie index.html pour tout chemin inconnu,
   // avec un code 200. Le type de contenu est donc le seul signal fiable.
   const type = reponse.headers.get('content-type') ?? '';
   if (!type.includes('json')) throw new ModelesAbsents();
 
-  let officiel: unknown;
   try {
-    officiel = await reponse.json();
+    return await reponse.json();
   } catch {
     throw new ModelesAbsents();
   }
+}
+
+export async function verifierReferentiel(): Promise<void> {
+  const officiel = await recupererClassesJson();
 
   // Le fichier peut etre une liste, ou un objet indexe par numero de classe.
   const liste: string[] = Array.isArray(officiel)

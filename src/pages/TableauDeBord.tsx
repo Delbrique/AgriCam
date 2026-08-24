@@ -236,8 +236,13 @@ export function TableauDeBord() {
       <InstallApp />
 
       {/* ================= KPI ================= */}
-      <section className="grid grid-cols-1 gap-e3 bp520:grid-cols-2 bp900:grid-cols-4">
-        <ApparitionAuDefilement delai={0}>
+      {/* items-stretch (deja la valeur par defaut de la grille, precise ici
+          pour que ce soit intentionnel) + h-full sur chaque enveloppe : les
+          4 tuiles s'alignent toutes sur la plus haute plutot que de suivre
+          leur propre contenu - la premiere (avec sa ligne de tendance) sert
+          de reference, les autres s'etirent pour la rejoindre. */}
+      <section className="grid grid-cols-1 items-stretch gap-e3 bp520:grid-cols-2 bp900:grid-cols-4">
+        <ApparitionAuDefilement delai={0} className="flex h-full">
           <CarteKpi
             icone={ScanEye}
             valeurNumerique={kpis.nbDiagnostics}
@@ -245,7 +250,7 @@ export function TableauDeBord() {
             tendance={variation(kpis.nbDiagnostics, kpisPrecedents?.nbDiagnostics)}
           />
         </ApparitionAuDefilement>
-        <ApparitionAuDefilement delai={80}>
+        <ApparitionAuDefilement delai={80} className="flex h-full">
           <CarteKpi
             icone={Percent}
             valeurNumerique={kpis.tauxSain !== null ? Math.round(kpis.tauxSain * 100) : undefined}
@@ -253,7 +258,7 @@ export function TableauDeBord() {
             libelle="plants sains"
           />
         </ApparitionAuDefilement>
-        <ApparitionAuDefilement delai={160}>
+        <ApparitionAuDefilement delai={160} className="flex h-full">
           <CarteKpi
             icone={ShieldAlert}
             valeurNumerique={kpis.nbAlertesCritiques}
@@ -261,7 +266,7 @@ export function TableauDeBord() {
             tendance={variation(kpis.nbAlertesCritiques, kpisPrecedents?.nbAlertesCritiques)}
           />
         </ApparitionAuDefilement>
-        <ApparitionAuDefilement delai={240}>
+        <ApparitionAuDefilement delai={240} className="flex h-full">
           <CarteKpi
             icone={Bug}
             valeur={kpis.maladiePredominante?.classe.nom ?? '—'}
@@ -376,7 +381,7 @@ function CarteKpi({
     : 'donnee truncate text-xl font-bold leading-none tracking-[-0.02em] text-encre';
 
   return (
-    <div className="carte-vivante flex items-center gap-e3">
+    <div className="carte-vivante flex w-full items-center gap-e3">
       <span
         className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sain-fond text-sain"
         aria-hidden="true"
