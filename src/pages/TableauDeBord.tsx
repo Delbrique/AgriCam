@@ -51,7 +51,7 @@ import { BarresCultures } from '../components/BarresCultures';
 import { CourbeEvolution } from '../components/CourbeEvolution';
 import { ListeDiagnostics } from '../components/ListeDiagnostics';
 import { PanneauRecommandations } from '../components/PanneauRecommandations';
-import { PerformanceModele } from '../components/PerformanceModele';
+import { BoutonMiseAJour } from '../components/BoutonMiseAJour';
 import { LanguageSelector } from '../components/LanguageSelector';
 
 const PERIODES: { valeur: Periode; libelle: string }[] = [
@@ -319,11 +319,6 @@ export function TableauDeBord() {
         <PanneauRecommandations recommandations={recommandations} />
       </ApparitionAuDefilement>
 
-      {/* ================= Performance & appareil ================= */}
-      <ApparitionAuDefilement>
-        <PerformanceModele nbDiagnostics={consultations.length} />
-      </ApparitionAuDefilement>
-
       {/* ================= Actions rapides ================= */}
       <section className="carte flex flex-wrap items-center gap-e3">
         <Link
@@ -350,6 +345,7 @@ export function TableauDeBord() {
           <FileDown size={16} aria-hidden="true" />
           Exporter en PDF
         </button>
+        <BoutonMiseAJour />
         <LanguageSelector />
       </section>
     </div>
