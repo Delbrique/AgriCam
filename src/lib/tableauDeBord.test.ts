@@ -204,21 +204,59 @@ describe('serieTemporelle', () => {
 });
 
 describe('recommandationsCritiques', () => {
-  it('ne retient que les cas critiques, les plus recents d’abord, avec leur conduite', () => {
+  it('regroupe les fruits critiques d’une meme maladie plutot que de repeter une carte par fruit', () => {
     const consultations = [
-      consultation('vieux', 10, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
-      consultation('recent', 1, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
-      consultation('sain', 1, [fruit('Tomato___Healthy', 0.9)]),
+      consultation('a', 10, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
+      consultation('b', 1, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
+      consultation('c', 1, [fruit('Tomato___Healthy', 0.9)]),
     ];
     const recos = recommandationsCritiques(consultations);
-    expect(recos.map((r) => r.consultationId)).toEqual(['recent', 'vieux']);
+    expect(recos).toHaveLength(1);
+    expect(recos[0].classe.id).toBe('Tomato___Spotted_wilt_Virus');
+    expect(recos[0].occurrences).toBe(2);
     expect(recos[0].conduite).toBeDefined();
   });
 
+  it('deux fruits critiques dans la meme consultation comptent pour deux occurrences', () => {
+    const consultations = [
+      consultation('a', 1, [
+        fruit('Tomato___Spotted_wilt_Virus', 0.9),
+        fruit('Tomato___Spotted_wilt_Virus', 0.9),
+      ]),
+    ];
+    expect(recommandationsCritiques(consultations)[0].occurrences).toBe(2);
+  });
+
+  it('garde la premiere et la derniere date d’apparition de chaque maladie', () => {
+    const consultations = [
+      consultation('ancien', 10, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
+      consultation('recent', 1, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
+    ];
+    const [reco] = recommandationsCritiques(consultations);
+    expect(reco.derniereFois).toBeGreaterThan(reco.premiereFois);
+  });
+
+  it('trie les maladies par derniere apparition, la plus recente d’abord', () => {
+    const consultations = [
+      consultation('a', 10, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
+      consultation('b', 1, [fruit('Tomato___Anthracnose', 0.9)]),
+    ];
+    const recos = recommandationsCritiques(consultations);
+    expect(recos.map((r) => r.classe.id)).toEqual([
+      'Tomato___Anthracnose',
+      'Tomato___Spotted_wilt_Virus',
+    ]);
+  });
+
   it('respecte la limite demandee', () => {
-    const consultations = Array.from({ length: 8 }, (_, i) =>
-      consultation(`c${i}`, i, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
-    );
+    const maladies = [
+      'Tomato___Spotted_wilt_Virus',
+      'Tomato___Anthracnose',
+      'Pepper___Anthracnose',
+      'Onion___Diseased',
+      'Tomato___Bacterial_Spot',
+    ];
+    const consultations = maladies.map((id, i) => consultation(`c${i}`, i, [fruit(id, 0.9)]));
     expect(recommandationsCritiques(consultations, 3)).toHaveLength(3);
   });
 });

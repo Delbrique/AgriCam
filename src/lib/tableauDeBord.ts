@@ -229,32 +229,46 @@ export function serieTemporelle(consultations: Consultation[]): PointSerie[] {
 }
 
 export interface RecommandationAgregee {
-  consultationId: string;
   classe: Classe;
-  horodatage: number;
+  /** Nombre de fruits critiques de cette maladie sur la periode - grandit
+   * a mesure que de nouveaux diagnostics tombent, au lieu d'une carte
+   * repetee a l'identique pour chaque fruit. */
+  occurrences: number;
+  premiereFois: number;
+  derniereFois: number;
   conduite: Conduite | undefined;
 }
 
 /** Reprend la conduite a tenir DEJA definie localement (data/conduites.ts)
- * pour les cas critiques les plus recents - jamais un nouvel appel reseau :
- * le tableau de bord reste utilisable hors ligne. */
+ * pour les cas critiques - jamais un nouvel appel reseau : le tableau de
+ * bord reste utilisable hors ligne. Regroupe par maladie plutot que par
+ * fruit : deux fruits atteints sur une meme photo ne redisent pas deux
+ * fois le meme conseil, ils font grimper un compteur d'occurrences - c'est
+ * ce compteur, avec la fenetre premiere/derniere fois, qui rend la section
+ * dynamique d'un diagnostic a l'autre plutot que figee sur un texte repete. */
 export function recommandationsCritiques(
   consultations: Consultation[],
   limite = 5,
 ): RecommandationAgregee[] {
-  const critiques: RecommandationAgregee[] = [];
+  const parMaladie = new Map<string, { classe: Classe; horodatages: number[] }>();
 
   consultations.forEach((c) => {
     c.fruits.forEach((f) => {
       if (!estAlerteCritique(f)) return;
-      critiques.push({
-        consultationId: c.id,
-        classe: f.classe,
-        horodatage: c.horodatage,
-        conduite: conduitePour(f.classe.id),
-      });
+      const entree = parMaladie.get(f.classe.id) ?? { classe: f.classe, horodatages: [] };
+      entree.horodatages.push(c.horodatage);
+      parMaladie.set(f.classe.id, entree);
     });
   });
 
-  return critiques.sort((a, b) => b.horodatage - a.horodatage).slice(0, limite);
+  return Array.from(parMaladie.values())
+    .map(({ classe, horodatages }) => ({
+      classe,
+      occurrences: horodatages.length,
+      premiereFois: Math.min(...horodatages),
+      derniereFois: Math.max(...horodatages),
+      conduite: conduitePour(classe.id),
+    }))
+    .sort((a, b) => b.derniereFois - a.derniereFois)
+    .slice(0, limite);
 }
