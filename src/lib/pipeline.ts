@@ -75,6 +75,11 @@ export class PhotoRejetee extends Error {
 
 const COTE_APERCU = 720;
 
+/** Part du plus petit cote de la photo conservee par le repli "sans
+ * detection" (voir diagnostiquer ci-dessous) - un compromis entre rogner
+ * les marges superflues et risquer de couper un sujet plus grand que prevu. */
+const FRACTION_REPLI_CENTRE = 0.75;
+
 function toileDepuis(image: HTMLImageElement, cote: number): HTMLCanvasElement {
   const echelle = Math.min(1, cote / Math.max(image.width, image.height));
   const toile = document.createElement('canvas');
@@ -222,12 +227,27 @@ export async function diagnostiquer(
   suivi?.({ etape: 'detection', fraction: 0.8, message: 'Repérage des fruits' });
   let boites = await detecter(apercu, apercu.width, apercu.height);
 
-  // Repli : si le detecteur ne trouve rien, on traite la photo entiere. Le
-  // diagnostic reste possible, mais sera signale comme moins fiable.
+  // Repli : si le detecteur ne trouve rien, on ne classe plus la photo
+  // entiere telle quelle. Le cadre complet embarque des marges qui n'ont
+  // jamais fait partie des images d'entrainement - fond, reflets, ombre du
+  // telephone - et eloigne d'autant plus le vecteur de caracteristiques des
+  // profils calibres (voir scripts/calculer_profils.py), au risque de
+  // declencher a tort le garde-fou hors sujet sur une vraie photo de
+  // culture, mal cadree. Un carre centre, plus proche d'un cadrage
+  // resserre sur le sujet, est une hypothese raisonnable sur une photo
+  // prise a main levee - pas une detection, juste un repli moins mauvais
+  // que le cadre entier.
   const sansDetection = boites.length === 0;
   if (sansDetection) {
+    const cote = Math.round(Math.min(apercu.width, apercu.height) * FRACTION_REPLI_CENTRE);
     boites = [
-      { x: 0, y: 0, largeur: apercu.width, hauteur: apercu.height, score: 0 },
+      {
+        x: Math.round((apercu.width - cote) / 2),
+        y: Math.round((apercu.height - cote) / 2),
+        largeur: cote,
+        hauteur: cote,
+        score: 0,
+      },
     ];
   }
 
