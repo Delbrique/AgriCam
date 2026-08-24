@@ -15,6 +15,7 @@ import {
   recommandationsCritiques,
   repartitionCultures,
   repartitionMaladies,
+  resumeLocalSituation,
   serieTemporelle,
   statutFruit,
 } from './tableauDeBord';
@@ -258,5 +259,30 @@ describe('recommandationsCritiques', () => {
     ];
     const consultations = maladies.map((id, i) => consultation(`c${i}`, i, [fruit(id, 0.9)]));
     expect(recommandationsCritiques(consultations, 3)).toHaveLength(3);
+  });
+});
+
+describe('resumeLocalSituation', () => {
+  it('inclut toujours le nombre de diagnostics', () => {
+    const kpis = calculerKpis([]);
+    expect(resumeLocalSituation(kpis)[0]).toContain('0 diagnostic');
+  });
+
+  it("n'affiche pas de ligne d'alertes critiques quand il n'y en a aucune", () => {
+    const consultations = [consultation('a', 1, [fruit('Tomato___Healthy', 0.9)])];
+    const kpis = calculerKpis(consultations);
+    const lignes = resumeLocalSituation(kpis);
+    expect(lignes.some((l) => l.includes('critique'))).toBe(false);
+  });
+
+  it('mentionne les alertes critiques et la maladie predominante quand elles existent', () => {
+    const consultations = [
+      consultation('a', 1, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
+      consultation('b', 1, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
+    ];
+    const kpis = calculerKpis(consultations);
+    const lignes = resumeLocalSituation(kpis);
+    expect(lignes.some((l) => l.includes('2 alertes critiques'))).toBe(true);
+    expect(lignes.some((l) => l.includes('Virus de la maladie bronzée'))).toBe(true);
   });
 });

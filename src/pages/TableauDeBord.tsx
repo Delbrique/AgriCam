@@ -50,7 +50,7 @@ import { DonutMaladies } from '../components/DonutMaladies';
 import { BarresCultures } from '../components/BarresCultures';
 import { CourbeEvolution } from '../components/CourbeEvolution';
 import { ListeDiagnostics } from '../components/ListeDiagnostics';
-import { PanneauRecommandations } from '../components/PanneauRecommandations';
+import { SyntheseTableauDeBord } from '../components/SyntheseTableauDeBord';
 import { BoutonMiseAJour } from '../components/BoutonMiseAJour';
 import { LanguageSelector } from '../components/LanguageSelector';
 
@@ -314,9 +314,21 @@ export function TableauDeBord() {
       </ApparitionAuDefilement>
 
       {/* ================= Recommandations ================= */}
+      {/* Analyse d'ENSEMBLE du tableau de bord (KPI, repartitions, maladies
+          critiques) - pas un conseil maladie par maladie : voir
+          SyntheseTableauDeBord.tsx pour la difference avec ConduiteATenir,
+          qui porte sur un seul diagnostic. */}
       <ApparitionAuDefilement className="flex flex-col gap-e4">
         <h2 className="text-xl tracking-[-0.025em]">Recommandations</h2>
-        <PanneauRecommandations recommandations={recommandations} />
+        <div className="carte">
+          <SyntheseTableauDeBord
+            periodeLibelle={PERIODES.find((p) => p.valeur === periode)?.libelle ?? periode}
+            kpis={kpis}
+            maladiesCritiques={recommandations}
+            repartitionMaladies={donutMaladies}
+            repartitionCultures={barresCultures}
+          />
+        </div>
       </ApparitionAuDefilement>
 
       {/* ================= Actions rapides ================= */}

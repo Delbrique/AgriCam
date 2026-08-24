@@ -272,3 +272,38 @@ export function recommandationsCritiques(
     .sort((a, b) => b.derniereFois - a.derniereFois)
     .slice(0, limite);
 }
+
+/** Resume local des KPI, en phrases simples - le filet de securite hors
+ * ligne de la synthese du tableau de bord (voir
+ * components/SyntheseTableauDeBord.tsx) : affiche instantanement, remplace
+ * par une analyse IA si le reseau est la. Contrairement au conseil de la
+ * fiche de resultat, cette synthese porte sur l'ENSEMBLE de la periode, pas
+ * un seul diagnostic - jamais de recommandation vide de sens ("tout va
+ * bien") quand il n'y a simplement aucune donnee. */
+export function resumeLocalSituation(kpis: KpiTableauDeBord): string[] {
+  const lignes: string[] = [];
+
+  lignes.push(
+    `${kpis.nbDiagnostics} diagnostic${kpis.nbDiagnostics > 1 ? 's' : ''} sur cette période.`,
+  );
+
+  if (kpis.tauxSain !== null) {
+    lignes.push(`${Math.round(kpis.tauxSain * 100)} % des fruits diagnostiqués sont sains.`);
+  }
+
+  if (kpis.nbAlertesCritiques > 0) {
+    lignes.push(
+      `${kpis.nbAlertesCritiques} alerte${kpis.nbAlertesCritiques > 1 ? 's' : ''} critique` +
+        `${kpis.nbAlertesCritiques > 1 ? 's' : ''} à vérifier en priorité.`,
+    );
+  }
+
+  if (kpis.maladiePredominante) {
+    lignes.push(
+      `Maladie la plus fréquente : ${kpis.maladiePredominante.classe.nom} ` +
+        `(${kpis.maladiePredominante.nombre} cas).`,
+    );
+  }
+
+  return lignes;
+}
