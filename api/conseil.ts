@@ -18,6 +18,14 @@ interface CorpsRequete {
   agent?: string | null;
   gravite?: string;
   confiance?: number;
+  /** Renseignes depuis le tableau de bord (voir PanneauRecommandations.tsx) :
+   * nombre de fois que cette maladie a ete diagnostiquee sur la periode, et
+   * la fenetre de dates correspondante - permet au conseil de reconnaitre
+   * une situation qui se repete plutot que de decrire la maladie dans
+   * l'abstrait a chaque fois. */
+  occurrences?: number;
+  premiereVue?: string;
+  derniereVue?: string;
 }
 
 export default async function handler(req: any, res: any) {
@@ -38,11 +46,19 @@ export default async function handler(req: any, res: any) {
   const corps: CorpsRequete =
     typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body ?? {};
 
-  const { maladie, culture, agent, gravite, confiance } = corps;
+  const { maladie, culture, agent, gravite, confiance, occurrences, premiereVue, derniereVue } =
+    corps;
   if (!maladie) {
     res.status(400).json({ erreur: 'Diagnostic manquant.' });
     return;
   }
+
+  const recurrence =
+    typeof occurrences === 'number' && occurrences > 1
+      ? `Cas r\u00e9p\u00e9t\u00e9s : ${occurrences} diagnostics de cette maladie sur cette parcelle` +
+        (premiereVue && derniereVue ? ` entre le ${premiereVue} et le ${derniereVue}` : '') +
+        '.'
+      : '';
 
   const contexte = [
     `Maladie diagnostiqu\u00e9e : ${maladie}`,
@@ -50,6 +66,7 @@ export default async function handler(req: any, res: any) {
     agent ? `Agent responsable : ${agent}` : '',
     gravite ? `Gravit\u00e9 : ${gravite}` : '',
     typeof confiance === 'number' ? `Confiance du mod\u00e8le : ${confiance} %` : '',
+    recurrence,
   ]
     .filter(Boolean)
     .join('\n');
@@ -75,7 +92,13 @@ export default async function handler(req: any, res: any) {
   const utilisateur =
     `Voici le diagnostic pos\u00e9 sur une photo de la parcelle :\n\n${contexte}\n\n` +
     "R\u00e9dige un conseil de traitement complet et tr\u00e8s explicite pour ce producteur, " +
-    'en respectant scrupuleusement la structure demand\u00e9e.';
+    'en respectant scrupuleusement la structure demand\u00e9e.' +
+    (recurrence
+      ? " La situation SE R\u00c9P\u00c8TE (voir \u00ab Cas r\u00e9p\u00e9t\u00e9s \u00bb ci-dessus) : dis-le clairement au " +
+        'd\u00e9but de "CE QUI ARRIVE \u00c0 VOTRE CULTURE", et adapte le ton en cons\u00e9quence - ' +
+        'plus pressant qu\u2019un premier cas isol\u00e9, notamment sur "\u00c0 FAIRE MAINTENANT" et ' +
+        '"QUAND APPELER UN TECHNICIEN".'
+      : '');
 
   try {
     const reponse = await fetch(
