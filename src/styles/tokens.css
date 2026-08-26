@@ -5,6 +5,11 @@
    libre. Toutes les decisions ci-dessous en decoulent - contraste eleve,
    corps de texte genereux, cibles tactiles d'au moins 48 px.
 
+   Palette "terroir" : vert de plantation + creme chaud + terre, plutot que
+   la palette froide precedente (vert-gris/blanc). Le mode sombre RESTE dans
+   la teinte verte (juste assombrie/desaturee), jamais un gris neutre
+   generique - voir le bloc :root.dark plus bas.
+
    Ce fichier ne contient plus que les VARIABLES : la remise a zero et les
    classes semantiques partagees (.donnee, .carte, .bouton-principal...) ont
    migre dans styles/tailwind.css (@layer base/components), pour que
@@ -14,51 +19,65 @@
    L'element signature reste la BANDE DE SEVERITE (voir bande.css) : une
    bandelette de test agronomique qui porte le verdict et se retrouve a
    l'identique sur la fiche de resultat, dans l'historique et sur la carte.
+   Les 4 niveaux de gravite (sain/alerte/atteint/grave) restent LA
+   nomenclature de tout le systeme de couleurs de diagnostic ; ils sont
+   desormais retaillees dans la meme famille de teintes que la marque
+   (vert-moyen/warning/danger) plutot que de vivre a cote.
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
-  /* --- Couleurs -------------------------------------------------------- */
-  /* Le neutre tire vers le vert-gris froid, pas vers le creme : sous une
-     lumiere chaude de plein champ, un fond creme vire au jaune sale. */
-  --papier: #f2f4ef;
+  /* --- Couleurs de marque (palette "terroir") --------------------------- */
+  --vert-fonce: #1a3d2b;
+  --vert-moyen: #2d6a4f;
+  --vert-clair: #52b788;
+  --vert-soft: #eaf7ef;
+  --creme: #fefae0;
+  --terre: #8b4513;
+  --danger: #c0392b;
+  --warning: #e67e22;
+
+  /* --- Surfaces et texte ------------------------------------------------ */
+  --papier: #f7f3e8;
   --carte: #ffffff;
-  --encre: #0e1a13;
-  --encre-douce: #4a5a51;
-  --trait: #d5dbd2;
+  --encre: #1a1a1a;
+  --encre-douce: #5b6b60;
+  --trait: rgba(45, 106, 79, 0.15); /* vert-moyen tinte, pas un gris plat */
 
   /* Vert d'accent, utilise pour les appels a l'action sur fond sombre
-     (bandeau d'accueil) et les elements de marque. */
-  --accent: #7ee08a;
-  --accent-survol: #98eca3;
+     (bandeau d'accueil) et les elements de marque - c'est vert-clair. */
+  --accent: var(--vert-clair);
+  --accent-survol: #6fcf9c;
 
   /* Chrome de marque : en-tete, cartouches "culture", bloc d'appel final.
      Volontairement CONSTANT quel que soit le theme clair/sombre - ce sont
-     des elements de marque toujours sombres, pas des surfaces de contenu ;
-     les redefinir ici plutot que de reutiliser --encre/--papier evite que
-     l'en-tete ne s'inverse quand le site passe en mode sombre. */
-  --chrome-fond: #0e1a13;
+     des elements de marque toujours sombres (vert-fonce), pas des surfaces
+     de contenu ; les redefinir ici plutot que de reutiliser --encre/--papier
+     evite que l'en-tete ne s'inverse quand le site passe en mode sombre. */
+  --chrome-fond: var(--vert-fonce);
   --chrome-texte: #f2f4ef;
   --chrome-texte-douce: #b9c6bd;
 
-  /* L'echelle de diagnostic EST la palette. Aucune couleur decorative. */
-  --sain: #1f7a4d;
-  --alerte: #d98a04;
-  --atteint: #b3411a;
-  --grave: #6e1f14;
+  /* L'echelle de diagnostic EST la palette : sain reprend le vert de marque,
+     alerte le warning, atteint/grave deux paliers du rouge danger. Aucune
+     couleur decorative. */
+  --sain: var(--vert-moyen);
+  --alerte: var(--warning);
+  --atteint: var(--danger);
+  --grave: #7a2015;
   --inconnu: #6b7a72;
 
   /* Fonds tres desatures des memes teintes, pour les surfaces. */
-  --sain-fond: #e6f2ea;
+  --sain-fond: var(--vert-soft);
   --alerte-fond: #fdf1d9;
-  --atteint-fond: #f9e7e0;
-  --grave-fond: #f4d9d0;
+  --atteint-fond: #f9e2df;
+  --grave-fond: #f0d2ce;
   --inconnu-fond: #eceeea;
 
   /* --- Typographie ----------------------------------------------------- */
-  --police-titre: 'Bricolage Grotesque', system-ui, sans-serif;
-  --police-texte: 'Source Sans 3', system-ui, sans-serif;
+  --police-titre: 'Sora', system-ui, sans-serif;
+  --police-texte: 'Sora', system-ui, sans-serif;
   --police-donnee: 'JetBrains Mono', ui-monospace, monospace;
 
   --t-xs: 0.75rem;
@@ -81,7 +100,7 @@
   --rayon-l: 10px;
   --cible: 48px; /* hauteur minimale de toute zone tactile */
 
-  --ombre: 0 1px 2px rgba(14, 26, 19, 0.06), 0 4px 12px rgba(14, 26, 19, 0.05);
+  --ombre: 0 1px 2px rgba(26, 61, 43, 0.06), 0 4px 12px rgba(26, 61, 43, 0.05);
 
   /* --- Largeur de page ------------------------------------------------- */
   /* Le contenu (en-tete ET pages) est borne a cette largeur, puis centre ;
@@ -96,31 +115,44 @@
 }
 
 /* --- Mode sombre ----------------------------------------------------------
-   Meme grammaire de teintes, luminance inversee. Bascule sur la classe
+   Meme grammaire de teintes, luminance inversee - mais toujours dans la
+   teinte verte (jamais un gris neutre generique). Bascule sur la classe
    "dark" posee sur <html> par ThemeProvider (voir components/ThemeProvider) -
    comme les couleurs Tailwind pointent toutes vers ces variables, aucune
    classe "dark:" n'est necessaire ailleurs dans l'application. */
 :root.dark {
-  --papier: #0e1a13;
-  --carte: #16241b;
-  --encre: #f2f4ef;
-  --encre-douce: #9fb0a6;
-  --trait: #2a3830;
+  --vert-fonce: #0f2419;
+  --vert-moyen: #3f8f68;
+  --vert-clair: #6fd9a5;
+  --vert-soft: #1c3327;
+  --terre: #c9853f;
+  --danger: #e0564a;
+  --warning: #f0994a;
 
-  --accent: #7ee08a;
-  --accent-survol: #98eca3;
+  --papier: #0f1a14; /* vert quasi-noir, jamais #000 pur */
+  --carte: #16241c; /* jamais noir pur non plus */
+  --encre: #eef3ee;
+  --encre-douce: #9aa79f;
+  --trait: rgba(111, 217, 165, 0.15); /* vert-clair tinte */
 
-  --sain: #4fd189;
-  --alerte: #f0ad2e;
-  --atteint: #e2673c;
-  --grave: #e2836c;
+  --accent: var(--vert-clair);
+  --accent-survol: #8ce3b8;
+
+  --chrome-fond: var(--vert-fonce);
+  --chrome-texte: #f2f4ef;
+  --chrome-texte-douce: #b9c6bd;
+
+  --sain: var(--vert-moyen);
+  --alerte: var(--warning);
+  --atteint: var(--danger);
+  --grave: #f28b7f;
   --inconnu: #8a9a92;
 
-  --sain-fond: rgba(31, 122, 77, 0.22);
-  --alerte-fond: rgba(217, 138, 4, 0.2);
-  --atteint-fond: rgba(179, 65, 26, 0.22);
-  --grave-fond: rgba(110, 31, 20, 0.28);
-  --inconnu-fond: rgba(107, 122, 114, 0.2);
+  --sain-fond: rgba(63, 143, 104, 0.22);
+  --alerte-fond: rgba(240, 153, 74, 0.2);
+  --atteint-fond: rgba(224, 86, 74, 0.2);
+  --grave-fond: rgba(242, 139, 127, 0.22);
+  --inconnu-fond: rgba(138, 154, 146, 0.2);
 
   --ombre: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.35);
 }

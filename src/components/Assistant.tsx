@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { FileText, MessageCircle, Paperclip, Send, X } from 'lucide-react';
+import { FileText, Maximize2, MessageCircle, Minimize2, Paperclip, Send, X } from 'lucide-react';
 import { demanderAssistant, type MessageChat } from '../lib/assistant';
 
 const TAILLE_BOUTON = 56;
@@ -42,6 +42,7 @@ function positionInitiale() {
 export function Assistant() {
   const [position, setPosition] = useState(positionInitiale);
   const [ouvert, setOuvert] = useState(false);
+  const [pleinEcran, setPleinEcran] = useState(false);
   const [messages, setMessages] = useState<MessageChat[]>([]);
   const [saisie, setSaisie] = useState('');
   const [enCours, setEnCours] = useState(false);
@@ -163,16 +164,35 @@ export function Assistant() {
       </button>
 
       {ouvert && (
-        <div className="fixed inset-x-e4 bottom-[calc(var(--cible)+env(safe-area-inset-bottom)+5.5rem)] z-30 mx-auto flex max-h-[70vh] w-auto max-w-[380px] flex-col overflow-hidden rounded-lg border border-trait bg-carte shadow-carte bp600:inset-x-auto bp600:right-e5">
-          <div className="flex items-center justify-between gap-e3 bg-encre px-e4 py-e3">
+        <div
+          className={
+            pleinEcran
+              ? 'fixed inset-0 z-30 flex flex-col overflow-hidden bg-carte'
+              : 'fixed inset-x-e4 bottom-[calc(var(--cible)+env(safe-area-inset-bottom)+5.5rem)] z-30 mx-auto flex max-h-[70vh] w-auto max-w-[380px] flex-col overflow-hidden rounded-lg border border-trait bg-carte shadow-carte bp600:inset-x-auto bp600:right-e5'
+          }
+        >
+          <div
+            className="flex items-center justify-between gap-e3 bg-encre px-e4 py-e3"
+            style={pleinEcran ? { paddingTop: 'max(var(--e3), env(safe-area-inset-top))' } : undefined}
+          >
             <span className="font-titre text-md font-bold text-papier">Assistant AgriCam</span>
-            <button
-              className="grid h-8 w-8 place-items-center rounded-full border-0 bg-transparent text-papier hover:bg-white/10"
-              onClick={() => setOuvert(false)}
-              aria-label="Fermer l'assistant"
-            >
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-e2">
+              <button
+                className="grid h-8 w-8 place-items-center rounded-full border-0 bg-transparent text-papier hover:bg-white/10"
+                onClick={() => setPleinEcran((v) => !v)}
+                aria-label={pleinEcran ? 'Réduire l’assistant' : 'Agrandir l’assistant'}
+                aria-pressed={pleinEcran}
+              >
+                {pleinEcran ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
+              <button
+                className="grid h-8 w-8 place-items-center rounded-full border-0 bg-transparent text-papier hover:bg-white/10"
+                onClick={() => setOuvert(false)}
+                aria-label="Fermer l'assistant"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-e4">

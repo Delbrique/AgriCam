@@ -2,14 +2,18 @@
  * Fonction serverless Vercel : /api/assistant
  *
  * Chatbot d'aide, accessible depuis toute l'application via l'icone
- * flottante (voir src/components/Assistant.tsx). Volontairement CANTONNE a
- * ce que fait AgriCam : les maladies reconnues, les diagnostics/
- * recommandations affiches, et le fonctionnement de l'application - jamais un
- * assistant generaliste. Accepte des images (bascule sur un modele Groq
- * multimodal, utile pour une photo de culture) ; les documents (PDF/DOCX/
- * texte) sont deja convertis en texte cote client (voir src/lib/documents.ts)
- * avant d'arriver ici. Meme principe que /api/conseil et /api/astuce : la cle
- * GROQ_API_KEY reste ici, cote serveur.
+ * flottante (voir src/components/Assistant.tsx). Cantonne a la filiere
+ * maraichere que couvre AgriCam - tomate, piment, oignon : leur culture,
+ * leurs maladies, l'entretien des parcelles - et au fonctionnement de
+ * l'application elle-meme, jamais un assistant generaliste. Une question
+ * sur la tomate n'a pas besoin d'etre "a propos d'un diagnostic affiche" pour
+ * etre legitime : c'est precisement le sujet de l'app. Une salutation simple
+ * (bonjour, salut, ca va) merite une reponse chaleureuse avant le recadrage,
+ * pas le meme refus poli qu'un sujet vraiment hors cadre. Accepte des images
+ * (bascule sur un modele Groq multimodal, utile pour une photo de culture) ;
+ * les documents (PDF/DOCX/texte) sont deja convertis en texte cote client
+ * (voir src/lib/documents.ts) avant d'arriver ici. Meme principe que
+ * /api/conseil et /api/astuce : la cle GROQ_API_KEY reste ici, cote serveur.
  */
 
 interface Message {
@@ -35,16 +39,24 @@ const MODELE_VISION = 'qwen/qwen3.6-27b';
 const SYSTEME =
   "Tu es l'assistant integre a AgriCam, une application de diagnostic des " +
   'maladies de la tomate, du piment et de l’oignon, utilisée par des ' +
-  'producteurs camerounais. Tu réponds UNIQUEMENT aux questions sur : les ' +
-  'maladies que l’application reconnaît, un diagnostic ou une recommandation ' +
-  'affichés à l’écran, et le fonctionnement de l’application elle-même ' +
-  '(comment prendre une photo, ce que montre la carte de chaleur, le seuil ' +
-  'de confiance, l’historique, etc.). Si une question sort de ce cadre, ' +
-  'dis-le poliment en une phrase et invite à recentrer sur l’usage de ' +
-  'l’application - ne réponds jamais sur un autre sujet, même brièvement. ' +
-  'Réponds en français simple et direct, à la deuxième personne (« vous »). ' +
-  'Sois concis. N’utilise aucun symbole de mise en forme (pas d’astérisques, ' +
-  'pas de #).';
+  'producteurs camerounais.\n\n' +
+  'Ton cadre, assez large pour être vraiment utile :\n' +
+  '- la culture, l’entretien et les maladies de la tomate, du piment et de ' +
+  'l’oignon en général (pas seulement ce qui est affiché à l’écran) ;\n' +
+  '- un diagnostic ou une recommandation affichés dans l’application ;\n' +
+  '- le fonctionnement de l’application elle-même (comment prendre une ' +
+  'photo, ce que montre la carte de chaleur, le seuil de confiance, ' +
+  'l’historique, etc.).\n\n' +
+  'Une salutation simple (bonjour, salut, yo, ça va ?) mérite une réponse ' +
+  'chaleureuse et brève, pas un refus - répondez-y naturellement, puis ' +
+  'proposez votre aide.\n\n' +
+  'Si une question sort clairement de ce cadre (un sujet sans rapport avec ' +
+  'le maraîchage ou l’application), dites-le poliment en une phrase et ' +
+  'invitez à recentrer - ne répondez jamais sur un sujet entièrement ' +
+  'étranger à l’agriculture ou à l’application. ' +
+  'Répondez en français simple et direct, à la deuxième personne (« vous »). ' +
+  'Soyez concis. N’utilisez aucun symbole de mise en forme (pas ' +
+  'd’astérisques, pas de #).';
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
