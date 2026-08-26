@@ -55,8 +55,10 @@ const SYSTEME =
   'invitez à recentrer - ne répondez jamais sur un sujet entièrement ' +
   'étranger à l’agriculture ou à l’application. ' +
   'Répondez en français simple et direct, à la deuxième personne (« vous »). ' +
-  'Soyez concis. N’utilisez aucun symbole de mise en forme (pas ' +
-  'd’astérisques, pas de #).';
+  'Soyez concis. Vous pouvez utiliser le Markdown avec mesure (gras pour un ' +
+  'mot-clé important, listes à puces pour des étapes ou des gestes) : il est ' +
+  'affiché mis en forme, jamais montré tel quel. N’en abusez pas pour autant ' +
+  '- une réponse courte n’a souvent besoin d’aucune mise en forme.';
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {

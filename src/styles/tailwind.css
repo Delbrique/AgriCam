@@ -83,8 +83,12 @@
     letter-spacing: 0.12em;
   }
 
+  /* Coins toujours arrondis (rounded-2xl), jamais d'angle vif - la carte
+     s'appuie sur une ombre douce en clair, et sur un liseret (ring) plutot
+     qu'une ombre en sombre : une ombre portee est quasi invisible sur un
+     fond deja sombre. */
   .carte {
-    @apply bg-carte border border-trait rounded-lg p-e4 shadow-carte;
+    @apply bg-carte border border-trait rounded-2xl p-e4 shadow-carte dark:shadow-none dark:ring-1 dark:ring-white/5;
   }
 
   /* Meme carte, mais qui repond au toucher : une legere levee au survol et
@@ -92,30 +96,30 @@
      lignes de diagnostic, parcelles) se sentent vivants sans rien changer
      a leur contenu. */
   .carte-vivante {
-    @apply bg-carte border border-trait rounded-lg p-e4 shadow-carte transition-all duration-200 ease-out;
+    @apply bg-carte border border-trait rounded-2xl p-e4 shadow-carte dark:shadow-none dark:ring-1 dark:ring-white/5 transition-all duration-200 ease-out;
   }
   .carte-vivante:hover {
-    @apply -translate-y-0.5 shadow-lg;
-    border-color: var(--encre);
+    @apply -translate-y-0.5 shadow-md dark:shadow-none;
+    border-color: var(--vert-moyen);
   }
   .carte-vivante:active {
     @apply translate-y-0;
   }
 
   .bouton-principal {
-    @apply bg-encre text-papier px-e5 font-semibold w-full;
+    @apply bg-vert-moyen text-white px-e5 font-semibold w-full rounded-xl transition-colors hover:bg-vert-fonce;
   }
 
   .bouton-principal:disabled {
-    @apply bg-encre-douce cursor-not-allowed;
+    @apply bg-encre-douce cursor-not-allowed hover:bg-encre-douce;
   }
 
   .bouton-second {
-    @apply bg-transparent text-encre border-trait px-e4 font-semibold;
+    @apply bg-transparent text-vert-fonce dark:text-vert-clair border-trait px-e4 font-semibold rounded-xl transition-colors hover:bg-vert-soft;
   }
 
   .avis {
-    @apply text-sm p-e3 rounded border-l-4 flex flex-col gap-e3 m-0;
+    @apply text-sm p-e3 rounded-xl border-l-4 flex flex-col gap-e3 m-0;
   }
 
   .avis p {

@@ -15,9 +15,60 @@
  * panneau le signale clairement plutot que d'echouer en silence.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { FileText, Maximize2, MessageCircle, Minimize2, Paperclip, Send, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { demanderAssistant, type MessageChat } from '../lib/assistant';
+
+/** Mise en forme des reponses de l'assistant (voir le systeme de prompt
+ * dans api/assistant.ts, qui autorise desormais un Markdown mesure) - les
+ * messages de l'utilisateur restent du texte brut, lui n'ecrit jamais de
+ * Markdown volontairement. */
+const COMPOSANTS_MARKDOWN = {
+  a: (props: ComponentProps<'a'>) => (
+    <a
+      {...props}
+      target="_blank"
+      rel="noreferrer"
+      className="text-vert-moyen underline hover:text-vert-fonce"
+    />
+  ),
+  p: (props: ComponentProps<'p'>) => <p {...props} className="m-0 mt-e2 first:mt-0" />,
+  ul: (props: ComponentProps<'ul'>) => (
+    <ul {...props} className="m-0 mt-e2 flex list-disc flex-col gap-1 pl-[1.15rem] first:mt-0" />
+  ),
+  ol: (props: ComponentProps<'ol'>) => (
+    <ol {...props} className="m-0 mt-e2 flex list-decimal flex-col gap-1 pl-[1.15rem] first:mt-0" />
+  ),
+  strong: (props: ComponentProps<'strong'>) => <strong {...props} className="font-semibold" />,
+  code: (props: ComponentProps<'code'>) => (
+    <code
+      {...props}
+      className="rounded bg-black/5 px-1 py-0.5 font-mono text-[0.85em] dark:bg-white/10"
+    />
+  ),
+  pre: (props: ComponentProps<'pre'>) => (
+    <pre
+      {...props}
+      className="overflow-x-auto rounded bg-black/5 p-e2 font-mono text-[0.85em] dark:bg-white/10"
+    />
+  ),
+  blockquote: (props: ComponentProps<'blockquote'>) => (
+    <blockquote {...props} className="border-l-2 border-vert-clair pl-e3 italic text-encre-douce" />
+  ),
+  table: (props: ComponentProps<'table'>) => (
+    <div className="overflow-x-auto">
+      <table {...props} className="w-full border-collapse text-xs" />
+    </div>
+  ),
+  thead: (props: ComponentProps<'thead'>) => <thead {...props} className="bg-vert-moyen text-white" />,
+  tr: (props: ComponentProps<'tr'>) => (
+    <tr {...props} className="border-b border-trait even:bg-vert-soft/40" />
+  ),
+  th: (props: ComponentProps<'th'>) => <th {...props} className="px-e2 py-1 text-left font-semibold" />,
+  td: (props: ComponentProps<'td'>) => <td {...props} className="px-e2 py-1" />,
+};
 
 const TAILLE_BOUTON = 56;
 const MARGE = 16;
@@ -217,13 +268,21 @@ export function Assistant() {
                       className="max-h-32 max-w-[70%] rounded-lg border border-trait object-cover"
                     />
                   )}
-                  <p
-                    className={`m-0 max-w-[85%] whitespace-pre-wrap rounded-lg px-e3 py-e2 text-sm leading-[1.45] ${
-                      m.role === 'user' ? 'bg-encre text-papier' : 'bg-trait text-encre'
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-e3 py-e2 text-sm leading-[1.45] ${
+                      m.role === 'user'
+                        ? 'rounded-br-sm bg-vert-fonce text-white'
+                        : 'rounded-bl-sm border border-trait bg-carte text-encre'
                     }`}
                   >
-                    {m.resume ?? m.contenu}
-                  </p>
+                    {m.role === 'user' ? (
+                      <p className="m-0 whitespace-pre-wrap">{m.resume ?? m.contenu}</p>
+                    ) : (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={COMPOSANTS_MARKDOWN}>
+                        {m.resume ?? m.contenu}
+                      </ReactMarkdown>
+                    )}
+                  </div>
                 </div>
               ))}
               {enCours && (
