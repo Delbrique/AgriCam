@@ -203,7 +203,7 @@ export function Assistant() {
   return (
     <>
       <button
-        className="fixed z-30 grid h-14 w-14 touch-none place-items-center rounded-full border-0 bg-encre text-papier shadow-carte active:scale-95"
+        className="fixed z-[1200] grid h-14 w-14 touch-none place-items-center rounded-full border-0 bg-encre text-papier shadow-carte active:scale-95"
         style={{ left: position.x, top: position.y }}
         onPointerDown={surPointerDown}
         onPointerMove={surPointerMove}
@@ -218,8 +218,8 @@ export function Assistant() {
         <div
           className={
             pleinEcran
-              ? 'fixed inset-0 z-30 flex flex-col overflow-hidden bg-carte'
-              : 'fixed inset-x-e4 bottom-[calc(var(--cible)+env(safe-area-inset-bottom)+5.5rem)] z-30 mx-auto flex max-h-[70vh] w-auto max-w-[380px] flex-col overflow-hidden rounded-lg border border-trait bg-carte shadow-carte bp600:inset-x-auto bp600:right-e5'
+              ? 'fixed inset-0 z-[1200] flex flex-col overflow-hidden bg-carte'
+              : 'fixed inset-x-e4 bottom-[calc(var(--cible)+env(safe-area-inset-bottom)+5.5rem)] z-[1200] mx-auto flex max-h-[70vh] w-auto max-w-[380px] flex-col overflow-hidden rounded-lg border border-trait bg-carte shadow-carte bp600:inset-x-auto bp600:right-e5'
           }
         >
           <div
