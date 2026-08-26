@@ -7,6 +7,7 @@ export const fr: Traductions = {
     nav: {
       tableauDeBord: 'Tableau de bord',
       diagnostic: 'Diagnostic',
+      communaute: 'Communauté',
     },
     modeleIncompatible: 'Modèle incompatible.',
   },

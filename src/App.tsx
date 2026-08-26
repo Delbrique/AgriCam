@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { Diagnostic } from './pages/Diagnostic';
+import { Communaute } from './pages/Communaute';
 import { verifierReferentiel } from './lib/classes';
 import { useTraduction } from './lib/traduction';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -40,6 +41,7 @@ export default function App() {
   const ONGLETS: [string, string][] = [
     ['/', t.chrome.nav.tableauDeBord],
     ['/diagnostic', t.chrome.nav.diagnostic],
+    ['/communaute', t.chrome.nav.communaute],
   ];
 
   // Controle d'integrite : le referentiel de classes de l'application doit
@@ -74,7 +76,7 @@ export default function App() {
             en barre basse fixe, à portée de pouce ; sur grand écran elle reste
             en ligne. Un seul élément dans le DOM, donc un seul ordre de
             tabulation au clavier. */}
-        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-2 border-t border-trait bg-carte pb-[env(safe-area-inset-bottom)] bp860:static bp860:grid-cols-none bp860:flex bp860:gap-e5 bp860:border-t-0 bp860:bg-transparent bp860:pb-0">
+        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 border-t border-trait bg-carte pb-[env(safe-area-inset-bottom)] bp860:static bp860:grid-cols-none bp860:flex bp860:gap-e5 bp860:border-t-0 bp860:bg-transparent bp860:pb-0">
           {ONGLETS.map(([chemin, libelle]) => (
             <NavLink key={chemin} to={chemin} end={chemin === '/'} className={classeOnglet}>
               {libelle}
@@ -110,6 +112,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<TableauDeBord />} />
             <Route path="/diagnostic" element={<Diagnostic />} />
+            <Route path="/communaute" element={<Communaute />} />
           </Routes>
         </ErrorBoundary>
       </main>

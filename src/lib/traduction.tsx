@@ -29,6 +29,7 @@ export interface Traductions {
     nav: {
       tableauDeBord: string;
       diagnostic: string;
+      communaute: string;
     };
     modeleIncompatible: string;
   };
