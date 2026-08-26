@@ -17,9 +17,12 @@
 #   SUPABASE_SERVICE_ROLE  - cle "service_role" (secrete, cote serveur
 #                            uniquement - contourne les policies RLS, donc
 #                            les verifications ci-dessous en tiennent lieu)
-#   SUPABASE_JWT_SECRET    - secret JWT du projet (Project Settings > API >
-#                            JWT Settings), pour verifier les jetons emis
-#                            par Supabase Auth cote client
+#
+# Pas de secret JWT en dur : les projets Supabase recents signent les jetons
+# avec une cle asymetrique (ES256) tournante (Project Settings > JWT Keys),
+# donc la verification se fait via la cle publique JWKS du projet plutot
+# qu'un secret partage fige - PyJWKClient recupere et met en cache cette cle
+# a partir du "kid" present dans l'en-tete du jeton.
 
 import os
 import time
@@ -27,6 +30,7 @@ from typing import Optional
 
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, Header
+from jwt import PyJWKClient
 from pydantic import BaseModel, Field
 from supabase import Client, create_client
 
@@ -34,9 +38,20 @@ app = FastAPI(title="AgriCam - API communautaire")
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE = os.environ.get("SUPABASE_SERVICE_ROLE")
-SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET")
 
 _client: Optional[Client] = None
+_jwks_client: Optional[PyJWKClient] = None
+
+
+def jwks_client() -> PyJWKClient:
+    global _jwks_client
+    if _jwks_client is None:
+        if not SUPABASE_URL:
+            raise HTTPException(status_code=500, detail="SUPABASE_URL non configure sur le serveur.")
+        _jwks_client = PyJWKClient(
+            f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json", cache_keys=True
+        )
+    return _jwks_client
 
 
 def client() -> Client:
@@ -63,14 +78,16 @@ def utilisateur_courant(authorization: str = Header(default="")) -> Utilisateur:
     """Verifie le jeton emis par Supabase Auth (envoye par le client apres
     connexion) et en extrait l'identite - jamais de confiance aveugle dans
     un user_id fourni tel quel par le client dans le corps de la requete."""
-    if not SUPABASE_JWT_SECRET:
-        raise HTTPException(status_code=500, detail="SUPABASE_JWT_SECRET non configure.")
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Connexion requise.")
     jeton = authorization.removeprefix("Bearer ").strip()
     try:
+        cle_signature = jwks_client().get_signing_key_from_jwt(jeton)
         charge = jwt.decode(
-            jeton, SUPABASE_JWT_SECRET, algorithms=["HS256"], audience="authenticated"
+            jeton,
+            cle_signature.key,
+            algorithms=["ES256", "RS256"],
+            audience="authenticated",
         )
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Session invalide ou expiree.")
