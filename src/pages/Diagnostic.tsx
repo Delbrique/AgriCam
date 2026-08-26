@@ -57,11 +57,7 @@ export function Diagnostic() {
       if (e instanceof PhotoRejetee) {
         setRejet({ qualite: e.qualite, fichier });
       } else {
-        setErreur(
-          e instanceof Error
-            ? e.message
-            : 'Le diagnostic n’a pas abouti. Vérifiez que les modèles ont bien été téléchargés au moins une fois, avec une connexion.',
-        );
+        setErreur(messageErreurLisible(e));
       }
     } finally {
       setOccupe(false);
@@ -102,6 +98,29 @@ export function Diagnostic() {
       {erreur && <p className="avis avis--erreur">{erreur}</p>}
     </>
   );
+}
+
+/**
+ * Traduit une erreur technique brute du navigateur en message comprehensible
+ * pour un producteur - jamais "Load failed" (Safari) ou "Failed to execute
+ * 'transaction' on 'IDBDatabase': The database connection is closing" tels
+ * quels. Les messages qu'on ecrit nous-memes ailleurs (classifieur.ts,
+ * detecteur.ts, classes.ts...) sont deja en francais clair et ne
+ * correspondent a aucun de ces motifs : ils ressortent inchanges.
+ */
+function messageErreurLisible(e: unknown): string {
+  const brut = e instanceof Error ? e.message : '';
+
+  if (/load failed|failed to fetch|networkerror|network request failed/i.test(brut)) {
+    return "Le téléchargement du modèle a échoué (connexion instable). Vérifiez votre réseau et réessayez.";
+  }
+  if (/connection is clos/i.test(brut)) {
+    return 'Le diagnostic a été calculé, mais son enregistrement dans l’historique a échoué. Réessayez.';
+  }
+  if (!brut) {
+    return 'Le diagnostic n’a pas abouti. Vérifiez que les modèles ont bien été téléchargés au moins une fois, avec une connexion.';
+  }
+  return brut;
 }
 
 function chargerImage(fichier: File): Promise<HTMLImageElement> {

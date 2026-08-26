@@ -45,6 +45,19 @@ function ouvrir() {
 
         db.createObjectStore('parcelles', { keyPath: 'id' });
       },
+    }).then((db) => {
+      // Certains navigateurs (Safari iOS en particulier, et les WebView
+      // integrees comme celle de WhatsApp) ferment une connexion
+      // IndexedDB inactive quand l'onglet passe en arriere-plan, sans
+      // prevenir le code qui l'utilise. Sans ce garde-fou, `base` continue
+      // de pointer vers une connexion morte et TOUTE transaction suivante
+      // echoue avec "The database connection is closing", meme apres que
+      // l'utilisateur revienne sur la page - jusqu'au rechargement complet.
+      // On force ici une reouverture propre au prochain appel.
+      db.addEventListener('close', () => {
+        base = null;
+      });
+      return db;
     });
   }
   return base;
@@ -52,6 +65,14 @@ function ouvrir() {
 
 function identifiant(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** Vrai pour l'erreur precise qu'une connexion IndexedDB fermee entre-temps
+ * declenche sur une transaction encore en vol - le seul cas ou reessayer
+ * une fois, contre la connexion fraiche que `ouvrir()` vient de rouvrir, a
+ * une chance reelle de reussir. */
+function estConnexionFermee(e: unknown): boolean {
+  return e instanceof Error && /connection is clos/i.test(e.message);
 }
 
 export async function enregistrer(
@@ -64,8 +85,19 @@ export async function enregistrer(
     parcelleId,
     synchronisee: false,
   };
-  const db = await ouvrir();
-  await db.put('consultations', consultation);
+  try {
+    const db = await ouvrir();
+    await db.put('consultations', consultation);
+  } catch (e) {
+    if (!estConnexionFermee(e)) throw e;
+    // Le diagnostic vient de couter plusieurs secondes de calcul sur
+    // l'appareil : le perdre pour un accroc de connexion IndexedDB (courant
+    // sur Safari iOS ou dans une WebView comme celle de WhatsApp, quand
+    // l'onglet a ete mis en arriere-plan) serait bien pire qu'un unique
+    // nouvel essai contre la connexion que `ouvrir()` vient de rouvrir.
+    const db = await ouvrir();
+    await db.put('consultations', consultation);
+  }
   return consultation;
 }
 

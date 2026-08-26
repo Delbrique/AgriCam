@@ -51,7 +51,7 @@ export async function chargerDetecteur(
   if (session) return;
   if (chargement) return chargement;
 
-  chargement = (async () => {
+  async function tenter(): Promise<void> {
     suivi?.(0.1, 'Chargement du détecteur');
     // Les binaires WebAssembly sont servis depuis l'application elle-meme, et
     // non depuis un CDN : sans cela, le detecteur cesserait de fonctionner des
@@ -64,6 +64,23 @@ export async function chargerDetecteur(
       graphOptimizationLevel: 'all',
     });
     suivi?.(1, 'Détecteur prêt');
+  }
+
+  chargement = (async () => {
+    try {
+      await tenter();
+    } catch (premiereErreur) {
+      // Meme logique que chargerClassifieur() : un telechargement a froid
+      // echoue parfois sur un simple accroc reseau, un seul nouvel essai
+      // suffit generalement.
+      session = null;
+      await new Promise((r) => setTimeout(r, 1500));
+      try {
+        await tenter();
+      } catch {
+        throw premiereErreur;
+      }
+    }
   })();
 
   try {

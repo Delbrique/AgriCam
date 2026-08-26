@@ -101,7 +101,7 @@ export async function chargerClassifieur(suivi?: SuiviChargement): Promise<void>
   if (tronc && tete) return;
   if (chargement) return chargement;
 
-  chargement = (async () => {
+  async function tenter(): Promise<void> {
     suivi?.(0.05, 'Préparation du moteur de calcul');
     await tf.ready();
 
@@ -144,6 +144,27 @@ export async function chargerClassifieur(suivi?: SuiviChargement): Promise<void>
     });
 
     suivi?.(1, 'Prêt');
+  }
+
+  chargement = (async () => {
+    try {
+      await tenter();
+    } catch (premiereErreur) {
+      // Un telechargement a froid (~35 Mo, premiere visite, aucun cache)
+      // echoue parfois sur un simple accroc reseau mobile ("Load failed"
+      // sur Safari, entre autres) - un seul nouvel essai, apres avoir
+      // efface tout etat partiel, evite de faire echouer toute la
+      // premiere visite d'un producteur pour un blip passager.
+      tronc = null;
+      tete = null;
+      profils = null;
+      await new Promise((r) => setTimeout(r, 1500));
+      try {
+        await tenter();
+      } catch {
+        throw premiereErreur;
+      }
+    }
   })();
 
   try {
