@@ -19,6 +19,7 @@ import {
   type RecommandationAgregee,
   type StatCulture,
 } from '../lib/tableauDeBord';
+import { useTraduction } from '../lib/traduction';
 
 interface Props {
   periodeLibelle: string;
@@ -37,6 +38,7 @@ export function SyntheseTableauDeBord({
   repartitionMaladies,
   repartitionCultures,
 }: Props) {
+  const { t, langue } = useTraduction();
   const [etat, setEtat] = useState<Etat>('inactif');
   const [syntheseIA, setSyntheseIA] = useState('');
 
@@ -98,11 +100,7 @@ export function SyntheseTableauDeBord({
   ]);
 
   if (kpis.nbDiagnostics === 0) {
-    return (
-      <p className="m-0 text-sm text-encre-douce">
-        Aucun diagnostic sur cette période — rien à analyser.
-      </p>
-    );
+    return <p className="m-0 text-sm text-encre-douce">{t.syntheseTableauDeBord.aucunDiagnostic}</p>;
   }
 
   const pret = etat === 'pret' && syntheseIA.length > 0;
@@ -113,13 +111,13 @@ export function SyntheseTableauDeBord({
         <RapportSynthese texte={syntheseIA} />
       ) : (
         <ul className="m-0 flex list-none flex-col gap-e1 p-0 text-sm leading-[1.5] text-encre">
-          {resumeLocalSituation(kpis).map((ligne, i) => (
+          {resumeLocalSituation(kpis, t, langue).map((ligne, i) => (
             <li key={i}>{ligne}</li>
           ))}
         </ul>
       )}
       {etat === 'chargement' && (
-        <p className="m-0 text-xs text-encre-douce">Analyse en cours…</p>
+        <p className="m-0 text-xs text-encre-douce">{t.syntheseTableauDeBord.analyseEnCours}</p>
       )}
     </div>
   );

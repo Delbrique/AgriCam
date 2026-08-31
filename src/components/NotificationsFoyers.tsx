@@ -13,10 +13,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, MessageCircleQuestionMark, TriangleAlert, X } from 'lucide-react';
 import { foyersActuels, type Foyer } from '../lib/alerte';
-import { classeParId } from '../lib/classes';
+import { classeParId, nomClasse } from '../lib/classes';
 import { ouvrirAssistantAvecQuestion } from '../lib/assistantBus';
+import { useTraduction } from '../lib/traduction';
 
 export function NotificationsFoyers() {
+  const { t, langue } = useTraduction();
   const [foyers, setFoyers] = useState<Foyer[]>([]);
   const [fermes, setFermes] = useState<Set<string>>(new Set());
   const [ouvert, setOuvert] = useState(false);
@@ -85,8 +87,8 @@ export function NotificationsFoyers() {
         onClick={() => setOuvert((v) => !v)}
         aria-label={
           visibles.length > 0
-            ? `Notifications (${visibles.length} alerte${visibles.length > 1 ? 's' : ''})`
-            : 'Notifications'
+            ? t.notificationsFoyers.notificationsAvecCompte(visibles.length)
+            : t.notificationsFoyers.notifications
         }
         aria-expanded={ouvert}
         onAnimationEnd={() => setSonner(false)}
@@ -106,9 +108,7 @@ export function NotificationsFoyers() {
       {ouvert && (
         <div className="absolute right-0 top-full z-30 mt-e2 flex max-h-[70vh] w-[min(22rem,90vw)] flex-col gap-e2 overflow-y-auto rounded-lg border border-trait bg-carte p-e3 shadow-carte">
           {visibles.length === 0 ? (
-            <p className="m-0 p-e2 text-sm text-encre-douce">
-              Aucune alerte pour l&apos;instant.
-            </p>
+            <p className="m-0 p-e2 text-sm text-encre-douce">{t.notificationsFoyers.aucuneAlerte}</p>
           ) : (
             visibles.map((foyer) => {
               const classe = classeParId(foyer.classeId);
@@ -123,33 +123,33 @@ export function NotificationsFoyers() {
                     onClick={() =>
                       setFermes((prev) => new Set(prev).add(foyer.classeId))
                     }
-                    aria-label="Fermer cette alerte"
+                    aria-label={t.notificationsFoyers.fermerAlerte}
                   >
                     <X size={14} aria-hidden="true" />
                   </button>
 
                   <p className="m-0 flex items-center gap-e2 text-sm font-semibold text-encre">
                     <TriangleAlert size={16} aria-hidden="true" />
-                    Foyer possible : {classe?.nom ?? foyer.classeId}
+                    {t.notificationsFoyers.foyerPossible(
+                      classe ? nomClasse(classe, langue) : foyer.classeId,
+                    )}
                   </p>
                   <p className="m-0 text-xs leading-[1.5] text-encre-douce">
-                    {foyer.points.length} diagnostics regroupés dans un même
-                    secteur, ces deux dernières semaines. Envisagez un
-                    traitement préventif sur les plants voisins.
+                    {t.notificationsFoyers.diagnosticsGroupes(foyer.points.length)}
                   </p>
                   <div className="flex flex-wrap gap-e2">
                     <button
                       className="bouton-second self-start text-xs"
                       onClick={() => localiser(foyer)}
                     >
-                      Localiser ce foyer
+                      {t.notificationsFoyers.localiserFoyer}
                     </button>
                     <button
                       className="bouton-second flex items-center gap-e1 self-start text-xs"
                       onClick={() => demanderConseil(foyer)}
                     >
                       <MessageCircleQuestionMark size={14} aria-hidden="true" />
-                      Demander à l&apos;assistant
+                      {t.notificationsFoyers.demanderAssistant}
                     </button>
                   </div>
                 </div>

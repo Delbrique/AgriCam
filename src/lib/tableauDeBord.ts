@@ -7,10 +7,11 @@
  * rester testables sans DOM ni IndexedDB simulee.
  */
 
-import { classeParId, type Classe } from './classes';
+import { classeParId, nomClasse, type Classe } from './classes';
 import { conduitePour, type Conduite } from '../data/conduites';
 import type { DiagnosticFruit } from './pipeline';
 import type { Consultation } from './stockage';
+import type { Traductions } from './traduction';
 
 export type Periode = 'jour' | 'semaine' | 'mois' | 'tout';
 
@@ -280,28 +281,29 @@ export function recommandationsCritiques(
  * fiche de resultat, cette synthese porte sur l'ENSEMBLE de la periode, pas
  * un seul diagnostic - jamais de recommandation vide de sens ("tout va
  * bien") quand il n'y a simplement aucune donnee. */
-export function resumeLocalSituation(kpis: KpiTableauDeBord): string[] {
+export function resumeLocalSituation(
+  kpis: KpiTableauDeBord,
+  t: Traductions,
+  langue: 'fr' | 'en',
+): string[] {
   const lignes: string[] = [];
 
-  lignes.push(
-    `${kpis.nbDiagnostics} diagnostic${kpis.nbDiagnostics > 1 ? 's' : ''} sur cette période.`,
-  );
+  lignes.push(t.syntheseTableauDeBord.resumeDiagnostics(kpis.nbDiagnostics));
 
   if (kpis.tauxSain !== null) {
-    lignes.push(`${Math.round(kpis.tauxSain * 100)} % des fruits diagnostiqués sont sains.`);
+    lignes.push(t.syntheseTableauDeBord.resumeTauxSain(Math.round(kpis.tauxSain * 100)));
   }
 
   if (kpis.nbAlertesCritiques > 0) {
-    lignes.push(
-      `${kpis.nbAlertesCritiques} alerte${kpis.nbAlertesCritiques > 1 ? 's' : ''} critique` +
-        `${kpis.nbAlertesCritiques > 1 ? 's' : ''} à vérifier en priorité.`,
-    );
+    lignes.push(t.syntheseTableauDeBord.resumeAlertesCritiques(kpis.nbAlertesCritiques));
   }
 
   if (kpis.maladiePredominante) {
     lignes.push(
-      `Maladie la plus fréquente : ${kpis.maladiePredominante.classe.nom} ` +
-        `(${kpis.maladiePredominante.nombre} cas).`,
+      t.syntheseTableauDeBord.resumeMaladiePredominante(
+        nomClasse(kpis.maladiePredominante.classe, langue),
+        kpis.maladiePredominante.nombre,
+      ),
     );
   }
 

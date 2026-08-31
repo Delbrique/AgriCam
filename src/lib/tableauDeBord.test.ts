@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { classeParId } from './classes';
 import type { DiagnosticFruit } from './pipeline';
 import type { Consultation } from './stockage';
+import { fr } from './locales/fr';
 import {
   calculerKpis,
   filtrerParPeriode,
@@ -265,13 +266,13 @@ describe('recommandationsCritiques', () => {
 describe('resumeLocalSituation', () => {
   it('inclut toujours le nombre de diagnostics', () => {
     const kpis = calculerKpis([]);
-    expect(resumeLocalSituation(kpis)[0]).toContain('0 diagnostic');
+    expect(resumeLocalSituation(kpis, fr, 'fr')[0]).toContain('0 diagnostic');
   });
 
   it("n'affiche pas de ligne d'alertes critiques quand il n'y en a aucune", () => {
     const consultations = [consultation('a', 1, [fruit('Tomato___Healthy', 0.9)])];
     const kpis = calculerKpis(consultations);
-    const lignes = resumeLocalSituation(kpis);
+    const lignes = resumeLocalSituation(kpis, fr, 'fr');
     expect(lignes.some((l) => l.includes('critique'))).toBe(false);
   });
 
@@ -281,7 +282,7 @@ describe('resumeLocalSituation', () => {
       consultation('b', 1, [fruit('Tomato___Spotted_wilt_Virus', 0.9)]),
     ];
     const kpis = calculerKpis(consultations);
-    const lignes = resumeLocalSituation(kpis);
+    const lignes = resumeLocalSituation(kpis, fr, 'fr');
     expect(lignes.some((l) => l.includes('2 alertes critiques'))).toBe(true);
     expect(lignes.some((l) => l.includes('Virus de la maladie bronzée'))).toBe(true);
   });

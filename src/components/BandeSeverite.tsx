@@ -10,7 +10,8 @@
  * pour dire l'etat sanitaire, partout dans l'application.
  */
 
-import { CLASSES, couleurGravite, type Gravite } from '../lib/classes';
+import { CLASSES, couleurGravite, nomClasse, type Gravite } from '../lib/classes';
+import { useTraduction } from '../lib/traduction';
 
 interface Props {
   probabilites: Float32Array;
@@ -29,6 +30,7 @@ export function BandeSeverite({
   compacte = false,
   incertain = false,
 }: Props) {
+  const { t, langue } = useTraduction();
   const segments = Array.from(probabilites)
     .map((p, i) => ({ p, i, classe: CLASSES[i] }))
     .filter((s) => s.p >= PART_MINIMALE)
@@ -37,8 +39,11 @@ export function BandeSeverite({
   const total = segments.reduce((s, x) => s + x.p, 0);
   const retenu = CLASSES[indiceRetenu];
   const libelle = incertain
-    ? 'Diagnostic incertain'
-    : `Diagnostic : ${retenu.nom}, confiance ${Math.round(probabilites[indiceRetenu] * 100)} %`;
+    ? t.bandeSeverite.diagnosticIncertain
+    : t.bandeSeverite.diagnostic(
+        nomClasse(retenu, langue),
+        Math.round(probabilites[indiceRetenu] * 100),
+      );
 
   if (compacte) {
     return (
@@ -55,7 +60,7 @@ export function BandeSeverite({
               flexGrow: p / total,
               background: incertain ? 'var(--inconnu)' : couleurGravite(classe.gravite),
             }}
-            title={`${classe.nom} - ${Math.round(p * 100)} %`}
+            title={`${nomClasse(classe, langue)} - ${Math.round(p * 100)} %`}
           />
         ))}
       </div>
@@ -67,13 +72,13 @@ export function BandeSeverite({
       {segments.map(({ p, i, classe }) => (
         <div key={classe.id} className="flex flex-col gap-e1">
           <span className="flex items-center gap-e2 text-sm">
-            <span className="min-w-0 flex-1 truncate">{classe.nom}</span>
+            <span className="min-w-0 flex-1 truncate">{nomClasse(classe, langue)}</span>
             {i === indiceRetenu && !incertain && (
               <span
                 className="rounded-sm border border-encre px-e1 font-donnee text-[0.625rem] font-bold uppercase tracking-[0.1em] text-encre"
                 aria-hidden="true"
               >
-                retenu
+                {t.bandeSeverite.retenu}
               </span>
             )}
             <span className="donnee shrink-0 text-sm text-encre-douce">

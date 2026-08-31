@@ -30,12 +30,7 @@ import {
   type Parcelle,
   type StatutParcelle,
 } from '../lib/stockage';
-
-const LIBELLE_CULTURE: Record<Parcelle['culture'], string> = {
-  tomate: 'Tomate',
-  piment: 'Piment',
-  oignon: 'Oignon',
-};
+import { useTraduction, type Traductions } from '../lib/traduction';
 
 interface Props {
   parcelles: Parcelle[];
@@ -59,6 +54,12 @@ export function GestionParcelles({
   rattachementsVersion,
   onSelectionner,
 }: Props) {
+  const { t } = useTraduction();
+  const LIBELLE_CULTURE: Record<Parcelle['culture'], string> = {
+    tomate: t.commun.cultures.tomate,
+    piment: t.commun.cultures.piment,
+    oignon: t.commun.cultures.oignon,
+  };
   const [statuts, setStatuts] = useState<Record<string, StatutParcelle>>({});
   const [creation, setCreation] = useState(false);
   const [nom, setNom] = useState('');
@@ -108,23 +109,19 @@ export function GestionParcelles({
   return (
     <div className="flex flex-col gap-e3">
       <div className="flex items-center justify-between gap-e2">
-        <h3 className="intitule">Mes parcelles</h3>
+        <h3 className="intitule">{t.gestionParcelles.titre}</h3>
         {!creation && (
           <button
             className="bouton-second flex items-center gap-e1 px-e3 text-sm"
             onClick={() => setCreation(true)}
           >
-            <Plus size={16} aria-hidden="true" /> Nouvelle parcelle
+            <Plus size={16} aria-hidden="true" /> {t.gestionParcelles.nouvelleParcelle}
           </button>
         )}
       </div>
 
       {parcelles.length > 0 && (
-        <p className="m-0 text-xs text-encre-douce">
-          Pour rattacher un diagnostic à une parcelle : cliquez sur son point
-          coloré sur la carte, puis choisissez la parcelle dans le menu «
-          Parcelle » qui apparaît dans l&apos;infobulle.
-        </p>
+        <p className="m-0 text-xs text-encre-douce">{t.gestionParcelles.aideRattachement}</p>
       )}
 
       {creation && (
@@ -136,18 +133,18 @@ export function GestionParcelles({
           }}
         >
           <label className="flex flex-col gap-e1 text-sm">
-            Nom
+            {t.gestionParcelles.nomLabel}
             <input
               className="rounded-xl border border-trait bg-transparent px-e3 py-e2"
               value={nom}
               onChange={(e) => setNom(e.target.value)}
-              placeholder="Champ piment - derrière la maison"
+              placeholder={t.gestionParcelles.nomPlaceholder}
               autoFocus
             />
           </label>
 
           <label className="flex flex-col gap-e1 text-sm">
-            Culture
+            {t.gestionParcelles.cultureLabel}
             <select
               className="rounded-xl border border-trait bg-transparent px-e3 py-e2"
               value={culture}
@@ -168,31 +165,25 @@ export function GestionParcelles({
               disabled={!positionActuelle}
               onChange={(e) => setAvecPosition(e.target.checked)}
             />
-            Utiliser ma position actuelle
+            {t.gestionParcelles.utiliserPosition}
           </label>
           {!positionActuelle && (
-            <p className="m-0 text-xs text-encre-douce">
-              Position indisponible pour l’instant — la parcelle sera créée
-              sans repère sur la carte.
-            </p>
+            <p className="m-0 text-xs text-encre-douce">{t.gestionParcelles.positionIndisponible}</p>
           )}
 
           <div className="flex gap-e2">
             <button type="submit" className="bouton-principal" disabled={!nom.trim()}>
-              Créer
+              {t.gestionParcelles.creer}
             </button>
             <button type="button" className="bouton-second" onClick={() => setCreation(false)}>
-              Annuler
+              {t.gestionParcelles.annuler}
             </button>
           </div>
         </form>
       )}
 
       {parcelles.length === 0 && !creation && (
-        <p className="m-0 text-sm text-encre-douce">
-          Regroupez vos points de diagnostic sous un nom de parcelle pour
-          suivre leur évolution dans le temps.
-        </p>
+        <p className="m-0 text-sm text-encre-douce">{t.gestionParcelles.aucuneParcelleTexte}</p>
       )}
 
       <ul className="m-0 flex list-none flex-col gap-e2 p-0">
@@ -232,7 +223,7 @@ export function GestionParcelles({
                     className="min-w-0 flex-1 truncate border-0 bg-transparent p-0 text-left text-sm font-semibold disabled:cursor-default"
                     onClick={() => p.position && onSelectionner(p)}
                     disabled={!p.position}
-                    title={p.position ? 'Centrer la carte sur cette parcelle' : undefined}
+                    title={p.position ? t.gestionParcelles.centrerCarte : undefined}
                   >
                     {p.nom}
                   </button>
@@ -244,14 +235,22 @@ export function GestionParcelles({
 
                 {enRenommage ? (
                   <>
-                    <IconeBouton icone={Check} label="Valider" onClick={() => validerRenommage(p.id)} />
-                    <IconeBouton icone={X} label="Annuler" onClick={() => setRenommageId(null)} />
+                    <IconeBouton
+                      icone={Check}
+                      label={t.gestionParcelles.valider}
+                      onClick={() => validerRenommage(p.id)}
+                    />
+                    <IconeBouton
+                      icone={X}
+                      label={t.gestionParcelles.annuler}
+                      onClick={() => setRenommageId(null)}
+                    />
                   </>
                 ) : (
                   <>
                     <IconeBouton
                       icone={Pencil}
-                      label={`Renommer ${p.nom}`}
+                      label={t.gestionParcelles.renommer(p.nom)}
                       onClick={() => {
                         setRenommageId(p.id);
                         setBrouillonNom(p.nom);
@@ -259,7 +258,7 @@ export function GestionParcelles({
                     />
                     <IconeBouton
                       icone={Trash2}
-                      label={`Supprimer ${p.nom}`}
+                      label={t.gestionParcelles.supprimer(p.nom)}
                       onClick={() => retirer(p.id)}
                     />
                   </>
@@ -269,19 +268,21 @@ export function GestionParcelles({
               <p className="donnee m-0 text-xs text-encre-douce">
                 {statut && statut.nbRecent > 0 ? (
                   <>
-                    {statut.nbRecent} consultation{statut.nbRecent > 1 ? 's' : ''} ·{' '}
-                    {Math.round((statut.tauxRecent ?? 0) * 100)}&nbsp;% infestation (30 j)
+                    {t.gestionParcelles.consultations(
+                      statut.nbRecent,
+                      Math.round((statut.tauxRecent ?? 0) * 100),
+                    )}
                     {' · '}
-                    <Tendance tendance={statut.tendance} />
+                    <Tendance tendance={statut.tendance} t={t} />
                   </>
                 ) : (
-                  'Pas encore de consultation rattachée'
+                  t.gestionParcelles.pasEncoreConsultation
                 )}
               </p>
 
               {p.position && (
                 <p className="m-0 flex items-center gap-e1 text-xs text-encre-douce">
-                  <MapPin size={12} aria-hidden="true" /> Repérée sur la carte
+                  <MapPin size={12} aria-hidden="true" /> {t.gestionParcelles.repereeSurCarte}
                 </p>
               )}
             </li>
@@ -313,25 +314,25 @@ function IconeBouton({
   );
 }
 
-function Tendance({ tendance }: { tendance: StatutParcelle['tendance'] }) {
+function Tendance({ tendance, t }: { tendance: StatutParcelle['tendance']; t: Traductions }) {
   if (tendance === 'aggravation') {
     return (
       <span className="inline-flex items-center gap-e1 text-atteint">
-        <TrendingUp size={14} aria-hidden="true" /> en hausse
+        <TrendingUp size={14} aria-hidden="true" /> {t.gestionParcelles.tendanceHausse}
       </span>
     );
   }
   if (tendance === 'amelioration') {
     return (
       <span className="inline-flex items-center gap-e1 text-sain">
-        <TrendingDown size={14} aria-hidden="true" /> en baisse
+        <TrendingDown size={14} aria-hidden="true" /> {t.gestionParcelles.tendanceBaisse}
       </span>
     );
   }
   if (tendance === 'stable') {
     return (
       <span className="inline-flex items-center gap-e1">
-        <Minus size={14} aria-hidden="true" /> stable
+        <Minus size={14} aria-hidden="true" /> {t.gestionParcelles.tendanceStable}
       </span>
     );
   }

@@ -111,6 +111,65 @@ export interface Traductions {
     effectuee: string;
     indisponible: string;
   };
+  syntheseTableauDeBord: {
+    aucunDiagnostic: string;
+    analyseEnCours: string;
+    resumeDiagnostics: (n: number) => string;
+    resumeTauxSain: (pct: number) => string;
+    resumeAlertesCritiques: (n: number) => string;
+    resumeMaladiePredominante: (nom: string, n: number) => string;
+  };
+  bandeSeverite: {
+    diagnosticIncertain: string;
+    diagnostic: (nom: string, pct: number) => string;
+    retenu: string;
+  };
+  carteFoyers: {
+    vousEtesIci: string;
+    vousEtesIciLieu: (lieu: string) => string;
+    localisationEnCours: string;
+    parcelle: string;
+    aucuneParcelle: string;
+    aucunGeolocalise: string;
+    aucunGeolocaliseCulture: string;
+    graviteSain: string;
+    graviteAlerte: string;
+    graviteAtteint: string;
+    graviteGrave: string;
+  };
+  gestionParcelles: {
+    titre: string;
+    nouvelleParcelle: string;
+    aideRattachement: string;
+    nomLabel: string;
+    nomPlaceholder: string;
+    cultureLabel: string;
+    utiliserPosition: string;
+    positionIndisponible: string;
+    creer: string;
+    annuler: string;
+    aucuneParcelleTexte: string;
+    centrerCarte: string;
+    valider: string;
+    renommer: (nom: string) => string;
+    supprimer: (nom: string) => string;
+    consultations: (n: number, pct: number) => string;
+    pasEncoreConsultation: string;
+    repereeSurCarte: string;
+    tendanceHausse: string;
+    tendanceBaisse: string;
+    tendanceStable: string;
+  };
+  notificationsFoyers: {
+    notifications: string;
+    notificationsAvecCompte: (n: number) => string;
+    aucuneAlerte: string;
+    foyerPossible: (nom: string) => string;
+    diagnosticsGroupes: (n: number) => string;
+    localiserFoyer: string;
+    demanderAssistant: string;
+    fermerAlerte: string;
+  };
 }
 
 export type Langue = 'fr' | 'en';

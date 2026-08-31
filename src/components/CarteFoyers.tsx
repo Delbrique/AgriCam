@@ -29,24 +29,11 @@ import {
   type Parcelle,
 } from '../lib/stockage';
 import type { Foyer } from '../lib/alerte';
-import { COULEUR_GRAVITE_HEX, type Gravite } from '../lib/classes';
+import { COULEUR_GRAVITE_HEX, nomClasse, type Gravite } from '../lib/classes';
+import { useTraduction } from '../lib/traduction';
 import { GestionParcelles } from './GestionParcelles';
 
 type FiltreCulture = 'toutes' | 'tomate' | 'piment' | 'oignon';
-
-const FILTRES: { valeur: FiltreCulture; libelle: string }[] = [
-  { valeur: 'toutes', libelle: 'Toutes' },
-  { valeur: 'tomate', libelle: 'Tomate' },
-  { valeur: 'piment', libelle: 'Piment' },
-  { valeur: 'oignon', libelle: 'Oignon' },
-];
-
-const LIBELLE_GRAVITE: Record<Gravite, string> = {
-  sain: 'Sain',
-  alerte: 'À surveiller',
-  atteint: 'Atteint',
-  grave: 'Grave',
-};
 
 const CENTRE_DEFAUT: [number, number] = [3.848, 11.502]; // Yaounde, repli si aucune donnee.
 /** Zoom "quartier" : assez precis pour lire les noms de rues, quand la carte
@@ -100,6 +87,19 @@ async function quartierDepuisPosition(lat: number, lon: number): Promise<string 
 }
 
 export function CarteFoyers() {
+  const { t, langue } = useTraduction();
+  const FILTRES: { valeur: FiltreCulture; libelle: string }[] = [
+    { valeur: 'toutes', libelle: t.commun.cultures.toutes },
+    { valeur: 'tomate', libelle: t.commun.cultures.tomate },
+    { valeur: 'piment', libelle: t.commun.cultures.piment },
+    { valeur: 'oignon', libelle: t.commun.cultures.oignon },
+  ];
+  const LIBELLE_GRAVITE: Record<Gravite, string> = {
+    sain: t.carteFoyers.graviteSain,
+    alerte: t.carteFoyers.graviteAlerte,
+    atteint: t.carteFoyers.graviteAtteint,
+    grave: t.carteFoyers.graviteGrave,
+  };
   const conteneurRef = useRef<HTMLDivElement>(null);
   const carteRef = useRef<L.Map | null>(null);
   const coucheRef = useRef<L.LayerGroup | null>(null);
@@ -255,7 +255,7 @@ export function CarteFoyers() {
         fillColor: '#1a73e8',
         fillOpacity: 1,
       })
-        .bindPopup(quartier ? `Vous êtes ici : ${quartier}` : 'Vous êtes ici')
+        .bindPopup(quartier ? t.carteFoyers.vousEtesIciLieu(quartier) : t.carteFoyers.vousEtesIci)
         .addTo(couche);
     }
 
@@ -263,7 +263,7 @@ export function CarteFoyers() {
       const { latitude, longitude } = c.position as { latitude: number; longitude: number };
       const principal = c.fruits.find((f) => !f.horsSujet) ?? c.fruits[0];
       const couleur = COULEUR_GRAVITE_HEX[c.graviteGlobale];
-      const date = new Date(c.horodatage).toLocaleDateString('fr-FR', {
+      const date = new Date(c.horodatage).toLocaleDateString(langue === 'en' ? 'en-US' : 'fr-FR', {
         day: '2-digit',
         month: 'long',
         year: 'numeric',
@@ -277,9 +277,9 @@ export function CarteFoyers() {
         .join('');
       const selecteurParcelle =
         listeParcelles.length > 0
-          ? `<label style="display:block;margin-top:6px;font-size:12px;">Parcelle` +
+          ? `<label style="display:block;margin-top:6px;font-size:12px;">${t.carteFoyers.parcelle}` +
             `<select data-consultation-id="${c.id}" style="display:block;width:100%;margin-top:2px;">` +
-            `<option value="">— aucune —</option>${optionsParcelle}</select></label>`
+            `<option value="">${t.carteFoyers.aucuneParcelle}</option>${optionsParcelle}</select></label>`
           : '';
 
       L.circleMarker([latitude, longitude], {
@@ -290,7 +290,7 @@ export function CarteFoyers() {
         fillOpacity: 0.9,
       })
         .bindPopup(
-          `<strong>${echapperHtml(principal.classe.nom)}</strong><br>` +
+          `<strong>${echapperHtml(nomClasse(principal.classe, langue))}</strong><br>` +
             `${LIBELLE_GRAVITE[c.graviteGlobale]} &middot; ${date}` +
             selecteurParcelle,
         )
@@ -326,17 +326,12 @@ export function CarteFoyers() {
       // rien fait.
       conteneurRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [filtrees, positionActuelle, quartier, listeParcelles, emplacement.state]);
+  }, [filtrees, positionActuelle, quartier, listeParcelles, emplacement.state, langue]);
 
   return (
     <div className="flex min-w-0 flex-col gap-e4">
       {consultations !== null && geolocalisees.length === 0 && (
-        <p className="avis avis--attention">
-          Aucun diagnostic géolocalisé pour l&apos;instant. Autorisez le
-          partage de position lorsque le navigateur le demande, lors de votre
-          prochain diagnostic : chaque photo géolocalisée apparaîtra ici,
-          comme un point sur la carte de votre champ.
-        </p>
+        <p className="avis avis--attention">{t.carteFoyers.aucunGeolocalise}</p>
       )}
 
       {positionActuelle && (
@@ -346,8 +341,8 @@ export function CarteFoyers() {
             style={{ background: '#1a73e8' }}
             aria-hidden="true"
           />
-          <strong>Vous êtes ici&nbsp;:</strong>{' '}
-          {quartier ?? 'localisation du quartier en cours…'}
+          <strong>{t.carteFoyers.vousEtesIci}&nbsp;:</strong>{' '}
+          {quartier ?? t.carteFoyers.localisationEnCours}
         </p>
       )}
 
@@ -380,7 +375,7 @@ export function CarteFoyers() {
             style={{ background: '#1a73e8' }}
             aria-hidden="true"
           />
-          Vous êtes ici
+          {t.carteFoyers.vousEtesIci}
         </span>
         {(Object.keys(LIBELLE_GRAVITE) as Gravite[]).map((g) => (
           <span key={g} className="flex items-center gap-e2 text-sm text-encre-douce">
@@ -396,7 +391,7 @@ export function CarteFoyers() {
 
       {geolocalisees.length > 0 && filtrees.length === 0 && (
         <p className="m-0 text-sm text-encre-douce">
-          Aucun diagnostic géolocalisé pour cette culture.
+          {t.carteFoyers.aucunGeolocaliseCulture}
         </p>
       )}
 
