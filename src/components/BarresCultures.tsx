@@ -24,12 +24,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { StatCulture } from '../lib/tableauDeBord';
-
-const LIBELLE_CULTURE: Record<StatCulture['culture'], string> = {
-  tomate: 'Tomate',
-  piment: 'Piment',
-  oignon: 'Oignon',
-};
+import { useTraduction } from '../lib/traduction';
 
 interface Props {
   donnees: StatCulture[];
@@ -39,14 +34,16 @@ const STYLE_ETIQUETTE = { fontSize: 12, fontWeight: 700, fill: 'var(--encre)' };
 const STYLE_ETIQUETTE_ATTEINTS = { fontSize: 12, fontWeight: 700, fill: 'var(--atteint)' };
 
 export function BarresCultures({ donnees }: Props) {
+  const { t } = useTraduction();
+  const LIBELLE_CULTURE: Record<StatCulture['culture'], string> = {
+    tomate: t.commun.cultures.tomate,
+    piment: t.commun.cultures.piment,
+    oignon: t.commun.cultures.oignon,
+  };
   const [actif, setActif] = useState<number | null>(null);
 
   if (donnees.length === 0) {
-    return (
-      <p className="m-0 text-sm text-encre-douce">
-        Aucun diagnostic pour l&apos;instant.
-      </p>
-    );
+    return <p className="m-0 text-sm text-encre-douce">{t.barresCultures.aucun}</p>;
   }
 
   const donneesPlates = donnees.map((d) => ({
@@ -89,7 +86,7 @@ export function BarresCultures({ donnees }: Props) {
                 // chaque <Bar> ci-dessous - inutile de le re-deviner a
                 // partir d'une cle technique.
                 const nombre = Number(valeur) || 0;
-                return [`${nombre} fruit${nombre > 1 ? 's' : ''}`, nom];
+                return [t.donutMaladies.fruit(nombre), nom];
               }}
               contentStyle={{
                 background: 'var(--carte)',
@@ -103,7 +100,7 @@ export function BarresCultures({ donnees }: Props) {
               dataKey="nombre"
               fill="var(--sain)"
               radius={[0, 6, 6, 0]}
-              name="Diagnostiqués"
+              name={t.barresCultures.diagnostiques}
               animationDuration={700}
               animationEasing="ease-out"
               onMouseEnter={(_, index) => setActif(index)}
@@ -117,7 +114,7 @@ export function BarresCultures({ donnees }: Props) {
               dataKey="atteints"
               fill="var(--atteint)"
               radius={[0, 6, 6, 0]}
-              name="Atteints/graves"
+              name={t.barresCultures.atteintsGraves}
               animationDuration={700}
               animationBegin={200}
               animationEasing="ease-out"
@@ -150,8 +147,7 @@ export function BarresCultures({ donnees }: Props) {
               />
               <span className="min-w-0 flex-1 truncate">{LIBELLE_CULTURE[d.culture]}</span>
               <span className="donnee shrink-0 text-encre-douce">
-                {d.nombre} diagnostiqué{d.nombre > 1 ? 's' : ''} · {d.nombreAtteints} atteint
-                {d.nombreAtteints > 1 ? 's' : ''} ({pourcentageAtteint}&nbsp;%)
+                {t.barresCultures.ligneDetail(d.nombre, d.nombreAtteints, pourcentageAtteint)}
               </span>
             </li>
           );

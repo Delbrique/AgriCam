@@ -17,8 +17,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { classeParId } from '../lib/classes';
+import { classeParId, nomClasse } from '../lib/classes';
 import type { PointSerie } from '../lib/tableauDeBord';
+import { useTraduction } from '../lib/traduction';
 
 const COULEURS_LIGNES = ['var(--atteint)', 'var(--alerte)', 'var(--grave)'];
 
@@ -27,12 +28,10 @@ interface Props {
 }
 
 export function CourbeEvolution({ serie }: Props) {
+  const { t, langue } = useTraduction();
+
   if (serie.length === 0) {
-    return (
-      <p className="m-0 text-sm text-encre-douce">
-        Pas encore assez de diagnostics pour tracer une évolution.
-      </p>
-    );
+    return <p className="m-0 text-sm text-encre-douce">{t.courbeEvolution.pasAssez}</p>;
   }
 
   const totalParMaladie = new Map<string, number>();
@@ -48,7 +47,10 @@ export function CourbeEvolution({ serie }: Props) {
 
   const donnees = serie.map((p) => {
     const point: Record<string, number | string> = {
-      date: new Date(p.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+      date: new Date(p.date).toLocaleDateString(langue === 'en' ? 'en-US' : 'fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+      }),
       total: p.total,
     };
     topMaladies.forEach((id) => {
@@ -76,7 +78,7 @@ export function CourbeEvolution({ serie }: Props) {
           <Line
             type="monotone"
             dataKey="total"
-            name="Total"
+            name={t.courbeEvolution.total}
             stroke="var(--sain)"
             strokeWidth={2}
             dot={false}
@@ -86,7 +88,10 @@ export function CourbeEvolution({ serie }: Props) {
               key={id}
               type="monotone"
               dataKey={id}
-              name={classeParId(id)?.nom ?? id}
+              name={(() => {
+                const classe = classeParId(id);
+                return classe ? nomClasse(classe, langue) : id;
+              })()}
               stroke={COULEURS_LIGNES[i % COULEURS_LIGNES.length]}
               strokeWidth={2}
               dot={false}

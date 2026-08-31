@@ -10,28 +10,17 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Trash2 } from 'lucide-react';
-import { CLASSES } from '../lib/classes';
+import { CLASSES, nomClasse } from '../lib/classes';
 import { statutFruit, type StatutDiagnostic } from '../lib/tableauDeBord';
 import { supprimer, type Consultation, type Parcelle } from '../lib/stockage';
+import { useTraduction, type Traductions } from '../lib/traduction';
 import { BandeSeverite } from './BandeSeverite';
 import { ConduiteATenir } from './ConduiteATenir';
-
-const LIBELLE_STATUT: Record<StatutDiagnostic, string> = {
-  sain: 'Sain',
-  surveiller: 'À surveiller',
-  critique: 'Critique',
-};
 
 const EMOJI_STATUT: Record<StatutDiagnostic, string> = {
   sain: '🟢',
   surveiller: '🟠',
   critique: '🔴',
-};
-
-const LIBELLE_CULTURE: Record<'tomate' | 'piment' | 'oignon', string> = {
-  tomate: 'Tomate',
-  piment: 'Piment',
-  oignon: 'Oignon',
 };
 
 type FiltreCulture = 'toutes' | 'tomate' | 'piment' | 'oignon';
@@ -52,15 +41,15 @@ function statutDe(c: Consultation): Statut {
 }
 
 /** Date relative tant qu'elle reste utile, absolue ensuite. */
-function dater(horodatage: number): string {
+function dater(horodatage: number, t: Traductions, langue: 'fr' | 'en'): string {
   const minutes = Math.floor((Date.now() - horodatage) / 60000);
-  if (minutes < 1) return 'à l’instant';
-  if (minutes < 60) return `il y a ${minutes} min`;
+  if (minutes < 1) return t.listeDiagnostics.dateInstant;
+  if (minutes < 60) return t.listeDiagnostics.dateMinutes(minutes);
   const heures = Math.floor(minutes / 60);
-  if (heures < 24) return `il y a ${heures} h`;
+  if (heures < 24) return t.listeDiagnostics.dateHeures(heures);
   const jours = Math.floor(heures / 24);
-  if (jours < 7) return `il y a ${jours} j`;
-  return new Date(horodatage).toLocaleDateString('fr-FR', {
+  if (jours < 7) return t.listeDiagnostics.dateJours(jours);
+  return new Date(horodatage).toLocaleDateString(langue === 'en' ? 'en-US' : 'fr-FR', {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
@@ -75,6 +64,17 @@ interface Props {
 }
 
 export function ListeDiagnostics({ consultations, parcelles, onConsultationSupprimee }: Props) {
+  const { t, langue } = useTraduction();
+  const LIBELLE_STATUT: Record<StatutDiagnostic, string> = {
+    sain: t.listeDiagnostics.statutSain,
+    surveiller: t.listeDiagnostics.statutSurveiller,
+    critique: t.listeDiagnostics.statutCritique,
+  };
+  const LIBELLE_CULTURE: Record<'tomate' | 'piment' | 'oignon', string> = {
+    tomate: t.commun.cultures.tomate,
+    piment: t.commun.cultures.piment,
+    oignon: t.commun.cultures.oignon,
+  };
   const [filtreCulture, setFiltreCulture] = useState<FiltreCulture>('toutes');
   const [filtreStatut, setFiltreStatut] = useState<FiltreStatut>('tous');
   const [limite, setLimite] = useState(PAS_PAGINATION);
@@ -83,9 +83,9 @@ export function ListeDiagnostics({ consultations, parcelles, onConsultationSuppr
   if (consultations.length === 0) {
     return (
       <p className="m-0 text-sm text-encre-douce">
-        Aucun diagnostic pour l&apos;instant.{' '}
+        {t.listeDiagnostics.aucunDiagnostic}{' '}
         <Link to="/diagnostic" className="font-semibold text-encre">
-          Lancer un diagnostic
+          {t.listeDiagnostics.lancerDiagnostic}
         </Link>
         .
       </p>
@@ -121,7 +121,7 @@ export function ListeDiagnostics({ consultations, parcelles, onConsultationSuppr
             onClick={() => setFiltreCulture(v)}
             aria-pressed={filtreCulture === v}
           >
-            {v === 'toutes' ? 'Toutes cultures' : LIBELLE_CULTURE[v]}
+            {v === 'toutes' ? t.listeDiagnostics.toutesCultures : LIBELLE_CULTURE[v]}
           </button>
         ))}
       </div>
@@ -138,13 +138,13 @@ export function ListeDiagnostics({ consultations, parcelles, onConsultationSuppr
             onClick={() => setFiltreStatut(v)}
             aria-pressed={filtreStatut === v}
           >
-            {v === 'tous' ? 'Tous statuts' : `${EMOJI_STATUT[v]} ${LIBELLE_STATUT[v]}`}
+            {v === 'tous' ? t.listeDiagnostics.tousStatuts : `${EMOJI_STATUT[v]} ${LIBELLE_STATUT[v]}`}
           </button>
         ))}
       </div>
 
       {filtrees.length === 0 ? (
-        <p className="m-0 text-sm text-encre-douce">Aucun diagnostic ne correspond à ces filtres.</p>
+        <p className="m-0 text-sm text-encre-douce">{t.listeDiagnostics.aucunFiltre}</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-e2 p-0">
           {visibles.map((c) => {
@@ -184,18 +184,20 @@ export function ListeDiagnostics({ consultations, parcelles, onConsultationSuppr
                         {statut === 'horsSujet' || statut === 'incertain' ? '⚪' : EMOJI_STATUT[statut]}
                       </span>
                       {statut === 'horsSujet'
-                        ? 'Hors sujet'
+                        ? t.listeDiagnostics.statutHorsSujet
                         : statut === 'incertain'
-                          ? 'Incertain'
+                          ? t.listeDiagnostics.statutIncertain
                           : LIBELLE_STATUT[statut]}
                     </span>
                     <span className="truncate text-sm font-semibold">
-                      {principal.horsSujet ? 'Photo non reconnue' : principal.classe.nom}
+                      {principal.horsSujet
+                        ? t.listeDiagnostics.photoNonReconnue
+                        : nomClasse(principal.classe, langue)}
                     </span>
                     <span className="donnee truncate text-xs text-encre-douce">
                       {!principal.horsSujet && `${Math.min(99, Math.round(principal.confiance * 100))} % · `}
-                      {dater(c.horodatage)}
-                      {parcelle ? ` · ${parcelle.nom}` : c.position ? ' · géolocalisé' : ''}
+                      {dater(c.horodatage, t, langue)}
+                      {parcelle ? ` · ${parcelle.nom}` : c.position ? ` · ${t.listeDiagnostics.geolocalise}` : ''}
                     </span>
                   </span>
 
@@ -210,14 +212,9 @@ export function ListeDiagnostics({ consultations, parcelles, onConsultationSuppr
                 {deplie && (
                   <div className="flex flex-col gap-e3 border-t border-trait p-e3">
                     {principal.horsSujet ? (
-                      <p className="avis avis--erreur m-0">
-                        Cette photo ne ressemblait à aucune des cultures reconnues (tomate,
-                        piment, oignon).
-                      </p>
+                      <p className="avis avis--erreur m-0">{t.listeDiagnostics.horsSujetTexte}</p>
                     ) : principal.incertain ? (
-                      <p className="avis avis--incertain m-0">
-                        Confiance insuffisante pour trancher entre les maladies connues.
-                      </p>
+                      <p className="avis avis--incertain m-0">{t.listeDiagnostics.incertainTexte}</p>
                     ) : (
                       <>
                         <BandeSeverite
@@ -239,7 +236,7 @@ export function ListeDiagnostics({ consultations, parcelles, onConsultationSuppr
                       onClick={() => retirer(c.id)}
                     >
                       <Trash2 size={16} aria-hidden="true" />
-                      Supprimer
+                      {t.listeDiagnostics.supprimer}
                     </button>
                   </div>
                 )}
@@ -251,7 +248,7 @@ export function ListeDiagnostics({ consultations, parcelles, onConsultationSuppr
 
       {limite < filtrees.length && (
         <button className="bouton-second self-start" onClick={() => setLimite((l) => l + PAS_PAGINATION)}>
-          Afficher plus ({filtrees.length - limite} restants)
+          {t.listeDiagnostics.afficherPlus(filtrees.length - limite)}
         </button>
       )}
     </div>

@@ -10,7 +10,8 @@
 
 import { useEffect, useState } from 'react';
 import { historique } from '../lib/stockage';
-import { CLASSES, couleurGravite } from '../lib/classes';
+import { CLASSES, couleurGravite, nomClasse } from '../lib/classes';
+import { useTraduction } from '../lib/traduction';
 
 const MAX_RANGS = 3;
 
@@ -21,6 +22,7 @@ interface Rang {
 }
 
 export function Tendance() {
+  const { t, langue } = useTraduction();
   const [rangs, setRangs] = useState<Rang[] | null>(null);
   const [total, setTotal] = useState(0);
 
@@ -39,7 +41,9 @@ export function Tendance() {
       const classement = Array.from(comptes.entries())
         .map(([id, compte]) => {
           const classe = CLASSES.find((c) => c.id === id);
-          return classe ? { nom: classe.nom, compte, couleur: couleurGravite(classe.gravite) } : null;
+          return classe
+            ? { nom: nomClasse(classe, langue), compte, couleur: couleurGravite(classe.gravite) }
+            : null;
         })
         .filter((r): r is Rang => r !== null)
         .sort((a, b) => b.compte - a.compte)
@@ -48,7 +52,7 @@ export function Tendance() {
       setRangs(classement);
       setTotal(n);
     });
-  }, []);
+  }, [langue]);
 
   if (rangs === null) {
     return <div aria-hidden="true" className="aspect-[4/5] max-h-[320px] w-full" />;
@@ -57,10 +61,8 @@ export function Tendance() {
   if (rangs.length === 0) {
     return (
       <section className="flex aspect-[4/5] max-h-[320px] w-full flex-col items-center justify-center gap-e1 rounded-lg border border-trait bg-carte px-e3 text-center">
-        <p className="intitule">Maladies fréquentes</p>
-        <p className="m-0 text-xs text-encre-douce">
-          Apparaîtra après vos premiers diagnostics.
-        </p>
+        <p className="intitule">{t.tendance.titre}</p>
+        <p className="m-0 text-xs text-encre-douce">{t.tendance.apparaitra}</p>
       </section>
     );
   }
@@ -70,8 +72,8 @@ export function Tendance() {
   return (
     <section className="flex aspect-[4/5] max-h-[320px] w-full flex-col gap-e2 rounded-lg border border-trait bg-carte p-e3">
       <div>
-        <p className="intitule">Maladies fréquentes</p>
-        <p className="m-0 text-[0.625rem] text-encre-douce">sur {total} cas atteints</p>
+        <p className="intitule">{t.tendance.titre}</p>
+        <p className="m-0 text-[0.625rem] text-encre-douce">{t.tendance.surCas(total)}</p>
       </div>
 
       <div className="flex flex-1 flex-col justify-center gap-e2">

@@ -28,6 +28,7 @@ import {
   type Parcelle,
 } from '../lib/stockage';
 import { classifieurPret } from '../lib/classifieur';
+import { nomClasse } from '../lib/classes';
 import { detecteurPret } from '../lib/detecteur';
 import { prechargerModeles } from '../lib/pipeline';
 import {
@@ -42,6 +43,8 @@ import {
   type Periode,
 } from '../lib/tableauDeBord';
 import { exporterCsv, exporterPdf } from '../lib/export';
+import { useTraduction } from '../lib/traduction';
+import type { Traductions } from '../lib/traduction';
 import { InstallApp } from '../components/InstallApp';
 import { ApparitionAuDefilement } from '../components/ApparitionAuDefilement';
 import { CompteurAnime } from '../components/CompteurAnime';
@@ -53,52 +56,57 @@ import { ListeDiagnostics } from '../components/ListeDiagnostics';
 import { SyntheseTableauDeBord } from '../components/SyntheseTableauDeBord';
 import { BoutonMiseAJour } from '../components/BoutonMiseAJour';
 
-const PERIODES: { valeur: Periode; libelle: string }[] = [
-  { valeur: 'jour', libelle: 'Jour' },
-  { valeur: 'semaine', libelle: 'Semaine' },
-  { valeur: 'mois', libelle: 'Mois' },
-  { valeur: 'tout', libelle: 'Tout' },
-];
-
 /** Variation en pourcentage vs la periode precedente de meme duree, ou
  * `null` quand elle n'a pas de sens (periode "tout", periode precedente
  * vide, ou variation nulle - inutile d'afficher "+0 %"). */
-function variation(actuel: number, precedent: number | null | undefined): string | null {
+function variation(
+  actuel: number,
+  precedent: number | null | undefined,
+  t: Traductions,
+): string | null {
   if (precedent === null || precedent === undefined) return null;
-  if (precedent === 0) return actuel > 0 ? '+100 % vs période précédente' : null;
+  if (precedent === 0) return actuel > 0 ? t.tableauDeBord.variation(100) : null;
   const pct = Math.round(((actuel - precedent) / precedent) * 100);
   if (pct === 0) return null;
-  return `${pct > 0 ? '+' : ''}${pct} % vs période précédente`;
+  return t.tableauDeBord.variation(pct);
 }
 
-function salutationSelonHeure(heure: number): string {
-  if (heure < 5) return 'Bonne nuit';
-  if (heure < 12) return 'Bonjour';
-  if (heure < 18) return 'Bon après-midi';
-  return 'Bonsoir';
+function salutationSelonHeure(heure: number, t: Traductions): string {
+  if (heure < 5) return t.tableauDeBord.salutations.nuit;
+  if (heure < 12) return t.tableauDeBord.salutations.matin;
+  if (heure < 18) return t.tableauDeBord.salutations.apresMidi;
+  return t.tableauDeBord.salutations.soir;
 }
 
 /** Une phrase d'humeur, uniquement quand elle dit quelque chose de reel :
  * jamais de fausse note enjouee sur un historique encore vide (deja
  * annonce ailleurs), et priorite aux alertes sur le ton positif. */
-function messageEtat(kpis: KpiTableauDeBord): { texte: string; ton: 'positif' | 'alerte' } | null {
+function messageEtat(
+  kpis: KpiTableauDeBord,
+  t: Traductions,
+): { texte: string; ton: 'positif' | 'alerte' } | null {
   if (kpis.nbDiagnostics === 0) return null;
   if (kpis.nbAlertesCritiques > 0) {
-    return {
-      texte: `${kpis.nbAlertesCritiques} alerte${kpis.nbAlertesCritiques > 1 ? 's' : ''} critique${kpis.nbAlertesCritiques > 1 ? 's' : ''} à vérifier`,
-      ton: 'alerte',
-    };
+    return { texte: t.tableauDeBord.alertesCritiques(kpis.nbAlertesCritiques), ton: 'alerte' };
   }
   if (kpis.tauxSain !== null && kpis.tauxSain >= 0.8) {
-    return { texte: 'Vos cultures se portent bien', ton: 'positif' };
+    return { texte: t.tableauDeBord.culturesVontBien, ton: 'positif' };
   }
   return null;
 }
 
 export function TableauDeBord() {
+  const { t, langue } = useTraduction();
   const [consultations, setConsultations] = useState<Consultation[] | null>(null);
   const [listeParcelles, setListeParcelles] = useState<Parcelle[]>([]);
   const [periode, setPeriode] = useState<Periode>('semaine');
+
+  const PERIODES: { valeur: Periode; libelle: string }[] = [
+    { valeur: 'jour', libelle: t.tableauDeBord.periodes.jour },
+    { valeur: 'semaine', libelle: t.tableauDeBord.periodes.semaine },
+    { valeur: 'mois', libelle: t.tableauDeBord.periodes.mois },
+    { valeur: 'tout', libelle: t.tableauDeBord.periodes.tout },
+  ];
 
   useEffect(() => {
     historique().then(setConsultations);
@@ -148,12 +156,12 @@ export function TableauDeBord() {
   );
 
   if (consultations === null) {
-    return <p>Lecture du tableau de bord…</p>;
+    return <p>{t.tableauDeBord.chargement}</p>;
   }
 
   const maintenantDate = new Date();
-  const salutation = salutationSelonHeure(maintenantDate.getHours());
-  const humeur = messageEtat(kpis);
+  const salutation = salutationSelonHeure(maintenantDate.getHours(), t);
+  const humeur = messageEtat(kpis, t);
 
   return (
     <div className="flex flex-col gap-e6">
@@ -162,7 +170,7 @@ export function TableauDeBord() {
         <div className="flex items-baseline justify-between gap-e3">
           <span className="text-sm font-semibold text-encre-douce">{salutation} 👋</span>
           <span className="whitespace-nowrap text-xs capitalize text-encre-douce">
-            {maintenantDate.toLocaleDateString('fr-FR', {
+            {maintenantDate.toLocaleDateString(langue === 'en' ? 'en-US' : 'fr-FR', {
               weekday: 'long',
               day: 'numeric',
               month: 'long',
@@ -174,8 +182,7 @@ export function TableauDeBord() {
         <div className="flex flex-wrap items-start justify-between gap-e3">
           <div className="min-w-0">
             <h1 className="m-0 text-sm font-normal leading-snug text-encre-douce">
-              AgriCam diagnostique les maladies de vos plants de tomate, piment et oignon à
-              partir d&apos;une simple photo, même sans connexion.
+              {t.tableauDeBord.intro}
             </h1>
             {humeur && (
               <p
@@ -193,7 +200,7 @@ export function TableauDeBord() {
               to="/diagnostic"
               className="inline-grid min-h-cible place-items-center whitespace-nowrap rounded bg-encre px-e5 font-semibold text-papier no-underline transition-transform duration-150 hover:scale-105 hover:brightness-110 active:scale-100"
             >
-              + Nouveau diagnostic
+              {t.tableauDeBord.nouveauDiagnostic}
             </Link>
           </div>
         </div>
@@ -229,8 +236,8 @@ export function TableauDeBord() {
           <CarteKpi
             icone={ScanEye}
             valeurNumerique={kpis.nbDiagnostics}
-            libelle="diagnostics effectués"
-            tendance={variation(kpis.nbDiagnostics, kpisPrecedents?.nbDiagnostics)}
+            libelle={t.tableauDeBord.kpi.diagnosticsEffectues}
+            tendance={variation(kpis.nbDiagnostics, kpisPrecedents?.nbDiagnostics, t)}
           />
         </ApparitionAuDefilement>
         <ApparitionAuDefilement delai={80} className="flex h-full">
@@ -238,22 +245,24 @@ export function TableauDeBord() {
             icone={Percent}
             valeurNumerique={kpis.tauxSain !== null ? Math.round(kpis.tauxSain * 100) : undefined}
             suffixe=" %"
-            libelle="plants sains"
+            libelle={t.tableauDeBord.kpi.plantsSains}
           />
         </ApparitionAuDefilement>
         <ApparitionAuDefilement delai={160} className="flex h-full">
           <CarteKpi
             icone={ShieldAlert}
             valeurNumerique={kpis.nbAlertesCritiques}
-            libelle="alertes critiques"
-            tendance={variation(kpis.nbAlertesCritiques, kpisPrecedents?.nbAlertesCritiques)}
+            libelle={t.tableauDeBord.kpi.alertesCritiques}
+            tendance={variation(kpis.nbAlertesCritiques, kpisPrecedents?.nbAlertesCritiques, t)}
           />
         </ApparitionAuDefilement>
         <ApparitionAuDefilement delai={240} className="flex h-full">
           <CarteKpi
             icone={Bug}
-            valeur={kpis.maladiePredominante?.classe.nom ?? '—'}
-            libelle="maladie prédominante"
+            valeur={
+              kpis.maladiePredominante ? nomClasse(kpis.maladiePredominante.classe, langue) : '—'
+            }
+            libelle={t.tableauDeBord.kpi.maladiePredominante}
             petit
           />
         </ApparitionAuDefilement>
@@ -261,14 +270,14 @@ export function TableauDeBord() {
 
       {/* ================= Etat sanitaire ================= */}
       <ApparitionAuDefilement className="flex flex-col gap-e4">
-        <h2 className="text-xl tracking-[-0.025em]">État sanitaire</h2>
+        <h2 className="text-xl tracking-[-0.025em]">{t.tableauDeBord.etatSanitaire}</h2>
         <div className="grid gap-e4 bp860:grid-cols-2">
           <div className="carte flex flex-col gap-e3">
-            <p className="intitule">Répartition des maladies</p>
+            <p className="intitule">{t.tableauDeBord.repartitionMaladies}</p>
             <DonutMaladies donnees={donutMaladies} />
           </div>
           <div className="carte flex flex-col gap-e3">
-            <p className="intitule">Cultures diagnostiquées</p>
+            <p className="intitule">{t.tableauDeBord.culturesDiagnostiquees}</p>
             <BarresCultures donnees={barresCultures} />
           </div>
         </div>
@@ -276,7 +285,7 @@ export function TableauDeBord() {
 
       {/* ================= Derniers diagnostics ================= */}
       <ApparitionAuDefilement className="flex flex-col gap-e4">
-        <h2 className="text-xl tracking-[-0.025em]">Derniers diagnostics</h2>
+        <h2 className="text-xl tracking-[-0.025em]">{t.tableauDeBord.derniersDiagnostics}</h2>
         <ListeDiagnostics
           consultations={periodeActuelle}
           parcelles={listeParcelles}
@@ -286,13 +295,13 @@ export function TableauDeBord() {
 
       {/* ================= Carte des diagnostics ================= */}
       <ApparitionAuDefilement className="flex min-w-0 flex-col gap-e4">
-        <h2 className="text-xl tracking-[-0.025em]">Carte des diagnostics</h2>
+        <h2 className="text-xl tracking-[-0.025em]">{t.tableauDeBord.carteDiagnostics}</h2>
         <CarteFoyers />
       </ApparitionAuDefilement>
 
       {/* ================= Evolution temporelle ================= */}
       <ApparitionAuDefilement className="carte flex flex-col gap-e3">
-        <p className="intitule">Évolution temporelle</p>
+        <p className="intitule">{t.tableauDeBord.evolutionTemporelle}</p>
         <CourbeEvolution serie={serie} />
       </ApparitionAuDefilement>
 
@@ -302,7 +311,7 @@ export function TableauDeBord() {
           SyntheseTableauDeBord.tsx pour la difference avec ConduiteATenir,
           qui porte sur un seul diagnostic. */}
       <ApparitionAuDefilement className="flex flex-col gap-e4">
-        <h2 className="text-xl tracking-[-0.025em]">Recommandations</h2>
+        <h2 className="text-xl tracking-[-0.025em]">{t.tableauDeBord.recommandations}</h2>
         <div className="carte">
           <SyntheseTableauDeBord
             periodeLibelle={PERIODES.find((p) => p.valeur === periode)?.libelle ?? periode}
@@ -329,7 +338,7 @@ export function TableauDeBord() {
           disabled={consultations.length === 0}
         >
           <Download size={16} aria-hidden="true" />
-          Exporter en CSV
+          {t.tableauDeBord.exporterCsv}
         </button>
         <button
           type="button"
@@ -338,7 +347,7 @@ export function TableauDeBord() {
           disabled={consultations.length === 0}
         >
           <FileDown size={16} aria-hidden="true" />
-          Exporter en PDF
+          {t.tableauDeBord.exporterPdf}
         </button>
         <BoutonMiseAJour />
       </section>

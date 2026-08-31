@@ -10,10 +10,12 @@
 
 import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { useTraduction } from '../lib/traduction';
 
 type EtatVerification = 'inactif' | 'verification' | 'fait' | 'indisponible';
 
 export function BoutonMiseAJour() {
+  const { t } = useTraduction();
   const [etat, setEtat] = useState<EtatVerification>('inactif');
 
   async function verifier() {
@@ -48,11 +50,11 @@ export function BoutonMiseAJour() {
           aria-hidden="true"
           className={etat === 'verification' ? 'animate-spin' : ''}
         />
-        Vérifier les mises à jour
+        {t.boutonMiseAJour.verifier}
       </button>
-      {etat === 'fait' && <span className="text-xs text-sain">Vérification effectuée.</span>}
+      {etat === 'fait' && <span className="text-xs text-sain">{t.boutonMiseAJour.effectuee}</span>}
       {etat === 'indisponible' && (
-        <span className="text-xs text-encre-douce">Indisponible sur ce navigateur.</span>
+        <span className="text-xs text-encre-douce">{t.boutonMiseAJour.indisponible}</span>
       )}
     </div>
   );

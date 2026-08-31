@@ -28,8 +28,16 @@ export interface Classe {
   organe: 'fruit' | 'bulbe';
   /** Libelle affiche a l'utilisateur. */
   nom: string;
+  /** Version anglaise de `nom`, affichee quand la langue de l'interface est
+   * l'anglais (voir nomClasse ci-dessous) - absente pour aucune entree, mais
+   * optionnelle dans le type pour ne pas casser un futur ajout de classe qui
+   * l'oublierait au lieu de planter silencieusement sur un `nom` vide. */
+  nomEn?: string;
   /** Agent en cause, quand il est identifie. */
   agent?: string;
+  /** Version anglaise de `agent`, seulement quand ce n'est pas deja un nom
+   * scientifique latin (donc identique dans les deux langues). */
+  agentEn?: string;
   gravite: Gravite;
   /**
    * Vrai si l'atteinte se transmet aux organes voisins. Determine l'urgence du
@@ -45,6 +53,7 @@ export const CLASSES: Classe[] = [
     culture: 'oignon',
     organe: 'bulbe',
     nom: 'Bulbe atteint',
+    nomEn: 'Diseased bulb',
     gravite: 'atteint',
     contagieux: true,
   },
@@ -53,6 +62,7 @@ export const CLASSES: Classe[] = [
     culture: 'oignon',
     organe: 'bulbe',
     nom: 'Oignon sain',
+    nomEn: 'Healthy onion',
     gravite: 'sain',
     contagieux: false,
   },
@@ -61,6 +71,7 @@ export const CLASSES: Classe[] = [
     culture: 'piment',
     organe: 'fruit',
     nom: 'Anthracnose du piment',
+    nomEn: 'Pepper anthracnose',
     agent: 'Colletotrichum spp.',
     gravite: 'atteint',
     contagieux: true,
@@ -70,6 +81,7 @@ export const CLASSES: Classe[] = [
     culture: 'piment',
     organe: 'fruit',
     nom: 'Piment sain',
+    nomEn: 'Healthy pepper',
     gravite: 'sain',
     contagieux: false,
   },
@@ -78,6 +90,7 @@ export const CLASSES: Classe[] = [
     culture: 'tomate',
     organe: 'fruit',
     nom: 'Anthracnose de la tomate',
+    nomEn: 'Tomato anthracnose',
     agent: 'Colletotrichum spp.',
     gravite: 'atteint',
     contagieux: true,
@@ -87,6 +100,7 @@ export const CLASSES: Classe[] = [
     culture: 'tomate',
     organe: 'fruit',
     nom: 'Tache bacterienne',
+    nomEn: 'Bacterial spot',
     agent: 'Xanthomonas spp.',
     gravite: 'atteint',
     contagieux: true,
@@ -99,7 +113,9 @@ export const CLASSES: Classe[] = [
     culture: 'tomate',
     organe: 'fruit',
     nom: 'Pourriture apicale',
+    nomEn: 'Blossom end rot',
     agent: 'Carence en calcium, liee a l\u2019irregularite des arrosages',
+    agentEn: 'Calcium deficiency, linked to irregular watering',
     gravite: 'alerte',
     contagieux: false,
   },
@@ -108,6 +124,7 @@ export const CLASSES: Classe[] = [
     culture: 'tomate',
     organe: 'fruit',
     nom: 'Tomate saine',
+    nomEn: 'Healthy tomato',
     gravite: 'sain',
     contagieux: false,
   },
@@ -116,11 +133,27 @@ export const CLASSES: Classe[] = [
     culture: 'tomate',
     organe: 'fruit',
     nom: 'Virus de la maladie bronzée',
+    nomEn: 'Tomato spotted wilt virus',
     agent: 'Tomato spotted wilt virus, transmis par les thrips',
+    agentEn: 'Tomato spotted wilt virus, transmitted by thrips',
     gravite: 'grave',
     contagieux: true,
   },
 ];
+
+/** Nom localise d'une classe - retombe sur le francais si la langue est
+ * l'anglais mais qu'aucune traduction n'est enregistree (ne devrait pas
+ * arriver, toutes les entrees ci-dessus en ont une). */
+export function nomClasse(c: Classe, langue: 'fr' | 'en'): string {
+  return langue === 'en' && c.nomEn ? c.nomEn : c.nom;
+}
+
+/** Agent localise - la plupart des noms scientifiques latins sont deja
+ * identiques dans les deux langues, seules les explications en langue
+ * naturelle (ex. carence en calcium) ont une version anglaise distincte. */
+export function agentClasse(c: Classe, langue: 'fr' | 'en'): string | undefined {
+  return langue === 'en' && c.agentEn ? c.agentEn : c.agent;
+}
 
 export const NB_CLASSES = CLASSES.length;
 

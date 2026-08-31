@@ -7,24 +7,23 @@
  */
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { COULEUR_GRAVITE_HEX } from '../lib/classes';
+import { COULEUR_GRAVITE_HEX, nomClasse } from '../lib/classes';
 import type { PartMaladie } from '../lib/tableauDeBord';
+import { useTraduction } from '../lib/traduction';
 
 interface Props {
   donnees: PartMaladie[];
 }
 
 export function DonutMaladies({ donnees }: Props) {
+  const { t, langue } = useTraduction();
+
   if (donnees.length === 0) {
-    return (
-      <p className="m-0 text-sm text-encre-douce">
-        Aucune maladie détectée pour l&apos;instant.
-      </p>
-    );
+    return <p className="m-0 text-sm text-encre-douce">{t.donutMaladies.aucune}</p>;
   }
 
   const donneesPlates = donnees.map((d) => ({
-    nom: d.classe.nom,
+    nom: nomClasse(d.classe, langue),
     nombre: d.nombre,
     couleur: COULEUR_GRAVITE_HEX[d.classe.gravite],
   }));
@@ -51,7 +50,7 @@ export function DonutMaladies({ donnees }: Props) {
               formatter={(valeur, _nom, item) => {
                 const nombre = Number(valeur) || 0;
                 const nom = (item?.payload as { nom?: string } | undefined)?.nom ?? '';
-                return [`${nombre} fruit${nombre > 1 ? 's' : ''}`, nom];
+                return [t.donutMaladies.fruit(nombre), nom];
               }}
               contentStyle={{
                 background: 'var(--carte)',
@@ -72,7 +71,7 @@ export function DonutMaladies({ donnees }: Props) {
               style={{ background: COULEUR_GRAVITE_HEX[d.classe.gravite] }}
               aria-hidden="true"
             />
-            <span className="min-w-0 flex-1 truncate">{d.classe.nom}</span>
+            <span className="min-w-0 flex-1 truncate">{nomClasse(d.classe, langue)}</span>
             <span className="donnee shrink-0 text-encre-douce">
               {d.nombre} · {Math.round(d.part * 100)}&nbsp;%
             </span>

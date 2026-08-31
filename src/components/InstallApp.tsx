@@ -24,6 +24,7 @@
 
 import { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
+import { useTraduction } from '../lib/traduction';
 
 interface EvenementInstallation extends Event {
   prompt: () => Promise<void>;
@@ -39,6 +40,7 @@ function dejaInstallee(): boolean {
 }
 
 export function InstallApp() {
+  const { t } = useTraduction();
   const [evenement, setEvenement] = useState<EvenementInstallation | null>(null);
   const [installee, setInstallee] = useState(false);
 
@@ -78,18 +80,14 @@ export function InstallApp() {
 
   return (
     <div className="flex flex-col gap-e2 rounded-lg border border-trait bg-carte p-e4 shadow-carte">
-      <p className="m-0 text-sm text-encre-douce">
-        Installez AgriCam sur votre écran d&apos;accueil : l&apos;application
-        s&apos;ouvre alors comme les autres, et le mode hors ligne est bien
-        plus fiable qu&apos;un simple lien.
-      </p>
+      <p className="m-0 text-sm text-encre-douce">{t.installApp.texte}</p>
 
       <button
         className="bouton-principal flex items-center justify-center gap-e2"
         onClick={installer}
       >
         <Download size={18} />
-        Installer l&apos;application
+        {t.installApp.bouton}
       </button>
     </div>
   );

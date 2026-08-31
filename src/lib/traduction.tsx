@@ -33,6 +33,84 @@ export interface Traductions {
     };
     modeleIncompatible: string;
   };
+  commun: {
+    cultures: { toutes: string; tomate: string; piment: string; oignon: string };
+  };
+  tableauDeBord: {
+    salutations: { nuit: string; matin: string; apresMidi: string; soir: string };
+    intro: string;
+    alertesCritiques: (n: number) => string;
+    culturesVontBien: string;
+    nouveauDiagnostic: string;
+    periodes: { jour: string; semaine: string; mois: string; tout: string };
+    chargement: string;
+    variation: (pct: number) => string;
+    kpi: {
+      diagnosticsEffectues: string;
+      plantsSains: string;
+      alertesCritiques: string;
+      maladiePredominante: string;
+    };
+    etatSanitaire: string;
+    repartitionMaladies: string;
+    culturesDiagnostiquees: string;
+    derniersDiagnostics: string;
+    carteDiagnostics: string;
+    evolutionTemporelle: string;
+    recommandations: string;
+    exporterCsv: string;
+    exporterPdf: string;
+  };
+  installApp: {
+    texte: string;
+    bouton: string;
+  };
+  listeDiagnostics: {
+    aucunDiagnostic: string;
+    lancerDiagnostic: string;
+    toutesCultures: string;
+    tousStatuts: string;
+    statutSain: string;
+    statutSurveiller: string;
+    statutCritique: string;
+    statutHorsSujet: string;
+    statutIncertain: string;
+    aucunFiltre: string;
+    photoNonReconnue: string;
+    horsSujetTexte: string;
+    incertainTexte: string;
+    supprimer: string;
+    afficherPlus: (n: number) => string;
+    dateInstant: string;
+    dateMinutes: (n: number) => string;
+    dateHeures: (n: number) => string;
+    dateJours: (n: number) => string;
+    geolocalise: string;
+  };
+  donutMaladies: {
+    aucune: string;
+    fruit: (n: number) => string;
+  };
+  barresCultures: {
+    aucun: string;
+    diagnostiques: string;
+    atteintsGraves: string;
+    ligneDetail: (n: number, atteints: number, pct: number) => string;
+  };
+  tendance: {
+    titre: string;
+    apparaitra: string;
+    surCas: (n: number) => string;
+  };
+  courbeEvolution: {
+    pasAssez: string;
+    total: string;
+  };
+  boutonMiseAJour: {
+    verifier: string;
+    effectuee: string;
+    indisponible: string;
+  };
 }
 
 export type Langue = 'fr' | 'en';
