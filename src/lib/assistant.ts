@@ -13,7 +13,15 @@ export interface MessageChat {
   image?: string;
 }
 
-export async function demanderAssistant(messages: MessageChat[]): Promise<string> {
+/**
+ * `surMorceau`, si fourni, est rappele a chaque fragment recu avec le texte
+ * accumule jusque-la (pas seulement le delta) : pratique pour un affichage
+ * qui se contente de reafficher la valeur recue (voir Assistant.tsx).
+ */
+export async function demanderAssistant(
+  messages: MessageChat[],
+  surMorceau?: (texteAccumule: string) => void,
+): Promise<string> {
   // `resume` ne sert qu'a l'affichage local : inutile de l'envoyer a Groq.
   const aEnvoyer = messages.map(({ role, contenu, image }) => ({ role, contenu, image }));
 
@@ -27,7 +35,22 @@ export async function demanderAssistant(messages: MessageChat[]): Promise<string
     const data = await reponse.json().catch(() => ({}));
     throw new Error(data.erreur ?? "L'assistant est indisponible.");
   }
+  if (!reponse.body) {
+    throw new Error("L'assistant n'a pas répondu.");
+  }
 
-  const data = await reponse.json();
-  return data.contenu as string;
+  const lecteur = reponse.body.getReader();
+  const decodeur = new TextDecoder();
+  let texte = '';
+  for (;;) {
+    const { done, value } = await lecteur.read();
+    if (done) break;
+    texte += decodeur.decode(value, { stream: true });
+    surMorceau?.(texte);
+  }
+
+  if (!texte.trim()) {
+    throw new Error("Réponse vide de l'assistant.");
+  }
+  return texte;
 }

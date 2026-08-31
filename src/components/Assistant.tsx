@@ -16,10 +16,53 @@
  */
 
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
-import { FileText, Maximize2, MessageCircle, Minimize2, Paperclip, Send, X } from 'lucide-react';
+import {
+  FileText,
+  Maximize2,
+  Mic,
+  MessageCircle,
+  Minimize2,
+  Paperclip,
+  Send,
+  X,
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { demanderAssistant, type MessageChat } from '../lib/assistant';
+
+/** Reconnaissance vocale (dictee) : API navigateur non standardisee (encore
+ * prefixee "webkit" partout sauf Chrome/Edge recents), absente des types
+ * lib.dom - typee au minimum ici plutot que d'ajouter une dependance pour
+ * une poignee de methodes. Absente sur Firefox et Safari desktop : le
+ * bouton micro se masque silencieusement plutot que d'echouer (voir
+ * RECONNAISSANCE_VOCALE_CTOR plus bas). */
+interface EvenementResultatVocal extends Event {
+  results: { [index: number]: { [index: number]: { transcript: string } } };
+}
+interface ReconnaissanceVocale extends EventTarget {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  start(): void;
+  stop(): void;
+  onresult: ((e: EvenementResultatVocal) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+}
+type ConstructeurReconnaissanceVocale = new () => ReconnaissanceVocale;
+
+const RECONNAISSANCE_VOCALE_CTOR: ConstructeurReconnaissanceVocale | null =
+  (window as unknown as { SpeechRecognition?: ConstructeurReconnaissanceVocale })
+    .SpeechRecognition ??
+  (window as unknown as { webkitSpeechRecognition?: ConstructeurReconnaissanceVocale })
+    .webkitSpeechRecognition ??
+  null;
+
+const SUGGESTIONS_DEPART = [
+  'Comment reconnaître le mildiou sur une tomate ?',
+  'Quand traiter le piment contre les pucerons ?',
+  'Comment lire la carte de chaleur du diagnostic ?',
+];
 
 /** Mise en forme des reponses de l'assistant (voir le systeme de prompt
  * dans api/assistant.ts, qui autorise desormais un Markdown mesure) - les
@@ -70,6 +113,38 @@ const COMPOSANTS_MARKDOWN = {
   td: (props: ComponentProps<'td'>) => <td {...props} className="px-e2 py-1" />,
 };
 
+/** Trois points respires en decale (voir l'animation "blink"), le temps que
+ * le premier morceau de la reponse arrive - remplace par le texte qui
+ * s'ecrit lui-meme (voir CurseurClignotant) des que le flux commence. */
+function PointsDeFrappe() {
+  return (
+    <span className="inline-flex items-center gap-1 py-1" aria-label="L'assistant écrit…">
+      {[0, 160, 320].map((delai) => (
+        <span
+          key={delai}
+          className="h-1.5 w-1.5 rounded-full bg-encre-douce animate-blink"
+          style={{ animationDelay: `${delai}ms` }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Petit trait clignotant en fin de reponse, le temps que le flux arrive -
+ * un rappel visuel discret que la reponse s'ecrit encore. */
+function CurseurClignotant() {
+  return (
+    <span
+      className="ml-0.5 -mb-[2px] inline-block h-[1em] w-[2px] animate-blink bg-encre-douce align-middle"
+      aria-hidden="true"
+    />
+  );
+}
+
+/** Hauteur max de la zone de saisie avant qu'elle ne devienne scrollable -
+ * assez pour quelques lignes, sans jamais avaler tout le panneau. */
+const HAUTEUR_MAX_SAISIE = 120;
+
 const TAILLE_BOUTON = 56;
 const MARGE = 16;
 /** Degage la barre de navigation basse sur telephone. */
@@ -100,15 +175,34 @@ export function Assistant() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [piece, setPiece] = useState<PieceJointe | null>(null);
   const [lecturePiece, setLecturePiece] = useState(false);
+  const [ecoute, setEcoute] = useState(false);
 
   const glisse = useRef(false);
   const depart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const finListe = useRef<HTMLDivElement>(null);
   const fichierRef = useRef<HTMLInputElement>(null);
+  const saisieRef = useRef<HTMLTextAreaElement>(null);
+  const reconnaissanceRef = useRef<ReconnaissanceVocale | null>(null);
 
   useEffect(() => {
     finListe.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, enCours]);
+
+  // Zone de saisie qui grandit avec son contenu, jusqu'a HAUTEUR_MAX_SAISIE :
+  // remise a "auto" avant de mesurer, sinon scrollHeight ne redescend jamais
+  // quand du texte est supprime.
+  useEffect(() => {
+    const zone = saisieRef.current;
+    if (!zone) return;
+    zone.style.height = 'auto';
+    zone.style.height = `${Math.min(zone.scrollHeight, HAUTEUR_MAX_SAISIE)}px`;
+  }, [saisie]);
+
+  // Arrete la dictee en cours si le panneau se ferme ou se demonte.
+  useEffect(() => {
+    if (!ouvert) reconnaissanceRef.current?.stop();
+  }, [ouvert]);
+  useEffect(() => () => reconnaissanceRef.current?.stop(), []);
 
   // Garde l'icone dans l'ecran si la fenetre est redimensionnee ou pivotee.
   useEffect(() => {
@@ -176,13 +270,11 @@ export function Assistant() {
     }
   }
 
-  async function envoyer() {
-    const texte = saisie.trim();
-    if ((!texte && !piece) || enCours) return;
+  async function envoyerMessage(texte: string, pieceEnvoyee: PieceJointe | null) {
+    if ((!texte && !pieceEnvoyee) || enCours) return;
 
     setErreur(null);
     setSaisie('');
-    const pieceEnvoyee = piece;
     setPiece(null);
 
     const message: MessageChat = construireMessage(texte, pieceEnvoyee);
@@ -190,14 +282,53 @@ export function Assistant() {
     setMessages(historique);
     setEnCours(true);
 
+    // indexReponse reste a -1 tant qu'aucun morceau n'est arrive : le panneau
+    // affiche alors les points de frappe plutot qu'une bulle vide (voir le
+    // rendu plus bas), le temps que la reponse commence a s'ecrire.
+    let indexReponse = -1;
     try {
-      const reponse = await demanderAssistant(historique);
-      setMessages((m) => [...m, { role: 'assistant', contenu: reponse }]);
+      await demanderAssistant(historique, (accumule) => {
+        setMessages((m) => {
+          if (indexReponse === -1) {
+            indexReponse = m.length;
+            return [...m, { role: 'assistant', contenu: accumule }];
+          }
+          const copie = [...m];
+          copie[indexReponse] = { role: 'assistant', contenu: accumule };
+          return copie;
+        });
+      });
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "L'assistant n'a pas pu répondre.");
     } finally {
       setEnCours(false);
     }
+  }
+
+  function envoyer() {
+    const texte = saisie.trim();
+    envoyerMessage(texte, piece);
+  }
+
+  function basculerDictee() {
+    if (!RECONNAISSANCE_VOCALE_CTOR) return;
+    if (ecoute) {
+      reconnaissanceRef.current?.stop();
+      return;
+    }
+    const reconnaissance = new RECONNAISSANCE_VOCALE_CTOR();
+    reconnaissance.lang = 'fr-FR';
+    reconnaissance.interimResults = false;
+    reconnaissance.maxAlternatives = 1;
+    reconnaissance.onresult = (e) => {
+      const texteDicte = e.results[0]?.[0]?.transcript ?? '';
+      if (texteDicte) setSaisie((s) => (s ? `${s} ${texteDicte}` : texteDicte));
+    };
+    reconnaissance.onerror = () => setEcoute(false);
+    reconnaissance.onend = () => setEcoute(false);
+    reconnaissanceRef.current = reconnaissance;
+    setEcoute(true);
+    reconnaissance.start();
   }
 
   return (
@@ -248,47 +379,74 @@ export function Assistant() {
 
           <div className="flex-1 overflow-y-auto p-e4">
             {messages.length === 0 && (
-              <p className="m-0 text-sm text-encre-douce">
-                Une maladie, un diagnostic ou une recommandation que vous ne
-                comprenez pas&nbsp;? Vous pouvez aussi joindre une photo de votre
-                culture ou un document à faire lire.
-              </p>
+              <div className="flex flex-col gap-e3">
+                <p className="m-0 text-sm text-encre-douce">
+                  Une maladie, un diagnostic ou une recommandation que vous ne
+                  comprenez pas&nbsp;? Vous pouvez aussi joindre une photo de votre
+                  culture ou un document à faire lire.
+                </p>
+                <div className="flex flex-col items-start gap-e2">
+                  {SUGGESTIONS_DEPART.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className="rounded-full border border-trait bg-transparent px-e3 py-e2 text-left text-sm text-vert-fonce transition-colors hover:bg-vert-soft dark:text-vert-clair"
+                      onClick={() => envoyerMessage(suggestion, null)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
             <div className="flex flex-col gap-e3">
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`flex flex-col gap-1 ${m.role === 'user' ? 'items-end' : 'items-start'}`}
-                >
-                  {m.image && (
-                    <img
-                      src={m.image}
-                      alt="Image jointe"
-                      className="max-h-32 max-w-[70%] rounded-lg border border-trait object-cover"
-                    />
-                  )}
+              {messages.map((m, i) => {
+                const dernierMessage = i === messages.length - 1;
+                const enFluxDecriture = m.role === 'assistant' && dernierMessage && enCours;
+                return (
                   <div
-                    className={`max-w-[85%] rounded-2xl px-e3 py-e2 text-sm leading-[1.45] ${
-                      m.role === 'user'
-                        ? 'rounded-br-sm bg-vert-fonce text-white'
-                        : 'rounded-bl-sm border border-trait bg-carte text-encre'
-                    }`}
+                    key={i}
+                    className={`flex flex-col gap-1 ${m.role === 'user' ? 'items-end' : 'items-start'}`}
                   >
-                    {m.role === 'user' ? (
-                      <p className="m-0 whitespace-pre-wrap">{m.resume ?? m.contenu}</p>
-                    ) : (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={COMPOSANTS_MARKDOWN}>
-                        {m.resume ?? m.contenu}
-                      </ReactMarkdown>
+                    {m.image && (
+                      <img
+                        src={m.image}
+                        alt="Image jointe"
+                        className="max-h-32 max-w-[70%] rounded-lg border border-trait object-cover"
+                      />
                     )}
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-e3 py-e2 text-sm leading-[1.45] ${
+                        m.role === 'user'
+                          ? 'rounded-br-sm bg-vert-fonce text-white'
+                          : 'rounded-bl-sm border border-trait bg-carte text-encre'
+                      }`}
+                    >
+                      {m.role === 'user' ? (
+                        <p className="m-0 whitespace-pre-wrap">{m.resume ?? m.contenu}</p>
+                      ) : enFluxDecriture ? (
+                        // Texte brut pendant le flux (pas de Markdown re-analyse
+                        // a chaque morceau, qui rendrait une syntaxe coupee en
+                        // plein milieu) - la mise en forme arrive au message
+                        // suivant, une fois le flux termine.
+                        <p className="m-0 whitespace-pre-wrap">
+                          {m.contenu}
+                          <CurseurClignotant />
+                        </p>
+                      ) : (
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={COMPOSANTS_MARKDOWN}>
+                          {m.resume ?? m.contenu}
+                        </ReactMarkdown>
+                      )}
+                    </div>
                   </div>
+                );
+              })}
+              {enCours && messages[messages.length - 1]?.role !== 'assistant' && (
+                <div className="self-start rounded-2xl rounded-bl-sm border border-trait bg-carte px-e3 py-e2">
+                  <PointsDeFrappe />
                 </div>
-              ))}
-              {enCours && (
-                <p className="m-0 self-start text-sm text-encre-douce">
-                  L&apos;assistant réfléchit…
-                </p>
               )}
             </div>
             <div ref={finListe} />
@@ -349,13 +507,34 @@ export function Assistant() {
               onChange={surFichier}
               hidden
             />
-            <input
-              className="min-h-[40px] flex-1 rounded border border-trait bg-papier px-e3 text-sm text-encre"
+            <textarea
+              ref={saisieRef}
+              rows={1}
+              className="max-h-[120px] min-h-[40px] flex-1 resize-none overflow-y-auto rounded border border-trait bg-papier px-e3 py-2 text-sm text-encre"
               placeholder="Votre question…"
               value={saisie}
               onChange={(e) => setSaisie(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  envoyer();
+                }
+              }}
               disabled={enCours}
             />
+            {RECONNAISSANCE_VOCALE_CTOR && (
+              <button
+                type="button"
+                className={`grid h-10 w-10 shrink-0 place-items-center rounded border-0 ${
+                  ecoute ? 'animate-pulse bg-atteint text-white' : 'bg-transparent text-encre hover:bg-trait/30'
+                }`}
+                onClick={basculerDictee}
+                aria-label={ecoute ? 'Arrêter la dictée' : 'Dicter votre question'}
+                aria-pressed={ecoute}
+              >
+                <Mic size={18} />
+              </button>
+            )}
             <button
               type="submit"
               className="grid h-10 w-10 shrink-0 place-items-center rounded border-0 bg-encre text-papier disabled:bg-encre-douce"

@@ -1,5 +1,5 @@
 /**
- * Fonction serverless Vercel : /api/assistant
+ * Fonction serverless Vercel (runtime Edge) : /api/assistant
  *
  * Chatbot d'aide, accessible depuis toute l'application via l'icone
  * flottante (voir src/components/Assistant.tsx). Cantonne a la filiere
@@ -14,7 +14,16 @@
  * les documents (PDF/DOCX/texte) sont deja convertis en texte cote client
  * (voir src/lib/documents.ts) avant d'arriver ici. Meme principe que
  * /api/conseil et /api/astuce : la cle GROQ_API_KEY reste ici, cote serveur.
+ *
+ * En streaming (runtime Edge, pas le Node classique des autres fonctions
+ * /api) : Groq renvoie la reponse en SSE format OpenAI, ce handler ne
+ * retransmet au client que le texte des deltas, en flux brut - voir
+ * demanderAssistant() dans src/lib/assistant.ts pour la lecture cote client,
+ * qui affiche le texte au fur et a mesure plutot que d'attendre la reponse
+ * complete.
  */
+
+export const config = { runtime: 'edge' };
 
 interface Message {
   role: 'user' | 'assistant';
@@ -65,27 +74,23 @@ const SYSTEME =
   'affiché mis en forme, jamais montré tel quel. N’en abusez pas pour autant ' +
   '- une réponse courte n’a souvent besoin d’aucune mise en forme.';
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
-    res.status(405).json({ erreur: 'Méthode non autorisée.' });
-    return;
+    return Response.json({ erreur: 'Méthode non autorisée.' }, { status: 405 });
   }
 
   const cle = process.env.GROQ_API_KEY;
   if (!cle) {
-    res.status(500).json({
-      erreur: "La clé du service de conseil n'est pas configurée sur le serveur.",
-    });
-    return;
+    return Response.json(
+      { erreur: "La clé du service de conseil n'est pas configurée sur le serveur." },
+      { status: 500 },
+    );
   }
 
-  const corps: CorpsRequete =
-    typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body ?? {};
-
+  const corps: CorpsRequete = await req.json().catch(() => ({ messages: [] }));
   const messages = Array.isArray(corps.messages) ? corps.messages : [];
   if (messages.length === 0) {
-    res.status(400).json({ erreur: 'Message manquant.' });
-    return;
+    return Response.json({ erreur: 'Message manquant.' }, { status: 400 });
   }
 
   // On borne l'historique envoye a Groq : les derniers echanges suffisent au
@@ -93,60 +98,87 @@ export default async function handler(req: any, res: any) {
   const recents = messages.slice(-12);
   const contientImage = recents.some((m) => !!m.image);
 
+  let reponseGroq: Response;
   try {
-    const reponse = await fetch(
-      'https://api.groq.com/openai/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${cle}`,
-        },
-        body: JSON.stringify({
-          model: contientImage ? MODELE_VISION : MODELE_TEXTE,
-          // Les deux modeles acceptent ce parametre mais pas les memes
-          // valeurs : gpt-oss attend low/medium/high, qwen attend none/default.
-          reasoning_effort: contientImage ? 'none' : 'low',
-          temperature: 0.5,
-          max_tokens: 1024,
-          messages: [
-            { role: 'system', content: SYSTEME },
-            ...recents.map((m) =>
-              m.image
-                ? {
-                    role: m.role,
-                    content: [
-                      { type: 'text', text: m.contenu },
-                      { type: 'image_url', image_url: { url: m.image } },
-                    ],
-                  }
-                : { role: m.role, content: m.contenu },
-            ),
-          ],
-        }),
+    reponseGroq = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${cle}`,
       },
-    );
-
-    if (!reponse.ok) {
-      const detail = await reponse.text();
-      res.status(502).json({
-        erreur: "L'assistant a refusé la demande.",
-        detail: detail.slice(0, 300),
-      });
-      return;
-    }
-
-    const data = await reponse.json();
-    const contenu: string = data?.choices?.[0]?.message?.content?.trim() ?? '';
-    if (!contenu) {
-      res.status(502).json({ erreur: "Réponse vide de l'assistant." });
-      return;
-    }
-
-    res.status(200).json({ contenu });
-  } catch (e) {
-    res.status(500).json({
-      erreur: "L'appel à l'assistant a échoué. Réessayez plus tard.",
+      body: JSON.stringify({
+        model: contientImage ? MODELE_VISION : MODELE_TEXTE,
+        // Les deux modeles acceptent ce parametre mais pas les memes
+        // valeurs : gpt-oss attend low/medium/high, qwen attend none/default.
+        reasoning_effort: contientImage ? 'none' : 'low',
+        temperature: 0.5,
+        max_tokens: 1024,
+        stream: true,
+        messages: [
+          { role: 'system', content: SYSTEME },
+          ...recents.map((m) =>
+            m.image
+              ? {
+                  role: m.role,
+                  content: [
+                    { type: 'text', text: m.contenu },
+                    { type: 'image_url', image_url: { url: m.image } },
+                  ],
+                }
+              : { role: m.role, content: m.contenu },
+          ),
+        ],
+      }),
     });
+  } catch {
+    return Response.json(
+      { erreur: "L'appel à l'assistant a échoué. Réessayez plus tard." },
+      { status: 500 },
+    );
   }
+
+  if (!reponseGroq.ok || !reponseGroq.body) {
+    const detail = await reponseGroq.text().catch(() => '');
+    return Response.json(
+      { erreur: "L'assistant a refusé la demande.", detail: detail.slice(0, 300) },
+      { status: 502 },
+    );
+  }
+
+  // Reduit le SSE format OpenAI de Groq (lignes "data: {...}", terminees par
+  // "data: [DONE]") a un flux texte brut : le client n'a besoin que des
+  // deltas de contenu, pas du reste de l'enveloppe JSON par morceau.
+  const decodeur = new TextDecoder();
+  const encodeur = new TextEncoder();
+  const lecteur = reponseGroq.body.getReader();
+  let tampon = '';
+
+  const flux = new ReadableStream<Uint8Array>({
+    async pull(controleur) {
+      const { done, value } = await lecteur.read();
+      if (done) {
+        controleur.close();
+        return;
+      }
+      tampon += decodeur.decode(value, { stream: true });
+      const lignes = tampon.split('\n');
+      tampon = lignes.pop() ?? '';
+      for (const ligne of lignes) {
+        const t = ligne.trim();
+        if (!t.startsWith('data:')) continue;
+        const donnees = t.slice(5).trim();
+        if (donnees === '[DONE]') continue;
+        try {
+          const json = JSON.parse(donnees);
+          const morceau: string | undefined = json?.choices?.[0]?.delta?.content;
+          if (morceau) controleur.enqueue(encodeur.encode(morceau));
+        } catch {
+          // Ligne SSE incomplete (coupee entre deux paquets reseau) : ignoree,
+          // elle sera reprise dans un prochain morceau via le tampon.
+        }
+      }
+    },
+  });
+
+  return new Response(flux, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 }
