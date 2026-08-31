@@ -184,6 +184,13 @@ export function CarteFoyers() {
     // ulterieur (rotation d'ecran, bascule clavier).
     const observateur = new ResizeObserver(() => carte.invalidateSize());
     observateur.observe(conteneur);
+    // Filet de securite : sur certains navigateurs mobiles, la toute
+    // premiere mesure (au montage, avant que la mise en page en flexbox
+    // imbriquee n'ait fini de se stabiliser) peut rester trop large tant
+    // qu'aucun redimensionnement reel ne se produit par la suite - un
+    // second passage juste apres le premier rendu corrige cette taille
+    // initiale sans attendre un evenement de redimensionnement.
+    requestAnimationFrame(() => carte.invalidateSize());
 
     // Position actuelle de l'utilisateur : un repere meme sans historique,
     // pour que la carte ne paraisse jamais "vide" au premier lancement. Le
@@ -316,7 +323,7 @@ export function CarteFoyers() {
   }, [filtrees, positionActuelle, quartier, listeParcelles, emplacement.state]);
 
   return (
-    <div className="flex flex-col gap-e4">
+    <div className="flex min-w-0 flex-col gap-e4">
       {consultations !== null && geolocalisees.length === 0 && (
         <p className="avis avis--attention">
           Aucun diagnostic géolocalisé pour l&apos;instant. Autorisez le

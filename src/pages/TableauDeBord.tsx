@@ -285,7 +285,7 @@ export function TableauDeBord() {
       </ApparitionAuDefilement>
 
       {/* ================= Carte des diagnostics ================= */}
-      <ApparitionAuDefilement className="flex flex-col gap-e4">
+      <ApparitionAuDefilement className="flex min-w-0 flex-col gap-e4">
         <h2 className="text-xl tracking-[-0.025em]">Carte des diagnostics</h2>
         <CarteFoyers />
       </ApparitionAuDefilement>

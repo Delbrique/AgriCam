@@ -61,7 +61,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="grid min-h-[100dvh] grid-rows-[auto_1fr] bg-papier">
+    <div className="grid min-h-[100dvh] grid-rows-[auto_1fr] overflow-x-hidden bg-papier">
       <header
         className="flex items-center gap-e5 px-[var(--pad-page)] pb-e3 pt-[max(var(--e3),env(safe-area-inset-top))] text-chrome-texte"
         style={{ background: 'linear-gradient(120deg, var(--vert-fonce), var(--vert-moyen))' }}
@@ -94,7 +94,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex w-full flex-col gap-e4 px-[var(--pad-page)] pb-[calc(var(--cible)_+_env(safe-area-inset-bottom)_+_var(--e5))] pt-e4 bp860:pb-e7">
+      <main className="flex w-full min-w-0 flex-col gap-e4 px-[var(--pad-page)] pb-[calc(var(--cible)_+_env(safe-area-inset-bottom)_+_var(--e5))] pt-e4 bp860:pb-e7">
         {alerte && (
           <div className="avis avis--erreur">
             <p className="m-0">
