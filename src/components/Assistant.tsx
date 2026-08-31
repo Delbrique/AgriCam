@@ -29,6 +29,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { demanderAssistant, type MessageChat } from '../lib/assistant';
+import { ecouterOuvertureAssistant } from '../lib/assistantBus';
 
 /** Reconnaissance vocale (dictee) : API navigateur non standardisee (encore
  * prefixee "webkit" partout sauf Chrome/Edge recents), absente des types
@@ -330,6 +331,23 @@ export function Assistant() {
     setEcoute(true);
     reconnaissance.start();
   }
+
+  // Ouverture depuis ailleurs dans l'app (ex. "Demander à l'assistant" sur
+  // un foyer signalé, voir NotificationsFoyers.tsx) : la ref garde toujours
+  // la dernière version d'envoyerMessage, sinon l'écouteur - enregistré une
+  // seule fois au montage - garderait indéfiniment la conversation vide du
+  // tout premier rendu.
+  const envoyerMessageRef = useRef(envoyerMessage);
+  envoyerMessageRef.current = envoyerMessage;
+
+  useEffect(
+    () =>
+      ecouterOuvertureAssistant((question) => {
+        setOuvert(true);
+        envoyerMessageRef.current(question, null);
+      }),
+    [],
+  );
 
   return (
     <>

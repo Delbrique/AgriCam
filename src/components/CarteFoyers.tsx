@@ -319,6 +319,12 @@ export function CarteFoyers() {
     if (foyerACentrerRef.current) {
       centrerSurFoyer(foyerACentrerRef.current);
       foyerACentrerRef.current = undefined;
+      // La carte n'est qu'une section parmi d'autres sur le tableau de bord
+      // (KPI, graphiques... la precedent) : sans ce scroll, "Localiser ce
+      // foyer" fermait juste le panneau de notifications sans amener
+      // visuellement la carte a l'ecran, laissant croire que le clic n'avait
+      // rien fait.
+      conteneurRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [filtrees, positionActuelle, quartier, listeParcelles, emplacement.state]);
 

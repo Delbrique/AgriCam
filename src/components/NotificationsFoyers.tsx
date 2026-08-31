@@ -11,9 +11,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, TriangleAlert, X } from 'lucide-react';
+import { Bell, MessageCircleQuestionMark, TriangleAlert, X } from 'lucide-react';
 import { foyersActuels, type Foyer } from '../lib/alerte';
 import { classeParId } from '../lib/classes';
+import { ouvrirAssistantAvecQuestion } from '../lib/assistantBus';
 
 export function NotificationsFoyers() {
   const [foyers, setFoyers] = useState<Foyer[]>([]);
@@ -64,6 +65,16 @@ export function NotificationsFoyers() {
     // cet etat de navigation a son montage pour se recentrer sur le foyer,
     // sans avoir besoin d'une reference partagee vers Leaflet.
     navigate('/', { state: { foyerACentrer: foyer } });
+  }
+
+  function demanderConseil(foyer: Foyer) {
+    setOuvert(false);
+    const nom = classeParId(foyer.classeId)?.nom ?? foyer.classeId;
+    ouvrirAssistantAvecQuestion(
+      `Un foyer possible de ${nom} vient d'être détecté (${foyer.points.length} ` +
+        `diagnostics regroupés dans un même secteur ces deux dernières semaines). ` +
+        `Que dois-je faire immédiatement ?`,
+    );
   }
 
   return (
@@ -126,12 +137,21 @@ export function NotificationsFoyers() {
                     secteur, ces deux dernières semaines. Envisagez un
                     traitement préventif sur les plants voisins.
                   </p>
-                  <button
-                    className="bouton-second self-start text-xs"
-                    onClick={() => localiser(foyer)}
-                  >
-                    Localiser ce foyer
-                  </button>
+                  <div className="flex flex-wrap gap-e2">
+                    <button
+                      className="bouton-second self-start text-xs"
+                      onClick={() => localiser(foyer)}
+                    >
+                      Localiser ce foyer
+                    </button>
+                    <button
+                      className="bouton-second flex items-center gap-e1 self-start text-xs"
+                      onClick={() => demanderConseil(foyer)}
+                    >
+                      <MessageCircleQuestionMark size={14} aria-hidden="true" />
+                      Demander à l&apos;assistant
+                    </button>
+                  </div>
                 </div>
               );
             })
