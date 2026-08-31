@@ -34,6 +34,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import { NB_CLASSES } from './classes';
+import { purgerCachesModeles } from './cache';
 
 const CHEMIN_TRONC = '/models/tronc/model.json';
 const CHEMIN_TETE = '/models/tete.json';
@@ -158,6 +159,7 @@ export async function chargerClassifieur(suivi?: SuiviChargement): Promise<void>
       tronc = null;
       tete = null;
       profils = null;
+      await purgerCachesModeles();
       await new Promise((r) => setTimeout(r, 1500));
       try {
         await tenter();

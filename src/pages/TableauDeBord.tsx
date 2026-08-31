@@ -159,17 +159,24 @@ export function TableauDeBord() {
     <div className="flex flex-col gap-e6">
       {/* ================= En-tete ================= */}
       <section className="flex flex-col gap-e3">
+        <div className="flex items-baseline justify-between gap-e3">
+          <span className="text-sm font-semibold text-encre-douce">{salutation} 👋</span>
+          <span className="whitespace-nowrap text-xs capitalize text-encre-douce">
+            {maintenantDate.toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </span>
+        </div>
+
         <div className="flex flex-wrap items-start justify-between gap-e3">
-          <div>
-            <h1 className="m-0 text-2xl">{salutation} 👋</h1>
-            <p className="m-0 text-sm capitalize text-encre-douce">
-              {maintenantDate.toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </p>
+          <div className="min-w-0">
+            <h1 className="m-0 text-lg font-bold leading-snug text-encre">
+              AgriCam diagnostique les maladies de vos plants de tomate, piment et oignon à
+              partir d&apos;une simple photo, même sans connexion.
+            </h1>
             {humeur && (
               <p
                 key={humeur.texte}

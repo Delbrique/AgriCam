@@ -117,6 +117,9 @@ function messageErreurLisible(e: unknown): string {
   if (/connection is clos/i.test(brut)) {
     return 'Le diagnostic a été calculé, mais son enregistrement dans l’historique a échoué. Réessayez.';
   }
+  if (/wasm|compileerror|doesn't parse|no available backend/i.test(brut)) {
+    return "Un des fichiers du modèle est arrivé corrompu (souvent un réseau mobile instable). Fermez complètement l'application et rouvrez-la pour retélécharger un exemplaire propre.";
+  }
   if (!brut) {
     return 'Le diagnostic n’a pas abouti. Vérifiez que les modèles ont bien été téléchargés au moins une fois, avec une connexion.';
   }

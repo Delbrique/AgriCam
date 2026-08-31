@@ -17,6 +17,7 @@
  */
 
 import * as ort from 'onnxruntime-web';
+import { purgerCachesModeles } from './cache';
 
 const CHEMIN_MODELE = '/models/detecteur.onnx';
 
@@ -72,8 +73,12 @@ export async function chargerDetecteur(
     } catch (premiereErreur) {
       // Meme logique que chargerClassifieur() : un telechargement a froid
       // echoue parfois sur un simple accroc reseau, un seul nouvel essai
-      // suffit generalement.
+      // suffit generalement - purgerCachesModeles() couvre en plus le cas
+      // d'un binaire WASM precache tronque/corrompu (reseau mobile
+      // instable pendant l'installation), que rejouer sans vider le cache
+      // aurait echoue a l'identique.
       session = null;
+      await purgerCachesModeles();
       await new Promise((r) => setTimeout(r, 1500));
       try {
         await tenter();

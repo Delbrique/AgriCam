@@ -75,7 +75,10 @@ export function VueCapture({ onImage, occupe, progression }: Props) {
         <h2 className="text-xl tracking-[-0.025em]">Analyse d&apos;un fruit</h2>
       </div>
       <p className="-mt-e3 text-sm text-encre-douce">
-        Photographiez un fruit pour obtenir un diagnostic immédiat, sans connexion.
+        Photographiez un fruit de <strong className="font-semibold text-encre">tomate</strong>,{' '}
+        <strong className="font-semibold text-encre">piment</strong> ou{' '}
+        <strong className="font-semibold text-encre">oignon</strong> pour obtenir un diagnostic
+        immédiat, sans connexion — ce sont les trois cultures reconnues par l'application.
       </p>
 
       <div className="grid grid-cols-2 gap-e3">
