@@ -16,6 +16,7 @@ import type { Session } from '@supabase/supabase-js';
 import { LogOut, Send } from 'lucide-react';
 import { communauteDisponible, supabase } from '../lib/supabase';
 import { Squelette } from '../components/Squelette';
+import { useTraduction } from '../lib/traduction';
 
 interface Message {
   id: string;
@@ -29,10 +30,11 @@ interface Message {
 const SALON = 'general';
 
 export function Communaute() {
+  const { t } = useTraduction();
   if (!communauteDisponible()) {
     return (
       <div className="avis avis--incertain">
-        <p>La communauté n'est pas disponible pour le moment.</p>
+        <p>{t.communaute.indisponible}</p>
       </div>
     );
   }
@@ -62,6 +64,7 @@ function CommunauteConnectee() {
 }
 
 function Connexion() {
+  const { t } = useTraduction();
   const [inscription, setInscription] = useState(false);
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
@@ -80,16 +83,16 @@ function Connexion() {
         const { error } = await supabase!.auth.signUp({
           email,
           password: motDePasse,
-          options: { data: { pseudo: pseudo.trim() || 'Producteur' } },
+          options: { data: { pseudo: pseudo.trim() || t.communaute.producteur } },
         });
         if (error) throw error;
-        setInfo('Compte créé. Vérifiez votre boîte mail pour confirmer votre adresse, puis connectez-vous.');
+        setInfo(t.communaute.compteCree);
       } else {
         const { error } = await supabase!.auth.signInWithPassword({ email, password: motDePasse });
         if (error) throw error;
       }
     } catch (err) {
-      setErreur(err instanceof Error ? err.message : 'Une erreur est survenue.');
+      setErreur(err instanceof Error ? err.message : t.communaute.erreurGenerique);
     } finally {
       setEnCours(false);
     }
@@ -99,28 +102,26 @@ function Connexion() {
     <div className="carte mx-auto flex w-full max-w-sm flex-col gap-e4">
       <div>
         <h1 className="m-0 font-titre text-lg font-bold text-encre">
-          {inscription ? 'Rejoindre la communauté' : 'Se connecter'}
+          {inscription ? t.communaute.rejoindre : t.communaute.seConnecter}
         </h1>
-        <p className="m-0 mt-1 text-sm text-encre-douce">
-          Échangez avec d'autres producteurs autour du diagnostic de vos cultures.
-        </p>
+        <p className="m-0 mt-1 text-sm text-encre-douce">{t.communaute.intro}</p>
       </div>
 
       <form className="flex flex-col gap-e3" onSubmit={soumettre}>
         {inscription && (
           <label className="flex flex-col gap-1 text-sm text-encre">
-            Pseudo
+            {t.communaute.pseudoLabel}
             <input
               className="min-h-cible rounded-xl border border-trait bg-papier px-e3 text-sm text-encre"
               value={pseudo}
               onChange={(e) => setPseudo(e.target.value)}
-              placeholder="Votre nom affiché"
+              placeholder={t.communaute.pseudoPlaceholder}
               maxLength={40}
             />
           </label>
         )}
         <label className="flex flex-col gap-1 text-sm text-encre">
-          E-mail
+          {t.communaute.emailLabel}
           <input
             type="email"
             required
@@ -130,7 +131,7 @@ function Connexion() {
           />
         </label>
         <label className="flex flex-col gap-1 text-sm text-encre">
-          Mot de passe
+          {t.communaute.motDePasseLabel}
           <input
             type="password"
             required
@@ -145,7 +146,11 @@ function Connexion() {
         {info && <p className="avis avis--merci">{info}</p>}
 
         <button type="submit" className="bouton-principal min-h-cible" disabled={enCours}>
-          {enCours ? 'Un instant…' : inscription ? 'Créer mon compte' : 'Se connecter'}
+          {enCours
+            ? t.communaute.unInstant
+            : inscription
+              ? t.communaute.creerMonCompte
+              : t.communaute.seConnecter}
         </button>
       </form>
 
@@ -158,13 +163,14 @@ function Connexion() {
           setInfo(null);
         }}
       >
-        {inscription ? "J'ai déjà un compte" : 'Créer un compte'}
+        {inscription ? t.communaute.dejaCompte : t.communaute.creerCompte}
       </button>
     </div>
   );
 }
 
 function FenetreChat({ session }: { session: Session }) {
+  const { t } = useTraduction();
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [saisie, setSaisie] = useState('');
   const [envoi, setEnvoi] = useState(false);
@@ -179,7 +185,7 @@ function FenetreChat({ session }: { session: Session }) {
         if (!annule) setMessages(d.messages);
       })
       .catch(() => {
-        if (!annule) setErreur("Impossible de charger les messages.");
+        if (!annule) setErreur(t.communaute.erreurChargement);
       });
     return () => {
       annule = true;
@@ -224,11 +230,11 @@ function FenetreChat({ session }: { session: Session }) {
       });
       if (!reponse.ok) {
         const detail = await reponse.json().catch(() => null);
-        throw new Error(detail?.detail || "Le message n'a pas pu être envoyé.");
+        throw new Error(detail?.detail || t.communaute.erreurEnvoi);
       }
       setSaisie('');
     } catch (err) {
-      setErreur(err instanceof Error ? err.message : "Le message n'a pas pu être envoyé.");
+      setErreur(err instanceof Error ? err.message : t.communaute.erreurEnvoi);
     } finally {
       setEnvoi(false);
     }
@@ -238,14 +244,14 @@ function FenetreChat({ session }: { session: Session }) {
     <div className="carte flex h-[70vh] flex-col p-0">
       <div className="flex items-center justify-between gap-e3 border-b border-trait px-e4 py-e3">
         <span className="text-sm text-encre-douce">
-          Salon général · connecté en tant que{' '}
+          {t.communaute.salonGeneralPrefixe}{' '}
           <strong className="text-encre">{session.user.user_metadata.pseudo ?? session.user.email}</strong>
         </span>
         <button
           type="button"
           className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-0 bg-transparent text-encre-douce hover:bg-trait/40"
           onClick={() => supabase!.auth.signOut()}
-          aria-label="Se déconnecter"
+          aria-label={t.communaute.seDeconnecter}
         >
           <LogOut size={16} />
         </button>
@@ -260,9 +266,7 @@ function FenetreChat({ session }: { session: Session }) {
           </div>
         )}
         {messages?.length === 0 && (
-          <p className="m-0 text-sm text-encre-douce">
-            Aucun message pour l'instant. Soyez le premier à écrire au salon !
-          </p>
+          <p className="m-0 text-sm text-encre-douce">{t.communaute.aucunMessage}</p>
         )}
 
         <div className="flex flex-col gap-e3">
@@ -292,7 +296,7 @@ function FenetreChat({ session }: { session: Session }) {
       <form className="flex items-center gap-e2 border-t border-trait p-e3" onSubmit={envoyer}>
         <input
           className="min-h-cible flex-1 rounded-xl border border-trait bg-papier px-e3 text-sm text-encre"
-          placeholder="Votre message…"
+          placeholder={t.communaute.placeholderMessage}
           value={saisie}
           onChange={(e) => setSaisie(e.target.value)}
           maxLength={500}
@@ -302,7 +306,7 @@ function FenetreChat({ session }: { session: Session }) {
           type="submit"
           className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-0 bg-vert-fonce text-white disabled:bg-encre-douce"
           disabled={envoi || !saisie.trim()}
-          aria-label="Envoyer"
+          aria-label={t.communaute.envoyer}
         >
           <Send size={18} />
         </button>

@@ -13,9 +13,14 @@
  */
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import type { Traductions } from '../lib/traduction';
 
 interface Props {
   children: ReactNode;
+  /** Passe en prop plutot que lu via useTraduction() : ErrorBoundary est un
+   * composant classe (obligatoire pour intercepter les erreurs de rendu, voir
+   * plus haut), les hooks n'y sont pas disponibles. */
+  t: Traductions;
 }
 
 interface State {
@@ -40,15 +45,13 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex flex-col gap-e4 py-e6">
           <p className="avis avis--erreur">
-            <strong>Une erreur inattendue est survenue.</strong> Vos
-            diagnostics restent en sécurité dans l&apos;historique de
-            l&apos;appareil. Essayez de recharger la page.
+            <strong>{this.props.t.errorBoundary.titre}</strong> {this.props.t.errorBoundary.texte}
           </p>
           <button
             className="bouton-principal"
             onClick={() => window.location.reload()}
           >
-            Recharger l&apos;application
+            {this.props.t.errorBoundary.recharger}
           </button>
         </div>
       );

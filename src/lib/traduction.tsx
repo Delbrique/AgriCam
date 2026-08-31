@@ -32,6 +32,7 @@ export interface Traductions {
       communaute: string;
     };
     modeleIncompatible: string;
+    reessayer: string;
   };
   commun: {
     cultures: { toutes: string; tomate: string; piment: string; oignon: string };
@@ -208,6 +209,57 @@ export interface Traductions {
     intro: string;
     ressemblance: (pct: number) => string;
     corrige: string;
+  };
+  assistant: {
+    titre: string;
+    ouvrir: string;
+    fermer: string;
+    reduire: string;
+    agrandir: string;
+    introTexte: string;
+    placeholderQuestion: string;
+    joindreFichier: string;
+    retirerPiece: string;
+    lecturePiece: string;
+    dicter: string;
+    arreterDictee: string;
+    envoyer: string;
+    connexionNecessaire: string;
+    imageIllisible: string;
+    aucunTexteDocument: string;
+    documentIllisible: string;
+    assistantSansReponse: string;
+    ecrit: string;
+    imageJointe: string;
+  };
+  communaute: {
+    indisponible: string;
+    rejoindre: string;
+    seConnecter: string;
+    intro: string;
+    pseudoLabel: string;
+    pseudoPlaceholder: string;
+    emailLabel: string;
+    motDePasseLabel: string;
+    unInstant: string;
+    creerMonCompte: string;
+    compteCree: string;
+    erreurGenerique: string;
+    dejaCompte: string;
+    creerCompte: string;
+    salonGeneralPrefixe: string;
+    seDeconnecter: string;
+    aucunMessage: string;
+    erreurChargement: string;
+    erreurEnvoi: string;
+    placeholderMessage: string;
+    envoyer: string;
+    producteur: string;
+  };
+  errorBoundary: {
+    titre: string;
+    texte: string;
+    recharger: string;
   };
   vueCapture: {
     titre: string;

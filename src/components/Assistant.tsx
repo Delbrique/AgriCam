@@ -30,6 +30,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { demanderAssistant, type MessageChat } from '../lib/assistant';
 import { ecouterOuvertureAssistant } from '../lib/assistantBus';
+import { useTraduction } from '../lib/traduction';
 
 /** Reconnaissance vocale (dictee) : API navigateur non standardisee (encore
  * prefixee "webkit" partout sauf Chrome/Edge recents), absente des types
@@ -117,9 +118,9 @@ const COMPOSANTS_MARKDOWN = {
 /** Trois points respires en decale (voir l'animation "blink"), le temps que
  * le premier morceau de la reponse arrive - remplace par le texte qui
  * s'ecrit lui-meme (voir CurseurClignotant) des que le flux commence. */
-function PointsDeFrappe() {
+function PointsDeFrappe({ libelle }: { libelle: string }) {
   return (
-    <span className="inline-flex items-center gap-1 py-1" aria-label="L'assistant écrit…">
+    <span className="inline-flex items-center gap-1 py-1" aria-label={libelle}>
       {[0, 160, 320].map((delai) => (
         <span
           key={delai}
@@ -167,6 +168,7 @@ function positionInitiale() {
 }
 
 export function Assistant() {
+  const { t, langue } = useTraduction();
   const [position, setPosition] = useState(positionInitiale);
   const [ouvert, setOuvert] = useState(false);
   const [pleinEcran, setPleinEcran] = useState(false);
@@ -253,7 +255,7 @@ export function Assistant() {
         const dataUrl = await lireCommeDataUrl(fichier);
         setPiece({ type: 'image', nom: fichier.name, dataUrl });
       } catch {
-        setErreur("Cette image n'a pas pu être lue.");
+        setErreur(t.assistant.imageIllisible);
       }
       return;
     }
@@ -262,10 +264,10 @@ export function Assistant() {
     try {
       const { extraireTexte } = await import('../lib/documents');
       const texte = await extraireTexte(fichier);
-      if (!texte) throw new Error('Aucun texte trouvé dans ce document.');
+      if (!texte) throw new Error(t.assistant.aucunTexteDocument);
       setPiece({ type: 'document', nom: fichier.name, texte });
     } catch (err) {
-      setErreur(err instanceof Error ? err.message : "Ce document n'a pas pu être lu.");
+      setErreur(err instanceof Error ? err.message : t.assistant.documentIllisible);
     } finally {
       setLecturePiece(false);
     }
@@ -300,7 +302,7 @@ export function Assistant() {
         });
       });
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : "L'assistant n'a pas pu répondre.");
+      setErreur(e instanceof Error ? e.message : t.assistant.assistantSansReponse);
     } finally {
       setEnCours(false);
     }
@@ -318,7 +320,7 @@ export function Assistant() {
       return;
     }
     const reconnaissance = new RECONNAISSANCE_VOCALE_CTOR();
-    reconnaissance.lang = 'fr-FR';
+    reconnaissance.lang = langue === 'en' ? 'en-US' : 'fr-FR';
     reconnaissance.interimResults = false;
     reconnaissance.maxAlternatives = 1;
     reconnaissance.onresult = (e) => {
@@ -357,7 +359,7 @@ export function Assistant() {
         onPointerDown={surPointerDown}
         onPointerMove={surPointerMove}
         onPointerUp={surPointerUp}
-        aria-label={ouvert ? "Fermer l'assistant" : "Ouvrir l'assistant"}
+        aria-label={ouvert ? t.assistant.fermer : t.assistant.ouvrir}
         aria-expanded={ouvert}
       >
         {ouvert ? <X size={24} /> : <MessageCircle size={24} />}
@@ -375,12 +377,12 @@ export function Assistant() {
             className="flex items-center justify-between gap-e3 bg-encre px-e4 py-e3"
             style={pleinEcran ? { paddingTop: 'max(var(--e3), env(safe-area-inset-top))' } : undefined}
           >
-            <span className="font-titre text-md font-bold text-papier">Assistant AgriCam</span>
+            <span className="font-titre text-md font-bold text-papier">{t.assistant.titre}</span>
             <div className="flex items-center gap-e2">
               <button
                 className="grid h-8 w-8 place-items-center rounded-full border-0 bg-transparent text-papier hover:bg-white/10"
                 onClick={() => setPleinEcran((v) => !v)}
-                aria-label={pleinEcran ? 'Réduire l’assistant' : 'Agrandir l’assistant'}
+                aria-label={pleinEcran ? t.assistant.reduire : t.assistant.agrandir}
                 aria-pressed={pleinEcran}
               >
                 {pleinEcran ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -388,7 +390,7 @@ export function Assistant() {
               <button
                 className="grid h-8 w-8 place-items-center rounded-full border-0 bg-transparent text-papier hover:bg-white/10"
                 onClick={() => setOuvert(false)}
-                aria-label="Fermer l'assistant"
+                aria-label={t.assistant.fermer}
               >
                 <X size={18} />
               </button>
@@ -398,11 +400,7 @@ export function Assistant() {
           <div className="flex-1 overflow-y-auto p-e4">
             {messages.length === 0 && (
               <div className="flex flex-col gap-e3">
-                <p className="m-0 text-sm text-encre-douce">
-                  Une maladie, un diagnostic ou une recommandation que vous ne
-                  comprenez pas&nbsp;? Vous pouvez aussi joindre une photo de votre
-                  culture ou un document à faire lire.
-                </p>
+                <p className="m-0 text-sm text-encre-douce">{t.assistant.introTexte}</p>
                 <div className="flex flex-col items-start gap-e2">
                   {SUGGESTIONS_DEPART.map((suggestion) => (
                     <button
@@ -430,7 +428,7 @@ export function Assistant() {
                     {m.image && (
                       <img
                         src={m.image}
-                        alt="Image jointe"
+                        alt={t.assistant.imageJointe}
                         className="max-h-32 max-w-[70%] rounded-lg border border-trait object-cover"
                       />
                     )}
@@ -463,7 +461,7 @@ export function Assistant() {
               })}
               {enCours && messages[messages.length - 1]?.role !== 'assistant' && (
                 <div className="self-start rounded-2xl rounded-bl-sm border border-trait bg-carte px-e3 py-e2">
-                  <PointsDeFrappe />
+                  <PointsDeFrappe libelle={t.assistant.ecrit} />
                 </div>
               )}
             </div>
@@ -473,9 +471,7 @@ export function Assistant() {
           {erreur && <p className="avis avis--erreur m-e3 mt-0">{erreur}</p>}
 
           {!navigator.onLine && (
-            <p className="m-e3 mt-0 text-xs text-encre-douce">
-              Une connexion est nécessaire pour parler à l&apos;assistant.
-            </p>
+            <p className="m-e3 mt-0 text-xs text-encre-douce">{t.assistant.connexionNecessaire}</p>
           )}
 
           {piece && (
@@ -490,7 +486,7 @@ export function Assistant() {
                 type="button"
                 className="grid h-6 w-6 shrink-0 place-items-center rounded-full border-0 bg-transparent text-encre-douce hover:bg-trait"
                 onClick={() => setPiece(null)}
-                aria-label="Retirer la pièce jointe"
+                aria-label={t.assistant.retirerPiece}
               >
                 <X size={14} />
               </button>
@@ -498,7 +494,7 @@ export function Assistant() {
           )}
           {lecturePiece && (
             <p className="m-0 border-t border-trait px-e3 py-e2 text-xs text-encre-douce">
-              Lecture du document…
+              {t.assistant.lecturePiece}
             </p>
           )}
 
@@ -514,7 +510,7 @@ export function Assistant() {
               className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-trait bg-transparent text-encre hover:bg-trait/30"
               onClick={() => fichierRef.current?.click()}
               disabled={lecturePiece}
-              aria-label="Joindre un fichier"
+              aria-label={t.assistant.joindreFichier}
             >
               <Paperclip size={18} />
             </button>
@@ -529,7 +525,7 @@ export function Assistant() {
               ref={saisieRef}
               rows={1}
               className="max-h-[120px] min-h-[40px] flex-1 resize-none overflow-y-auto rounded-xl border border-trait bg-papier px-e3 py-2 text-sm text-encre"
-              placeholder="Votre question…"
+              placeholder={t.assistant.placeholderQuestion}
               value={saisie}
               onChange={(e) => setSaisie(e.target.value)}
               onKeyDown={(e) => {
@@ -547,7 +543,7 @@ export function Assistant() {
                   ecoute ? 'animate-pulse bg-atteint text-white' : 'bg-transparent text-encre hover:bg-trait/30'
                 }`}
                 onClick={basculerDictee}
-                aria-label={ecoute ? 'Arrêter la dictée' : 'Dicter votre question'}
+                aria-label={ecoute ? t.assistant.arreterDictee : t.assistant.dicter}
                 aria-pressed={ecoute}
               >
                 <Mic size={18} />
@@ -557,7 +553,7 @@ export function Assistant() {
               type="submit"
               className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-0 bg-encre text-papier disabled:bg-encre-douce"
               disabled={enCours || (!saisie.trim() && !piece)}
-              aria-label="Envoyer"
+              aria-label={t.assistant.envoyer}
             >
               <Send size={18} />
             </button>

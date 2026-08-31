@@ -101,7 +101,7 @@ export default function App() {
               <strong>{t.chrome.modeleIncompatible}</strong> {alerte}
             </p>
             <button className="bouton-second self-start" onClick={verifier}>
-              Réessayer
+              {t.chrome.reessayer}
             </button>
           </div>
         )}
@@ -111,7 +111,7 @@ export default function App() {
             reinitialise jamais tout seul. Le forcer a se remonter a chaque
             changement de route evite qu'une erreur sur /diagnostic reste
             affichee apres avoir clique sur "Tableau de bord". */}
-        <ErrorBoundary key={location.pathname}>
+        <ErrorBoundary key={location.pathname} t={t}>
           <Routes>
             <Route path="/" element={<TableauDeBord />} />
             <Route path="/diagnostic" element={<Diagnostic />} />
