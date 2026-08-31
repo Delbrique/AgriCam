@@ -62,7 +62,10 @@ export default function App() {
 
   return (
     <div className="grid min-h-[100dvh] grid-rows-[auto_1fr] bg-papier">
-      <header className="flex items-center gap-e5 bg-chrome px-[var(--pad-page)] pb-e3 pt-[max(var(--e3),env(safe-area-inset-top))] text-chrome-texte">
+      <header
+        className="flex items-center gap-e5 px-[var(--pad-page)] pb-e3 pt-[max(var(--e3),env(safe-area-inset-top))] text-chrome-texte"
+        style={{ background: 'linear-gradient(120deg, var(--vert-fonce), var(--vert-moyen))' }}
+      >
         <div className="mr-auto flex flex-col">
           <span className="font-titre text-lg font-extrabold leading-[1.1] tracking-[-0.03em]">
             {t.chrome.marque}

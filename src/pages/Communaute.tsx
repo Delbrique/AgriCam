@@ -15,6 +15,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { LogOut, Send } from 'lucide-react';
 import { communauteDisponible, supabase } from '../lib/supabase';
+import { Squelette } from '../components/Squelette';
 
 interface Message {
   id: string;
@@ -47,7 +48,15 @@ function CommunauteConnectee() {
     return () => abonnement.subscription.unsubscribe();
   }, []);
 
-  if (session === undefined) return <p className="text-sm text-encre-douce">Chargement…</p>;
+  if (session === undefined) {
+    return (
+      <div className="carte mx-auto flex w-full max-w-sm flex-col gap-e3">
+        <Squelette className="h-6 w-2/3" />
+        <Squelette className="h-4 w-full" />
+        <Squelette className="h-10 w-full" />
+      </div>
+    );
+  }
   if (!session) return <Connexion />;
   return <FenetreChat session={session} />;
 }
@@ -243,7 +252,13 @@ function FenetreChat({ session }: { session: Session }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-e4">
-        {messages === null && <p className="m-0 text-sm text-encre-douce">Chargement des messages…</p>}
+        {messages === null && (
+          <div className="flex flex-col gap-e3">
+            <Squelette className="h-12 w-2/3 self-start" />
+            <Squelette className="h-12 w-1/2 self-end" />
+            <Squelette className="h-12 w-3/5 self-start" />
+          </div>
+        )}
         {messages?.length === 0 && (
           <p className="m-0 text-sm text-encre-douce">
             Aucun message pour l'instant. Soyez le premier à écrire au salon !

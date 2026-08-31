@@ -22,10 +22,43 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  html {
+    /* Sur ce meme element que la classe "dark" (voir index.html) : la
+       couleur de fond change avec elle, donc une transition ici evite un
+       bond sec au bascule de theme, sur toute la page d'un coup. */
+    transition: background-color 300ms ease, color 300ms ease;
+  }
+
   body {
     @apply m-0 bg-papier text-encre font-texte text-md antialiased;
     line-height: 1.55;
     overscroll-behavior-y: contain;
+    transition: background-color 300ms ease, color 300ms ease;
+  }
+
+  /* Scrollbar dans la meme teinte que le theme actif (via les variables
+     CSS, donc pas de regle separee pour le mode sombre) plutot que la barre
+     grise par defaut du navigateur, qui jure sur un fond tres sombre. */
+  * {
+    scrollbar-color: var(--trait) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--trait);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--vert-moyen);
+    background-clip: padding-box;
   }
 
   h1,

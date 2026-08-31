@@ -2,6 +2,21 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
+    <!-- Pose la classe "dark" avant le premier rendu (voir ThemeProvider,
+         meme cle "agricam-theme") : sans ce script bloquant, la page
+         flasherait en clair une fraction de seconde avant que React ne
+         reprenne la main, y compris pour un visiteur en theme sombre. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('agricam-theme');
+          var sombre =
+            t === 'dark' ||
+            (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', sombre);
+        } catch (e) {}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0E1A13" />
     <meta
