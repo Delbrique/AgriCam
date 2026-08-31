@@ -173,7 +173,7 @@ export function TableauDeBord() {
 
         <div className="flex flex-wrap items-start justify-between gap-e3">
           <div className="min-w-0">
-            <h1 className="m-0 text-lg font-bold leading-snug text-encre">
+            <h1 className="m-0 text-sm font-normal leading-snug text-encre-douce">
               AgriCam diagnostique les maladies de vos plants de tomate, piment et oignon à
               partir d&apos;une simple photo, même sans connexion.
             </h1>
