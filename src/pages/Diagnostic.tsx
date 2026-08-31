@@ -18,8 +18,10 @@ import {
 } from '../lib/pipeline';
 import { corriger, enregistrer, type Consultation } from '../lib/stockage';
 import type { Qualite } from '../lib/qualite';
+import { useTraduction, type Traductions } from '../lib/traduction';
 
 export function Diagnostic() {
+  const { t } = useTraduction();
   const [occupe, setOccupe] = useState(false);
   const [progression, setProgression] = useState<Progression | null>(null);
   const [consultation, setConsultation] = useState<Consultation | null>(null);
@@ -43,7 +45,7 @@ export function Diagnostic() {
     setOccupe(true);
 
     try {
-      const image = await chargerImage(fichier);
+      const image = await chargerImage(fichier, t.diagnostic.fichierIllisible);
       const position = await positionActuelle();
 
       const resultat = await diagnostiquer(image, {
@@ -57,13 +59,13 @@ export function Diagnostic() {
       if (e instanceof PhotoRejetee) {
         setRejet({ qualite: e.qualite, fichier });
       } else {
-        setErreur(messageErreurLisible(e));
+        setErreur(messageErreurLisible(e, t));
       }
     } finally {
       setOccupe(false);
       setProgression(null);
     }
-  }, []);
+  }, [t]);
 
   async function surCorrection(_indexFruit: number, classeId: string) {
     if (consultation) await corriger(consultation.id, classeId);
@@ -85,12 +87,12 @@ export function Diagnostic() {
 
       {rejet && (
         <div className="avis avis--attention">
-          <p>{rejet.qualite.conseil}</p>
+          <p>{rejet.qualite.motif ? t.qualite[rejet.qualite.motif] : rejet.qualite.conseil}</p>
           <button
             className="bouton-second"
             onClick={() => lancer(rejet.fichier, true)}
           >
-            Analyser quand même
+            {t.diagnostic.analyserQuandMeme}
           </button>
         </div>
       )}
@@ -108,25 +110,25 @@ export function Diagnostic() {
  * detecteur.ts, classes.ts...) sont deja en francais clair et ne
  * correspondent a aucun de ces motifs : ils ressortent inchanges.
  */
-function messageErreurLisible(e: unknown): string {
+function messageErreurLisible(e: unknown, t: Traductions): string {
   const brut = e instanceof Error ? e.message : '';
 
   if (/load failed|failed to fetch|networkerror|network request failed/i.test(brut)) {
-    return "Le téléchargement du modèle a échoué (connexion instable). Vérifiez votre réseau et réessayez.";
+    return t.diagnostic.erreurTelechargement;
   }
   if (/connection is clos/i.test(brut)) {
-    return 'Le diagnostic a été calculé, mais son enregistrement dans l’historique a échoué. Réessayez.';
+    return t.diagnostic.erreurEnregistrement;
   }
   if (/wasm|compileerror|doesn't parse|no available backend/i.test(brut)) {
-    return "Un des fichiers du modèle est arrivé corrompu (souvent un réseau mobile instable). Fermez complètement l'application et rouvrez-la pour retélécharger un exemplaire propre.";
+    return t.diagnostic.erreurCorrompu;
   }
   if (!brut) {
-    return 'Le diagnostic n’a pas abouti. Vérifiez que les modèles ont bien été téléchargés au moins une fois, avec une connexion.';
+    return t.diagnostic.erreurGenerique;
   }
   return brut;
 }
 
-function chargerImage(fichier: File): Promise<HTMLImageElement> {
+function chargerImage(fichier: File, messageErreur: string): Promise<HTMLImageElement> {
   return new Promise((resoudre, rejeter) => {
     const url = URL.createObjectURL(fichier);
     const image = new Image();
@@ -136,7 +138,7 @@ function chargerImage(fichier: File): Promise<HTMLImageElement> {
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      rejeter(new Error('Ce fichier n’est pas une image lisible.'));
+      rejeter(new Error(messageErreur));
     };
     image.src = url;
   });

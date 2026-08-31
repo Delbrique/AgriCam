@@ -14,8 +14,9 @@
  */
 
 import { useState } from 'react';
-import { CLASSES, couleurGravite } from '../lib/classes';
+import { CLASSES, agentClasse, couleurGravite, nomClasse } from '../lib/classes';
 import type { DiagnosticFruit, Diagnostic } from '../lib/pipeline';
+import { useTraduction } from '../lib/traduction';
 import { BandeSeverite, PastilleGravite } from './BandeSeverite';
 import { ConduiteATenir } from './ConduiteATenir';
 import { DiagnosticsSimilaires } from './DiagnosticsSimilaires';
@@ -31,14 +32,14 @@ interface Props {
   onCorriger?: (indexFruit: number, classeId: string) => void;
 }
 
-const LIBELLE_GRAVITE = {
-  sain: 'Rien à signaler',
-  alerte: 'À surveiller',
-  atteint: 'Atteinte confirmée',
-  grave: 'Atteinte grave',
-} as const;
-
 export function FicheResultat({ diagnostic, onRecommencer }: Props) {
+  const { t, langue } = useTraduction();
+  const LIBELLE_GRAVITE = {
+    sain: t.ficheResultat.rienASignaler,
+    alerte: t.ficheResultat.aSurveiller,
+    atteint: t.ficheResultat.atteinteConfirmee,
+    grave: t.ficheResultat.atteinteGrave,
+  } as const;
   const [selection, setSelection] = useState(0);
   const [chaleurVisible, setChaleurVisible] = useState(true);
 
@@ -53,46 +54,28 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
         className="rounded-lg border border-trait border-l-[6px] bg-carte p-e5 shadow-carte"
         style={{ borderLeftColor: couleurGravite(diagnostic.graviteGlobale) }}
       >
-        <p className="intitule">Verdict</p>
+        <p className="intitule">{t.ficheResultat.verdict}</p>
         <h1 className="mb-e2 mt-e1 text-2xl">
-          {tousHorsSujet ? 'Photo non reconnue' : LIBELLE_GRAVITE[diagnostic.graviteGlobale]}
+          {tousHorsSujet ? t.ficheResultat.photoNonReconnue : LIBELLE_GRAVITE[diagnostic.graviteGlobale]}
         </h1>
 
         {!tousHorsSujet && (multiple ? (
           <p className="m-0 text-sm text-encre-douce">
-            <span className="donnee text-lg text-encre">
-              {diagnostic.nbAtteints}
-            </span>{' '}
-            fruit{diagnostic.nbAtteints > 1 ? 's' : ''} atteint
-            {diagnostic.nbAtteints > 1 ? 's' : ''} sur{' '}
-            <span className="donnee">{diagnostic.fruits.length}</span> repérés,
-            soit un taux d&apos;infestation de{' '}
-            <span className="donnee">
-              {Math.round(diagnostic.tauxInfestation * 100)}&nbsp;%
-            </span>
-            .
+            {t.ficheResultat.fruitsAtteints(
+              diagnostic.nbAtteints,
+              diagnostic.fruits.length,
+              Math.round(diagnostic.tauxInfestation * 100),
+            )}
           </p>
         ) : (
-          <p className="m-0 text-sm text-encre-douce">
-            Un seul fruit analysé sur cette photo.
-          </p>
+          <p className="m-0 text-sm text-encre-douce">{t.ficheResultat.unSeulFruit}</p>
         ))}
 
         {diagnostic.sansDetection && (
-          <p className="avis avis--attention">
-            Aucun fruit n&apos;a pu être repéré : la photo entière a été
-            analysée. Le résultat est moins fiable. Rapprochez-vous du fruit et
-            reprenez la photo.
-          </p>
+          <p className="avis avis--attention">{t.ficheResultat.sansDetection}</p>
         )}
 
-        {tousHorsSujet && (
-          <p className="avis avis--erreur">
-            Cette photo ne ressemble à aucune des cultures reconnues (tomate,
-            piment, oignon). Reprenez une photo cadrée sur le fruit ou le
-            bulbe à diagnostiquer.
-          </p>
-        )}
+        {tousHorsSujet && <p className="avis avis--erreur">{t.ficheResultat.horsSujetAvis}</p>}
       </section>
 
       {/* --- Grille 2x2 :
@@ -101,21 +84,19 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
       <div className="grid grid-cols-1 gap-e5 bp860:grid-cols-2">
         {/* Photo annotee : fruits reperes (haut gauche) */}
         <section className="carte flex flex-col gap-e3">
-          <p className="intitule">Fruits repérés</p>
+          <p className="intitule">{t.ficheResultat.fruitsRepere}</p>
           <PhotoAnnotee
             photo={diagnostic.photo}
             fruits={diagnostic.fruits}
             selection={selection}
             onSelection={setSelection}
           />
-          {multiple && (
-            <p>Touchez un fruit pour voir son diagnostic.</p>
-          )}
+          {multiple && <p>{t.ficheResultat.toucherFruit}</p>}
         </section>
 
         {/* Diagnostic du fruit selectionne (haut droite) */}
         <section className="carte flex flex-col gap-e3">
-          <p className="intitule">Diagnostic</p>
+          <p className="intitule">{t.ficheResultat.diagnosticTitre}</p>
 
           {fruit.horsSujet ? (
             <HorsSujetExplique />
@@ -126,14 +107,14 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
               <div className="flex items-center justify-between gap-e3">
                 <PastilleGravite
                   gravite={fruit.classe.gravite}
-                  libelle={fruit.classe.nom}
+                  libelle={nomClasse(fruit.classe, langue)}
                 />
                 <span className="donnee text-xl font-bold">
                   {Math.min(99, Math.round(fruit.confiance * 100))}&nbsp;%
                 </span>
               </div>
               {fruit.classe.agent && (
-                <p>Agent en cause : {fruit.classe.agent}</p>
+                <p>{t.ficheResultat.agentEnCause(agentClasse(fruit.classe, langue) ?? fruit.classe.agent)}</p>
               )}
             </>
           )}
@@ -170,33 +151,23 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
         {!fruit.horsSujet && (
           <section className="carte flex flex-col gap-e3 bp860:self-start">
             <div className="flex items-center justify-between gap-e3">
-              <p className="intitule">Zones analysées</p>
+              <p className="intitule">{t.ficheResultat.zonesAnalysees}</p>
               <button
                 className="min-h-[40px] border border-trait bg-transparent px-e3 text-sm font-semibold text-encre aria-pressed:border-encre aria-pressed:bg-encre aria-pressed:text-papier"
                 onClick={() => setChaleurVisible((v) => !v)}
                 aria-pressed={chaleurVisible}
               >
-                {chaleurVisible ? 'Masquer' : 'Afficher'}
+                {chaleurVisible ? t.ficheResultat.masquer : t.ficheResultat.afficher}
               </button>
             </div>
 
             <img
               className="mx-auto block max-h-[300px] w-auto max-w-full rounded-lg bg-encre object-contain"
               src={chaleurVisible ? fruit.vignetteChaleur : fruit.vignette}
-              alt={
-                chaleurVisible
-                  ? 'Zones de l’image ayant motivé le diagnostic'
-                  : 'Fruit analysé'
-              }
+              alt={chaleurVisible ? t.ficheResultat.altZonesChaudes : t.ficheResultat.altFruitAnalyse}
             />
 
-            {chaleurVisible && (
-              <p>
-                Les zones chaudes sont celles sur lesquelles le modèle s&apos;est
-                appuyé. Si elles ne couvrent pas la lésion, le diagnostic est à
-                prendre avec prudence.
-              </p>
-            )}
+            {chaleurVisible && <p>{t.ficheResultat.zonesChaudesTexte}</p>}
           </section>
         )}
       </div>
@@ -206,7 +177,7 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
       )}
 
       <button className="bouton-principal" onClick={onRecommencer}>
-        Analyser un autre fruit
+        {t.ficheResultat.analyserAutreFruit}
       </button>
     </div>
   );
@@ -218,12 +189,10 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
  * entre maladies, c'est une image hors du domaine de l'application.
  */
 function HorsSujetExplique() {
+  const { t } = useTraduction();
   return (
     <div className="avis avis--erreur">
-      <strong>Photo hors sujet.</strong> Cette image ne ressemble à aucune des
-      cultures reconnues par AgriCam (tomate, piment, oignon). Le modèle ne
-      classe que des photos de fruits ou de bulbes de ces trois cultures ;
-      reprenez une photo cadrée dessus.
+      <strong>{t.ficheResultat.horsSujetTitre}</strong> {t.ficheResultat.horsSujetTexte}
     </div>
   );
 }
@@ -232,12 +201,11 @@ function HorsSujetExplique() {
  * Quand la confiance passe sous le seuil, on refuse de trancher.
  */
 function IncertitudeExpliquee({ fruit }: { fruit: DiagnosticFruit }) {
+  const { t } = useTraduction();
   return (
     <div className="avis avis--incertain">
-      <strong>Diagnostic incertain.</strong> Le modèle hésite entre plusieurs
-      états ({Math.round(fruit.confiance * 100)}&nbsp;% pour l&apos;hypothèse la
-      plus probable). Reprenez la photo de plus près, en lumière naturelle, ou
-      demandez un avis à un technicien.
+      <strong>{t.ficheResultat.incertainTitre}</strong>{' '}
+      {t.ficheResultat.incertainTexte(Math.round(fruit.confiance * 100))}
     </div>
   );
 }

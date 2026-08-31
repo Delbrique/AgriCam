@@ -35,6 +35,7 @@ export interface Traductions {
   };
   commun: {
     cultures: { toutes: string; tomate: string; piment: string; oignon: string };
+    ou: string;
   };
   tableauDeBord: {
     salutations: { nuit: string; matin: string; apresMidi: string; soir: string };
@@ -169,6 +170,85 @@ export interface Traductions {
     localiserFoyer: string;
     demanderAssistant: string;
     fermerAlerte: string;
+  };
+  ficheResultat: {
+    verdict: string;
+    photoNonReconnue: string;
+    rienASignaler: string;
+    aSurveiller: string;
+    atteinteConfirmee: string;
+    atteinteGrave: string;
+    fruitsAtteints: (n: number, total: number, pct: number) => string;
+    unSeulFruit: string;
+    sansDetection: string;
+    horsSujetAvis: string;
+    fruitsRepere: string;
+    toucherFruit: string;
+    diagnosticTitre: string;
+    agentEnCause: (agent: string) => string;
+    zonesAnalysees: string;
+    masquer: string;
+    afficher: string;
+    zonesChaudesTexte: string;
+    altZonesChaudes: string;
+    altFruitAnalyse: string;
+    analyserAutreFruit: string;
+    horsSujetTitre: string;
+    horsSujetTexte: string;
+    incertainTitre: string;
+    incertainTexte: (pct: number) => string;
+  };
+  photoAnnotee: {
+    altPhoto: string;
+    fruitLabel: (n: number, nom: string) => string;
+    photoNonReconnue: string;
+  };
+  diagnosticsSimilaires: {
+    titre: string;
+    intro: string;
+    ressemblance: (pct: number) => string;
+    corrige: string;
+  };
+  vueCapture: {
+    titre: string;
+    introAvant: string;
+    introApres: string;
+    analyseEnCours: string;
+    choisirPhoto: string;
+    formats: string;
+    leSaviezVous: string;
+  };
+  qualite: {
+    sombre: string;
+    surexpose: string;
+    monotone: string;
+    flou: string;
+  };
+  diagnostic: {
+    analyserQuandMeme: string;
+    erreurTelechargement: string;
+    erreurEnregistrement: string;
+    erreurCorrompu: string;
+    erreurGenerique: string;
+    fichierIllisible: string;
+  };
+  conduiteATenir: {
+    queFaire: string;
+    urgenceAucune: string;
+    urgenceSurveiller: string;
+    urgenceSous48h: string;
+    urgenceImmediat: string;
+    ecouterConsignes: string;
+    arreterLecture: string;
+    ameliorationEnCours: string;
+    reessayer: string;
+    telechargerPdf: string;
+    masquer: string;
+    eviterQueCelaRevienne: string;
+    aNePasFaire: string;
+    serviceIndisponible: string;
+    redactionEchouee: string;
+    conseilRestValable: string;
   };
 }
 

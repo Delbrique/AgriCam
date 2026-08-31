@@ -16,6 +16,7 @@ import { Camera, ImageUp, Lightbulb } from 'lucide-react';
 import { Tendance } from './Tendance';
 import { astuceEnLigne, astuceHorsLigne } from '../lib/astuce';
 import type { Progression } from '../lib/pipeline';
+import { useTraduction } from '../lib/traduction';
 
 interface Props {
   onImage: (fichier: File) => void;
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function VueCapture({ onImage, occupe, progression }: Props) {
+  const { t } = useTraduction();
   const entree = useRef<HTMLInputElement>(null);
   const [astuce, setAstuce] = useState(astuceHorsLigne);
 
@@ -58,7 +60,7 @@ export function VueCapture({ onImage, occupe, progression }: Props) {
             style={{ width: `${(progression?.fraction ?? 0) * 100}%` }}
           />
         </div>
-        <p className="text-sm text-encre-douce">{progression?.message ?? 'Analyse en cours'}</p>
+        <p className="text-sm text-encre-douce">{progression?.message ?? t.vueCapture.analyseEnCours}</p>
       </div>
     );
   }
@@ -72,13 +74,15 @@ export function VueCapture({ onImage, occupe, progression }: Props) {
         >
           <Camera size={22} strokeWidth={1.75} />
         </span>
-        <h2 className="text-xl tracking-[-0.025em]">Analyse d&apos;un fruit</h2>
+        <h2 className="text-xl tracking-[-0.025em]">{t.vueCapture.titre}</h2>
       </div>
       <p className="-mt-e3 text-sm text-encre-douce">
-        Photographiez un fruit de <strong className="font-semibold text-encre">tomate</strong>,{' '}
-        <strong className="font-semibold text-encre">piment</strong> ou{' '}
-        <strong className="font-semibold text-encre">oignon</strong> pour obtenir un diagnostic
-        immédiat, sans connexion — ce sont les trois cultures reconnues par l'application.
+        {t.vueCapture.introAvant}{' '}
+        <strong className="font-semibold text-encre">{t.commun.cultures.tomate}</strong>,{' '}
+        <strong className="font-semibold text-encre">{t.commun.cultures.piment}</strong>{' '}
+        {t.commun.ou}{' '}
+        <strong className="font-semibold text-encre">{t.commun.cultures.oignon}</strong>{' '}
+        {t.vueCapture.introApres}
       </p>
 
       <div className="grid grid-cols-2 gap-e3">
@@ -92,8 +96,8 @@ export function VueCapture({ onImage, occupe, progression }: Props) {
           >
             <ImageUp size={26} strokeWidth={1.75} />
           </span>
-          <span className="font-titre text-md font-bold text-encre">Choisir une photo</span>
-          <span className="text-xs text-encre-douce">PNG, JPG ou WebP</span>
+          <span className="font-titre text-md font-bold text-encre">{t.vueCapture.choisirPhoto}</span>
+          <span className="text-xs text-encre-douce">{t.vueCapture.formats}</span>
         </button>
 
         <Tendance />
@@ -107,7 +111,7 @@ export function VueCapture({ onImage, occupe, progression }: Props) {
           <Lightbulb size={22} strokeWidth={1.75} />
         </span>
         <div key={astuce} className="flex flex-col gap-0.5 animate-entree">
-          <span className="font-titre text-sm font-bold text-encre">Le saviez-vous&nbsp;?</span>
+          <span className="font-titre text-sm font-bold text-encre">{t.vueCapture.leSaviezVous}</span>
           <p className="m-0 text-sm leading-[1.45] text-encre-douce">{astuce}</p>
         </div>
       </div>

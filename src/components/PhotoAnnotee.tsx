@@ -6,9 +6,10 @@
  * avant meme d'ouvrir le detail.
  */
 
-import { couleurGravite } from '../lib/classes';
+import { couleurGravite, nomClasse } from '../lib/classes';
 import type { DiagnosticFruit } from '../lib/pipeline';
 import { useEffect, useRef, useState } from 'react';
+import { useTraduction } from '../lib/traduction';
 
 interface Props {
   photo: string;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function PhotoAnnotee({ photo, fruits, selection, onSelection }: Props) {
+  const { t, langue } = useTraduction();
   const conteneur = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ largeur: 1, hauteur: 1 });
 
@@ -40,7 +42,7 @@ export function PhotoAnnotee({ photo, fruits, selection, onSelection }: Props) {
       <img
         className="block h-auto max-h-[300px] w-auto max-w-full"
         src={photo}
-        alt="Photo analysée"
+        alt={t.photoAnnotee.altPhoto}
       />
 
       {!unique &&
@@ -63,7 +65,10 @@ export function PhotoAnnotee({ photo, fruits, selection, onSelection }: Props) {
                 borderColor: couleur,
               }}
               onClick={() => onSelection(i)}
-              aria-label={`Fruit ${i + 1} : ${fruit.horsSujet ? 'photo non reconnue' : fruit.classe.nom}`}
+              aria-label={t.photoAnnotee.fruitLabel(
+                i + 1,
+                fruit.horsSujet ? t.photoAnnotee.photoNonReconnue : nomClasse(fruit.classe, langue),
+              )}
               aria-pressed={i === selection}
             >
               <span

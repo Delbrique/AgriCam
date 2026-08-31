@@ -9,9 +9,10 @@
  */
 
 import { useEffect, useState } from 'react';
-import { couleurGravite } from '../lib/classes';
+import { couleurGravite, nomClasse } from '../lib/classes';
 import { diagnosticsSimilaires, type ResultatSimilarite } from '../lib/similarite';
 import type { Consultation } from '../lib/stockage';
+import { useTraduction } from '../lib/traduction';
 
 interface Props {
   embedding: ArrayLike<number>;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function DiagnosticsSimilaires({ embedding, idAExclure }: Props) {
+  const { t, langue } = useTraduction();
   const [resultats, setResultats] = useState<ResultatSimilarite<Consultation>[] | null>(null);
 
   useEffect(() => {
@@ -39,10 +41,8 @@ export function DiagnosticsSimilaires({ embedding, idAExclure }: Props) {
 
   return (
     <section className="carte flex flex-col gap-e3">
-      <p className="intitule">Diagnostics similaires</p>
-      <p className="m-0 text-sm text-encre-douce">
-        Ces cas de votre historique ressemblent visuellement à celui-ci.
-      </p>
+      <p className="intitule">{t.diagnosticsSimilaires.titre}</p>
+      <p className="m-0 text-sm text-encre-douce">{t.diagnosticsSimilaires.intro}</p>
 
       <ul className="m-0 flex list-none flex-col gap-e2 p-0">
         {resultats.map(({ candidat, similarite }) => {
@@ -62,12 +62,12 @@ export function DiagnosticsSimilaires({ embedding, idAExclure }: Props) {
                   className="truncate text-sm font-semibold"
                   style={{ color: couleurGravite(candidat.graviteGlobale) }}
                 >
-                  {principal.classe.nom}
+                  {nomClasse(principal.classe, langue)}
                 </span>
                 <span className="text-xs text-encre-douce">
-                  {dater(candidat.horodatage)} · {Math.round(similarite * 100)}&nbsp;% de
-                  ressemblance
-                  {candidat.correction && ' · corrigé'}
+                  {dater(candidat.horodatage, langue)} ·{' '}
+                  {t.diagnosticsSimilaires.ressemblance(Math.round(similarite * 100))}
+                  {candidat.correction && ` · ${t.diagnosticsSimilaires.corrige}`}
                 </span>
               </div>
             </li>
@@ -78,8 +78,8 @@ export function DiagnosticsSimilaires({ embedding, idAExclure }: Props) {
   );
 }
 
-function dater(horodatage: number): string {
-  return new Date(horodatage).toLocaleDateString('fr-FR', {
+function dater(horodatage: number, langue: 'fr' | 'en'): string {
+  return new Date(horodatage).toLocaleDateString(langue === 'en' ? 'en-US' : 'fr-FR', {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',

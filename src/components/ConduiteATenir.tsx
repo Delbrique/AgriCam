@@ -19,6 +19,7 @@ import { jsPDF } from 'jspdf';
 import { Volume2, VolumeX } from 'lucide-react';
 import type { Classe, Gravite } from '../lib/classes';
 import { conduitePour, LIBELLE_URGENCE, type Urgence } from '../data/conduites';
+import { useTraduction, type Traductions } from '../lib/traduction';
 
 const COULEUR_URGENCE: Record<Urgence, string> = {
   aucune: 'var(--sain)',
@@ -26,6 +27,19 @@ const COULEUR_URGENCE: Record<Urgence, string> = {
   sous_48h: 'var(--atteint)',
   immediat: 'var(--grave)',
 };
+
+/** Libelles d'urgence localises - remplace LIBELLE_URGENCE (data/conduites.ts,
+ * francais uniquement) pour l'affichage ; le texte long de la conduite elle-
+ * meme (resume/gestes/eviter/prevention) reste francais pour l'instant, voir
+ * la note dans le commentaire d'en-tete du fichier. */
+function libelleUrgence(u: Urgence, t: Traductions): string {
+  return {
+    aucune: t.conduiteATenir.urgenceAucune,
+    surveiller: t.conduiteATenir.urgenceSurveiller,
+    sous_48h: t.conduiteATenir.urgenceSous48h,
+    immediat: t.conduiteATenir.urgenceImmediat,
+  }[u];
+}
 
 /** Le lecteur audio embarque du navigateur : fonctionne hors ligne, sans
  * dependance externe. Utile debout, au champ, une main occupee par le
@@ -69,6 +83,7 @@ interface Props {
 type EtatIA = 'inactif' | 'chargement' | 'pret' | 'erreur';
 
 export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur }: Props) {
+  const { t } = useTraduction();
   const [replieOuvert, setReplieOuvert] = useState(false);
   const [enLecture, setEnLecture] = useState(false);
   const [etatIA, setEtatIA] = useState<EtatIA>('inactif');
@@ -95,16 +110,14 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
 
       if (!reponse.ok) {
         const data = await reponse.json().catch(() => ({}));
-        throw new Error(data.erreur ?? 'Le service de conseil est indisponible.');
+        throw new Error(data.erreur ?? t.conduiteATenir.serviceIndisponible);
       }
 
       const data = await reponse.json();
       setConseilIA(data.conseil as string);
       setEtatIA('pret');
     } catch (e) {
-      setErreurIA(
-        e instanceof Error ? e.message : 'La rédaction du conseil enrichi a échoué.',
-      );
+      setErreurIA(e instanceof Error ? e.message : t.conduiteATenir.redactionEchouee);
       setEtatIA('erreur');
     }
   }
@@ -324,7 +337,7 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
   return (
     <section className="carte flex flex-col gap-e3 bp860:self-start">
       <div className="flex items-center justify-between gap-e3">
-        <p className="intitule">Que faire</p>
+        <p className="intitule">{t.conduiteATenir.queFaire}</p>
         <div className="flex items-center gap-e2">
           {LECTURE_DISPONIBLE && (
             <button
@@ -332,7 +345,7 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
               className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-0 bg-transparent text-encre-douce hover:bg-trait"
               onClick={basculerLecture}
               aria-pressed={enLecture}
-              aria-label={enLecture ? 'Arrêter la lecture' : 'Écouter les consignes'}
+              aria-label={enLecture ? t.conduiteATenir.arreterLecture : t.conduiteATenir.ecouterConsignes}
             >
               {enLecture ? (
                 <VolumeX size={16} aria-hidden="true" />
@@ -345,7 +358,7 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
             className="whitespace-nowrap rounded-sm px-e3 py-e1 font-donnee text-xs font-bold uppercase tracking-[0.06em] text-white"
             style={{ background: COULEUR_URGENCE[urgence] }}
           >
-            {LIBELLE_URGENCE[urgence]}
+            {libelleUrgence(urgence, t)}
           </span>
         </div>
       </div>
@@ -364,7 +377,7 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
 
           {eviter && (
             <p className="m-0 rounded border-l-4 border-atteint bg-atteint-fond p-e3 text-sm leading-[1.45]">
-              <strong>À ne pas faire.</strong> {eviter}
+              <strong>{t.conduiteATenir.aNePasFaire}</strong> {eviter}
             </p>
           )}
 
@@ -375,7 +388,7 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
                 onClick={() => setReplieOuvert((v) => !v)}
                 aria-expanded={replieOuvert}
               >
-                {replieOuvert ? 'Masquer' : 'Éviter que cela revienne'}
+                {replieOuvert ? t.conduiteATenir.masquer : t.conduiteATenir.eviterQueCelaRevienne}
               </button>
               {replieOuvert && (
                 <p className="m-0 text-sm leading-[1.45] text-encre-douce">{prevention}</p>
@@ -386,17 +399,17 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
       )}
 
       {etatIA === 'chargement' && (
-        <p className="m-0 text-xs text-encre-douce">Amélioration du conseil en cours…</p>
+        <p className="m-0 text-xs text-encre-douce">{t.conduiteATenir.ameliorationEnCours}</p>
       )}
 
       {etatIA === 'erreur' && (
         <p className="m-0 text-xs text-encre-douce">
-          {erreurIA} Le conseil ci-dessus reste valable.{' '}
+          {erreurIA} {t.conduiteATenir.conseilRestValable}{' '}
           <button
             className="border-0 bg-transparent p-0 text-xs font-semibold text-encre underline underline-offset-[3px]"
             onClick={demanderConseilIA}
           >
-            Réessayer
+            {t.conduiteATenir.reessayer}
           </button>
         </p>
       )}
@@ -406,7 +419,7 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
           className="min-h-[40px] self-start rounded border-0 bg-encre px-e4 text-sm font-semibold text-white hover:brightness-[1.12]"
           onClick={telechargerPdf}
         >
-          Télécharger en PDF
+          {t.conduiteATenir.telechargerPdf}
         </button>
       )}
     </section>

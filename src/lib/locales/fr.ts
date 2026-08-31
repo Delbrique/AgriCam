@@ -13,6 +13,7 @@ export const fr: Traductions = {
   },
   commun: {
     cultures: { toutes: 'Toutes', tomate: 'Tomate', piment: 'Piment', oignon: 'Oignon' },
+    ou: 'ou',
   },
   tableauDeBord: {
     salutations: {
@@ -162,5 +163,96 @@ export const fr: Traductions = {
     localiserFoyer: 'Localiser ce foyer',
     demanderAssistant: "Demander à l'assistant",
     fermerAlerte: 'Fermer cette alerte',
+  },
+  ficheResultat: {
+    verdict: 'Verdict',
+    photoNonReconnue: 'Photo non reconnue',
+    rienASignaler: 'Rien à signaler',
+    aSurveiller: 'À surveiller',
+    atteinteConfirmee: 'Atteinte confirmée',
+    atteinteGrave: 'Atteinte grave',
+    fruitsAtteints: (n, total, pct) =>
+      `${n} fruit${n > 1 ? 's' : ''} atteint${n > 1 ? 's' : ''} sur ${total} repérés, soit un taux d’infestation de ${pct} %.`,
+    unSeulFruit: 'Un seul fruit analysé sur cette photo.',
+    sansDetection:
+      "Aucun fruit n'a pu être repéré : la photo entière a été analysée. Le résultat est moins fiable. Rapprochez-vous du fruit et reprenez la photo.",
+    horsSujetAvis:
+      'Cette photo ne ressemble à aucune des cultures reconnues (tomate, piment, oignon). Reprenez une photo cadrée sur le fruit ou le bulbe à diagnostiquer.',
+    fruitsRepere: 'Fruits repérés',
+    toucherFruit: 'Touchez un fruit pour voir son diagnostic.',
+    diagnosticTitre: 'Diagnostic',
+    agentEnCause: (agent) => `Agent en cause : ${agent}`,
+    zonesAnalysees: 'Zones analysées',
+    masquer: 'Masquer',
+    afficher: 'Afficher',
+    zonesChaudesTexte:
+      'Les zones chaudes sont celles sur lesquelles le modèle s’est appuyé. Si elles ne couvrent pas la lésion, le diagnostic est à prendre avec prudence.',
+    altZonesChaudes: 'Zones de l’image ayant motivé le diagnostic',
+    altFruitAnalyse: 'Fruit analysé',
+    analyserAutreFruit: 'Analyser un autre fruit',
+    horsSujetTitre: 'Photo hors sujet.',
+    horsSujetTexte:
+      'Cette image ne ressemble à aucune des cultures reconnues par AgriCam (tomate, piment, oignon). Le modèle ne classe que des photos de fruits ou de bulbes de ces trois cultures ; reprenez une photo cadrée dessus.',
+    incertainTitre: 'Diagnostic incertain.',
+    incertainTexte: (pct) =>
+      `Le modèle hésite entre plusieurs états (${pct} % pour l’hypothèse la plus probable). Reprenez la photo de plus près, en lumière naturelle, ou demandez un avis à un technicien.`,
+  },
+  photoAnnotee: {
+    altPhoto: 'Photo analysée',
+    fruitLabel: (n, nom) => `Fruit ${n} : ${nom}`,
+    photoNonReconnue: 'photo non reconnue',
+  },
+  diagnosticsSimilaires: {
+    titre: 'Diagnostics similaires',
+    intro: 'Ces cas de votre historique ressemblent visuellement à celui-ci.',
+    ressemblance: (pct) => `${pct} % de ressemblance`,
+    corrige: 'corrigé',
+  },
+  vueCapture: {
+    titre: "Analyse d'un fruit",
+    introAvant: 'Photographiez un fruit de',
+    introApres:
+      "pour obtenir un diagnostic immédiat, sans connexion — ce sont les trois cultures reconnues par l'application.",
+    analyseEnCours: 'Analyse en cours',
+    choisirPhoto: 'Choisir une photo',
+    formats: 'PNG, JPG ou WebP',
+    leSaviezVous: 'Le saviez-vous ?',
+  },
+  qualite: {
+    sombre: "Photo trop sombre. Sortez de l'ombre ou approchez le fruit de la lumière.",
+    surexpose:
+      'Photo brûlée par le soleil. Placez-vous dos au soleil, ou faites de l’ombre avec la main.',
+    monotone: 'Aucun détail visible. Cadrez le fruit lui-même, pas le feuillage.',
+    flou: 'Photo floue. Tenez le téléphone à deux mains, touchez le fruit sur l’écran pour faire le point.',
+  },
+  diagnostic: {
+    analyserQuandMeme: 'Analyser quand même',
+    erreurTelechargement:
+      'Le téléchargement du modèle a échoué (connexion instable). Vérifiez votre réseau et réessayez.',
+    erreurEnregistrement:
+      'Le diagnostic a été calculé, mais son enregistrement dans l’historique a échoué. Réessayez.',
+    erreurCorrompu:
+      "Un des fichiers du modèle est arrivé corrompu (souvent un réseau mobile instable). Fermez complètement l'application et rouvrez-la pour retélécharger un exemplaire propre.",
+    erreurGenerique:
+      'Le diagnostic n’a pas abouti. Vérifiez que les modèles ont bien été téléchargés au moins une fois, avec une connexion.',
+    fichierIllisible: 'Ce fichier n’est pas une image lisible.',
+  },
+  conduiteATenir: {
+    queFaire: 'Que faire',
+    urgenceAucune: 'Rien à faire',
+    urgenceSurveiller: 'À surveiller',
+    urgenceSous48h: 'Agir sous 48 heures',
+    urgenceImmediat: 'Agir aujourd’hui',
+    ecouterConsignes: 'Écouter les consignes',
+    arreterLecture: 'Arrêter la lecture',
+    ameliorationEnCours: 'Amélioration du conseil en cours…',
+    reessayer: 'Réessayer',
+    telechargerPdf: 'Télécharger en PDF',
+    masquer: 'Masquer',
+    eviterQueCelaRevienne: 'Éviter que cela revienne',
+    aNePasFaire: 'À ne pas faire.',
+    serviceIndisponible: 'Le service de conseil est indisponible.',
+    redactionEchouee: "La rédaction du conseil enrichi a échoué.",
+    conseilRestValable: 'Le conseil ci-dessus reste valable.',
   },
 };

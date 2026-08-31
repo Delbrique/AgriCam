@@ -13,6 +13,7 @@ export const en: Traductions = {
   },
   commun: {
     cultures: { toutes: 'All', tomate: 'Tomato', piment: 'Pepper', oignon: 'Onion' },
+    ou: 'or',
   },
   tableauDeBord: {
     salutations: {
@@ -158,5 +159,95 @@ export const en: Traductions = {
     localiserFoyer: 'Locate this outbreak',
     demanderAssistant: 'Ask the assistant',
     fermerAlerte: 'Dismiss this alert',
+  },
+  ficheResultat: {
+    verdict: 'Verdict',
+    photoNonReconnue: 'Photo not recognized',
+    rienASignaler: 'Nothing to report',
+    aSurveiller: 'To watch',
+    atteinteConfirmee: 'Disease confirmed',
+    atteinteGrave: 'Severe disease',
+    fruitsAtteints: (n, total, pct) =>
+      `${n} fruit${n > 1 ? 's' : ''} affected out of ${total} spotted, an infestation rate of ${pct}%.`,
+    unSeulFruit: 'Only one fruit analyzed on this photo.',
+    sansDetection:
+      'No fruit could be spotted: the whole photo was analyzed instead. The result is less reliable. Get closer to the fruit and retake the photo.',
+    horsSujetAvis:
+      "This photo doesn't resemble any of the recognized crops (tomato, pepper, onion). Retake a photo framed on the fruit or bulb to diagnose.",
+    fruitsRepere: 'Fruits spotted',
+    toucherFruit: 'Tap a fruit to see its diagnosis.',
+    diagnosticTitre: 'Diagnosis',
+    agentEnCause: (agent) => `Responsible agent: ${agent}`,
+    zonesAnalysees: 'Analyzed areas',
+    masquer: 'Hide',
+    afficher: 'Show',
+    zonesChaudesTexte:
+      "The highlighted areas are what the model relied on. If they don't cover the lesion, treat the diagnosis with caution.",
+    altZonesChaudes: 'Areas of the image that drove the diagnosis',
+    altFruitAnalyse: 'Analyzed fruit',
+    analyserAutreFruit: 'Analyze another fruit',
+    horsSujetTitre: 'Off-topic photo.',
+    horsSujetTexte:
+      "This image doesn't resemble any of the crops recognized by AgriCam (tomato, pepper, onion). The model only classifies photos of fruit or bulbs from these three crops; retake a photo framed on it.",
+    incertainTitre: 'Uncertain diagnosis.',
+    incertainTexte: (pct) =>
+      `The model is hesitating between several states (${pct}% for the most likely one). Retake the photo closer up, in natural light, or ask a technician for advice.`,
+  },
+  photoAnnotee: {
+    altPhoto: 'Analyzed photo',
+    fruitLabel: (n, nom) => `Fruit ${n}: ${nom}`,
+    photoNonReconnue: 'photo not recognized',
+  },
+  diagnosticsSimilaires: {
+    titre: 'Similar diagnoses',
+    intro: 'These cases from your history visually resemble this one.',
+    ressemblance: (pct) => `${pct}% match`,
+    corrige: 'corrected',
+  },
+  vueCapture: {
+    titre: 'Fruit analysis',
+    introAvant: 'Photograph a',
+    introApres:
+      'fruit to get an instant diagnosis, even without a connection — these are the three crops recognized by the app.',
+    analyseEnCours: 'Analyzing',
+    choisirPhoto: 'Choose a photo',
+    formats: 'PNG, JPG or WebP',
+    leSaviezVous: 'Did you know?',
+  },
+  qualite: {
+    sombre: 'Photo too dark. Step out of the shade or bring the fruit closer to the light.',
+    surexpose: "Photo washed out by the sun. Turn your back to the sun, or shade it with your hand.",
+    monotone: 'No visible detail. Frame the fruit itself, not the foliage.',
+    flou: 'Blurry photo. Hold the phone with both hands, tap the fruit on screen to focus.',
+  },
+  diagnostic: {
+    analyserQuandMeme: 'Analyze anyway',
+    erreurTelechargement:
+      'The model download failed (unstable connection). Check your network and try again.',
+    erreurEnregistrement:
+      'The diagnosis was computed, but saving it to your history failed. Please try again.',
+    erreurCorrompu:
+      'One of the model files arrived corrupted (often an unstable mobile network). Fully close the app and reopen it to download a clean copy.',
+    erreurGenerique:
+      'The diagnosis could not be completed. Make sure the models were downloaded at least once, with a connection.',
+    fichierIllisible: 'This file is not a readable image.',
+  },
+  conduiteATenir: {
+    queFaire: 'What to do',
+    urgenceAucune: 'Nothing to do',
+    urgenceSurveiller: 'To watch',
+    urgenceSous48h: 'Act within 48 hours',
+    urgenceImmediat: 'Act today',
+    ecouterConsignes: 'Listen to the instructions',
+    arreterLecture: 'Stop the reading',
+    ameliorationEnCours: 'Refining the advice…',
+    reessayer: 'Retry',
+    telechargerPdf: 'Download as PDF',
+    masquer: 'Hide',
+    eviterQueCelaRevienne: 'Avoid it coming back',
+    aNePasFaire: "Don't do this.",
+    serviceIndisponible: 'The advice service is unavailable.',
+    redactionEchouee: 'Generating the enriched advice failed.',
+    conseilRestValable: 'The advice above still stands.',
   },
 };
