@@ -147,36 +147,49 @@ export default async function handler(req: Request): Promise<Response> {
 
   // Reduit le SSE format OpenAI de Groq (lignes "data: {...}", terminees par
   // "data: [DONE]") a un flux texte brut : le client n'a besoin que des
-  // deltas de contenu, pas du reste de l'enveloppe JSON par morceau.
+  // deltas de contenu, pas du reste de l'enveloppe JSON par morceau. La
+  // boucle de lecture tourne dans start(), pas dans pull() : les modeles de
+  // raisonnement de Groq emettent d'abord de nombreux deltas "reasoning"
+  // (jamais transmis au client) avant le premier delta "content" - or dans
+  // le runtime Edge de Vercel, pull() n'est pas rappele tant qu'il n'a rien
+  // mis en file (constate en test : le flux restait bloque des qu'un
+  // morceau ne contenait que du raisonnement). Une boucle auto-entretenue
+  // dans start() ne depend pas de ce ré-appel et avance quoi qu'il arrive.
   const decodeur = new TextDecoder();
   const encodeur = new TextEncoder();
   const lecteur = reponseGroq.body.getReader();
-  let tampon = '';
 
   const flux = new ReadableStream<Uint8Array>({
-    async pull(controleur) {
-      const { done, value } = await lecteur.read();
-      if (done) {
-        controleur.close();
+    async start(controleur) {
+      let tampon = '';
+      try {
+        for (;;) {
+          const { done, value } = await lecteur.read();
+          if (done) break;
+          tampon += decodeur.decode(value, { stream: true });
+          const lignes = tampon.split('\n');
+          tampon = lignes.pop() ?? '';
+          for (const ligne of lignes) {
+            const t = ligne.trim();
+            if (!t.startsWith('data:')) continue;
+            const donnees = t.slice(5).trim();
+            if (donnees === '[DONE]') continue;
+            try {
+              const json = JSON.parse(donnees);
+              const morceau: string | undefined = json?.choices?.[0]?.delta?.content;
+              if (morceau) controleur.enqueue(encodeur.encode(morceau));
+            } catch {
+              // Ligne SSE incomplete (coupee entre deux paquets reseau) :
+              // ignoree, elle sera reprise dans un prochain morceau via le
+              // tampon.
+            }
+          }
+        }
+      } catch (e) {
+        controleur.error(e);
         return;
       }
-      tampon += decodeur.decode(value, { stream: true });
-      const lignes = tampon.split('\n');
-      tampon = lignes.pop() ?? '';
-      for (const ligne of lignes) {
-        const t = ligne.trim();
-        if (!t.startsWith('data:')) continue;
-        const donnees = t.slice(5).trim();
-        if (donnees === '[DONE]') continue;
-        try {
-          const json = JSON.parse(donnees);
-          const morceau: string | undefined = json?.choices?.[0]?.delta?.content;
-          if (morceau) controleur.enqueue(encodeur.encode(morceau));
-        } catch {
-          // Ligne SSE incomplete (coupee entre deux paquets reseau) : ignoree,
-          // elle sera reprise dans un prochain morceau via le tampon.
-        }
-      }
+      controleur.close();
     },
   });
 
