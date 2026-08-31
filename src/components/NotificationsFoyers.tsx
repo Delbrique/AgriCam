@@ -104,7 +104,7 @@ export function NotificationsFoyers() {
               return (
                 <div
                   key={foyer.classeId}
-                  className="relative flex flex-col gap-e2 rounded border border-atteint bg-atteint-fond p-e3 pr-e6"
+                  className="relative flex flex-col gap-e2 rounded-xl border border-atteint bg-atteint-fond p-e3 pr-e6"
                 >
                   <button
                     type="button"

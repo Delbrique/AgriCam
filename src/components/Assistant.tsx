@@ -493,7 +493,7 @@ export function Assistant() {
           >
             <button
               type="button"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded border border-trait bg-transparent text-encre hover:bg-trait/30"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-trait bg-transparent text-encre hover:bg-trait/30"
               onClick={() => fichierRef.current?.click()}
               disabled={lecturePiece}
               aria-label="Joindre un fichier"
@@ -510,7 +510,7 @@ export function Assistant() {
             <textarea
               ref={saisieRef}
               rows={1}
-              className="max-h-[120px] min-h-[40px] flex-1 resize-none overflow-y-auto rounded border border-trait bg-papier px-e3 py-2 text-sm text-encre"
+              className="max-h-[120px] min-h-[40px] flex-1 resize-none overflow-y-auto rounded-xl border border-trait bg-papier px-e3 py-2 text-sm text-encre"
               placeholder="Votre question…"
               value={saisie}
               onChange={(e) => setSaisie(e.target.value)}
@@ -525,7 +525,7 @@ export function Assistant() {
             {RECONNAISSANCE_VOCALE_CTOR && (
               <button
                 type="button"
-                className={`grid h-10 w-10 shrink-0 place-items-center rounded border-0 ${
+                className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border-0 ${
                   ecoute ? 'animate-pulse bg-atteint text-white' : 'bg-transparent text-encre hover:bg-trait/30'
                 }`}
                 onClick={basculerDictee}
@@ -537,7 +537,7 @@ export function Assistant() {
             )}
             <button
               type="submit"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded border-0 bg-encre text-papier disabled:bg-encre-douce"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-0 bg-encre text-papier disabled:bg-encre-douce"
               disabled={enCours || (!saisie.trim() && !piece)}
               aria-label="Envoyer"
             >

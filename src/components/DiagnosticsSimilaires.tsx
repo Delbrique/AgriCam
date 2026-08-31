@@ -50,7 +50,7 @@ export function DiagnosticsSimilaires({ embedding, idAExclure }: Props) {
           return (
             <li
               key={candidat.id}
-              className="flex items-center gap-e3 rounded border border-trait p-e2"
+              className="flex items-center gap-e3 rounded-xl border border-trait p-e2"
             >
               <img
                 className="h-12 w-12 shrink-0 rounded bg-encre object-cover"

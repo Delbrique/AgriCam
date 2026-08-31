@@ -138,7 +138,7 @@ export function GestionParcelles({
           <label className="flex flex-col gap-e1 text-sm">
             Nom
             <input
-              className="rounded border border-trait bg-transparent px-e3 py-e2"
+              className="rounded-xl border border-trait bg-transparent px-e3 py-e2"
               value={nom}
               onChange={(e) => setNom(e.target.value)}
               placeholder="Champ piment - derrière la maison"
@@ -149,7 +149,7 @@ export function GestionParcelles({
           <label className="flex flex-col gap-e1 text-sm">
             Culture
             <select
-              className="rounded border border-trait bg-transparent px-e3 py-e2"
+              className="rounded-xl border border-trait bg-transparent px-e3 py-e2"
               value={culture}
               onChange={(e) => setCulture(e.target.value as Parcelle['culture'])}
             >
@@ -218,7 +218,7 @@ export function GestionParcelles({
 
                 {enRenommage ? (
                   <input
-                    className="min-w-0 flex-1 rounded border border-trait bg-transparent px-e2 py-e1 text-sm"
+                    className="min-w-0 flex-1 rounded-xl border border-trait bg-transparent px-e2 py-e1 text-sm"
                     value={brouillonNom}
                     onChange={(e) => setBrouillonNom(e.target.value)}
                     autoFocus
