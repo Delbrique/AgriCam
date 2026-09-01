@@ -210,6 +210,20 @@ export interface Traductions {
     ressemblance: (pct: number) => string;
     corrige: string;
   };
+  export: {
+    horsSujetMinuscule: string;
+    horsSujet: string;
+    titrePdf: string;
+    resumePdf: (n: number, date: string) => string;
+    colDate: string;
+    colCulture: string;
+    colDiagnostic: string;
+    colConfiance: string;
+    colFruits: string;
+    fruitsAtteints: (n: number, total: number) => string;
+    footerPdf: string;
+    page: (p: number, total: number) => string;
+  };
   assistant: {
     titre: string;
     ouvrir: string;
@@ -301,6 +315,14 @@ export interface Traductions {
     serviceIndisponible: string;
     redactionEchouee: string;
     conseilRestValable: string;
+    pdfSousTitre: string;
+    pdfCulture: string;
+    pdfAgent: string;
+    pdfConfiance: string;
+    pdfDate: string;
+    pdfZonesAnalysees: string;
+    pdfFooter: string;
+    pdfPage: (p: number, total: number) => string;
   };
 }
 

@@ -334,7 +334,7 @@ export function TableauDeBord() {
         <button
           type="button"
           className="bouton-second flex items-center gap-e2"
-          onClick={() => exporterCsv(consultations)}
+          onClick={() => exporterCsv(consultations, t, langue)}
           disabled={consultations.length === 0}
         >
           <Download size={16} aria-hidden="true" />
@@ -343,7 +343,7 @@ export function TableauDeBord() {
         <button
           type="button"
           className="bouton-second flex items-center gap-e2"
-          onClick={() => exporterPdf(consultations)}
+          onClick={() => exporterPdf(consultations, t, langue)}
           disabled={consultations.length === 0}
         >
           <FileDown size={16} aria-hidden="true" />

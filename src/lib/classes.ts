@@ -141,18 +141,30 @@ export const CLASSES: Classe[] = [
   },
 ];
 
+/** Resout toujours via le referentiel CLASSES en vigueur, par id, plutot que
+ * de faire confiance a l'objet `classe` recu : une Consultation enregistree
+ * dans IndexedDB avant l'ajout de nomEn/agentEn contient un CLONE fige de la
+ * classe telle qu'elle etait a l'epoque (structured clone, pas une reference
+ * vivante) - sans cette resolution, les diagnostics deja stockes resteraient
+ * bloques en francais meme apres bascule en anglais. */
+function classeVivante(c: Classe): Classe {
+  return CLASSES.find((x) => x.id === c.id) ?? c;
+}
+
 /** Nom localise d'une classe - retombe sur le francais si la langue est
  * l'anglais mais qu'aucune traduction n'est enregistree (ne devrait pas
  * arriver, toutes les entrees ci-dessus en ont une). */
 export function nomClasse(c: Classe, langue: 'fr' | 'en'): string {
-  return langue === 'en' && c.nomEn ? c.nomEn : c.nom;
+  const actuel = classeVivante(c);
+  return langue === 'en' && actuel.nomEn ? actuel.nomEn : actuel.nom;
 }
 
 /** Agent localise - la plupart des noms scientifiques latins sont deja
  * identiques dans les deux langues, seules les explications en langue
  * naturelle (ex. carence en calcium) ont une version anglaise distincte. */
 export function agentClasse(c: Classe, langue: 'fr' | 'en'): string | undefined {
-  return langue === 'en' && c.agentEn ? c.agentEn : c.agent;
+  const actuel = classeVivante(c);
+  return langue === 'en' && actuel.agentEn ? actuel.agentEn : actuel.agent;
 }
 
 export const NB_CLASSES = CLASSES.length;

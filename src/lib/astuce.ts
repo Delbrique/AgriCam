@@ -8,18 +8,18 @@
  * rester sans rien a montrer.
  */
 
-import { CLASSES } from './classes';
+import { CLASSES, agentClasse, nomClasse } from './classes';
 import { astuceAleatoire } from '../data/sensibilisation';
 
 const MALADIES = CLASSES.filter((c) => c.gravite !== 'sain');
 
 /** Astuce locale, disponible immediatement (hors ligne ou en attendant Groq). */
-export function astuceHorsLigne(): string {
-  return astuceAleatoire();
+export function astuceHorsLigne(langue: 'fr' | 'en' = 'fr'): string {
+  return astuceAleatoire(langue);
 }
 
 /** Astuce Groq, sur une maladie choisie au hasard. Null si indisponible. */
-export async function astuceEnLigne(): Promise<string | null> {
+export async function astuceEnLigne(langue: 'fr' | 'en' = 'fr'): Promise<string | null> {
   if (!navigator.onLine) return null;
 
   const classe = MALADIES[Math.floor(Math.random() * MALADIES.length)];
@@ -29,9 +29,10 @@ export async function astuceEnLigne(): Promise<string | null> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        maladie: classe.nom,
+        maladie: nomClasse(classe, langue),
         culture: classe.culture,
-        agent: classe.agent ?? null,
+        agent: agentClasse(classe, langue) ?? null,
+        langue,
       }),
     });
     if (!reponse.ok) return null;

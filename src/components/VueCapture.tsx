@@ -25,19 +25,20 @@ interface Props {
 }
 
 export function VueCapture({ onImage, occupe, progression }: Props) {
-  const { t } = useTraduction();
+  const { t, langue } = useTraduction();
   const entree = useRef<HTMLInputElement>(null);
-  const [astuce, setAstuce] = useState(astuceHorsLigne);
+  const [astuce, setAstuce] = useState(() => astuceHorsLigne(langue));
 
   useEffect(() => {
+    setAstuce(astuceHorsLigne(langue));
     let annule = false;
-    astuceEnLigne().then((texte) => {
+    astuceEnLigne(langue).then((texte) => {
       if (!annule && texte) setAstuce(texte);
     });
     return () => {
       annule = true;
     };
-  }, []);
+  }, [langue]);
 
   function choisir(e: React.ChangeEvent<HTMLInputElement>) {
     const fichier = e.target.files?.[0];

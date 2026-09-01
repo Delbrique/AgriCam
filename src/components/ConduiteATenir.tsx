@@ -17,7 +17,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { jsPDF } from 'jspdf';
 import { Volume2, VolumeX } from 'lucide-react';
-import type { Classe, Gravite } from '../lib/classes';
+import { agentClasse, nomClasse, type Classe, type Gravite } from '../lib/classes';
 import { conduitePour, LIBELLE_URGENCE, type Urgence } from '../data/conduites';
 import { useTraduction, type Traductions } from '../lib/traduction';
 
@@ -83,7 +83,7 @@ interface Props {
 type EtatIA = 'inactif' | 'chargement' | 'pret' | 'erreur';
 
 export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur }: Props) {
-  const { t } = useTraduction();
+  const { t, langue } = useTraduction();
   const [replieOuvert, setReplieOuvert] = useState(false);
   const [enLecture, setEnLecture] = useState(false);
   const [etatIA, setEtatIA] = useState<EtatIA>('inactif');
@@ -100,11 +100,12 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          maladie: classe.nom,
+          maladie: nomClasse(classe, langue),
           culture: classe.culture,
-          agent: classe.agent ?? null,
+          agent: agentClasse(classe, langue) ?? null,
           gravite: classe.gravite,
           confiance: Math.round(confiance * 100),
+          langue,
         }),
       });
 
@@ -123,14 +124,14 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
   }
 
   // A chaque changement de maladie affichee (autre fruit selectionne,
-  // nouvelle photo) : on repart du texte en dur, et on redemande la version
-  // enrichie si le reseau est la.
+  // nouvelle photo) OU de langue de l'interface : on repart du texte en dur,
+  // et on redemande la version enrichie si le reseau est la.
   useEffect(() => {
     setConseilIA('');
     setEtatIA('inactif');
     if (navigator.onLine) demanderConseilIA();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classe.id]);
+  }, [classe.id, langue]);
 
   // Coupe toute lecture en cours des que le diagnostic affiche change ou que
   // le composant disparait.
@@ -172,8 +173,11 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
       return;
     }
 
+    // La conduite en dur (repli) reste ecrite en francais (voir plus haut) ;
+    // seul le conseil IA est bilingue - la voix ne doit passer en anglais
+    // que lorsqu'elle lit effectivement ce texte-la.
     const enonce = new SpeechSynthesisUtterance(texteAudio());
-    enonce.lang = 'fr-FR';
+    enonce.lang = conseilPret && langue === 'en' ? 'en-US' : 'fr-FR';
     enonce.onend = () => setEnLecture(false);
     enonce.onerror = () => setEnLecture(false);
 
@@ -208,19 +212,20 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
     doc.setFont('times', 'normal');
     doc.setFontSize(12);
     doc.setTextColor(185, 198, 189);
-    doc.text('Conseil de traitement personnalise', margeX, 18);
+    doc.text(t.conduiteATenir.pdfSousTitre, margeX, 18);
     y = 24 + 10;
 
-    const date = new Date(horodatage).toLocaleDateString('fr-FR', {
+    const date = new Date(horodatage).toLocaleDateString(langue === 'en' ? 'en-US' : 'fr-FR', {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
     });
+    const agentPdf = agentClasse(classe, langue);
     const lignesVerdict = [
-      `Culture : ${classe.culture}`,
-      classe.agent ? `Agent en cause : ${classe.agent}` : '',
-      `Confiance du diagnostic : ${Math.min(99, Math.round(confiance * 100))} %`,
-      `Date du diagnostic : ${date}`,
+      `${t.conduiteATenir.pdfCulture} : ${t.commun.cultures[classe.culture]}`,
+      agentPdf ? `${t.conduiteATenir.pdfAgent} : ${agentPdf}` : '',
+      `${t.conduiteATenir.pdfConfiance} : ${Math.min(99, Math.round(confiance * 100))}%`,
+      `${t.conduiteATenir.pdfDate} : ${date}`,
     ].filter(Boolean);
     const hauteurBox = 11 + lignesVerdict.length * hauteurLigne(12) + 4;
 
@@ -235,7 +240,7 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
     doc.setFont('times', 'bold');
     doc.setFontSize(14);
     doc.setTextColor(...ENCRE);
-    doc.text(classe.nom, xTexteBox, yBox);
+    doc.text(nomClasse(classe, langue), xTexteBox, yBox);
     yBox += hauteurLigne(14);
 
     doc.setFont('times', 'normal');
@@ -253,7 +258,7 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
       doc.setFont('times', 'italic');
       doc.setFontSize(9);
       doc.setTextColor(...ENCRE_DOUCE);
-      doc.text('Zones analysees (Grad-CAM)', margeX, y + cote + 5);
+      doc.text(t.conduiteATenir.pdfZonesAnalysees, margeX, y + cote + 5);
       y += cote + 12;
     } catch {
       /* si l'image ne peut pas etre integree, on continue sans elle */
@@ -316,17 +321,13 @@ export function ConduiteATenir({ classe, confiance, horodatage, vignetteChaleur 
       doc.setFont('times', 'italic');
       doc.setFontSize(9);
       doc.setTextColor(...ENCRE_DOUCE);
-      doc.text(
-        'Conseil genere par AgriCam — a confirmer par un technicien agricole en cas de doute.',
-        margeX,
-        290,
-      );
-      doc.text(`Page ${p} / ${totalPages}`, 210 - margeX, 290, {
+      doc.text(t.conduiteATenir.pdfFooter, margeX, 290);
+      doc.text(t.conduiteATenir.pdfPage(p, totalPages), 210 - margeX, 290, {
         align: 'right',
       });
     }
 
-    const nomFichier = `AgriCam_conseil_${classe.nom
+    const nomFichier = `AgriCam_conseil_${nomClasse(classe, langue)
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
       .replace(/[^a-zA-Z0-9]+/g, '_')

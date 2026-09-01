@@ -16,6 +16,7 @@ interface CorpsRequete {
   maladie: string;
   culture?: string;
   agent?: string | null;
+  langue?: 'fr' | 'en';
 }
 
 export default async function handler(req: any, res: any) {
@@ -35,32 +36,52 @@ export default async function handler(req: any, res: any) {
   const corps: CorpsRequete =
     typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body ?? {};
 
-  const { maladie, culture, agent } = corps;
+  const { maladie, culture, agent, langue } = corps;
   if (!maladie) {
     res.status(400).json({ erreur: 'Maladie manquante.' });
     return;
   }
 
-  const contexte = [
-    `Maladie : ${maladie}`,
-    culture ? `Culture : ${culture}` : '',
-    agent ? `Agent responsable : ${agent}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const enAnglais = langue === 'en';
 
-  const systeme =
-    "Tu rediges le fait du jour d'une application de diagnostic agricole, pour " +
-    "des producteurs de tomate, piment et oignon au Cameroun. Ecris UNE SEULE " +
-    "phrase en français simple et direct, à la deuxième personne (« vous ») ou " +
-    "impersonnelle, qui enseigne quelque chose de concret et d'actionnable sur " +
-    "la maladie donnée (comment elle se propage, un geste qui limite les pertes, " +
-    "une erreur fréquente à éviter). Jamais de généralité vague. Pas de symbole " +
-    "de mise en forme, pas de guillemets autour de la phrase, pas de préfixe " +
-    "comme « Le saviez-vous » (l'application l'ajoute déjà). Une seule phrase, " +
-    "40 mots maximum.";
+  const contexte = enAnglais
+    ? [
+        `Disease: ${maladie}`,
+        culture ? `Crop: ${culture}` : '',
+        agent ? `Responsible agent: ${agent}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : [
+        `Maladie : ${maladie}`,
+        culture ? `Culture : ${culture}` : '',
+        agent ? `Agent responsable : ${agent}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
 
-  const utilisateur = `${contexte}\n\nDonne le fait du jour pour cette maladie.`;
+  const systeme = enAnglais
+    ? "You write the daily fact for an agricultural diagnosis app, for tomato, " +
+      "pepper and onion growers in Cameroon. Write ONE SINGLE sentence in " +
+      "simple, direct English, addressed to the grower ('you') or impersonal, " +
+      "that teaches something concrete and actionable about the given disease " +
+      "(how it spreads, an action that limits losses, a common mistake to " +
+      "avoid). Never a vague generality. No formatting symbols, no quotation " +
+      "marks around the sentence, no prefix like 'Did you know' (the app " +
+      "already adds it). One sentence, 40 words maximum."
+    : "Tu rediges le fait du jour d'une application de diagnostic agricole, pour " +
+      "des producteurs de tomate, piment et oignon au Cameroun. Ecris UNE SEULE " +
+      "phrase en français simple et direct, à la deuxième personne (« vous ») ou " +
+      "impersonnelle, qui enseigne quelque chose de concret et d'actionnable sur " +
+      "la maladie donnée (comment elle se propage, un geste qui limite les pertes, " +
+      "une erreur fréquente à éviter). Jamais de généralité vague. Pas de symbole " +
+      "de mise en forme, pas de guillemets autour de la phrase, pas de préfixe " +
+      "comme « Le saviez-vous » (l'application l'ajoute déjà). Une seule phrase, " +
+      "40 mots maximum.";
+
+  const utilisateur = enAnglais
+    ? `${contexte}\n\nGive today's fact for this disease.`
+    : `${contexte}\n\nDonne le fait du jour pour cette maladie.`;
 
   try {
     const reponse = await fetch(
