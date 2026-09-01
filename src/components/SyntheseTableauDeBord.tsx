@@ -19,6 +19,7 @@ import {
   type RecommandationAgregee,
   type StatCulture,
 } from '../lib/tableauDeBord';
+import { nomClasse } from '../lib/classes';
 import { useTraduction } from '../lib/traduction';
 
 interface Props {
@@ -56,21 +57,24 @@ export function SyntheseTableauDeBord({
         tauxSain: kpis.tauxSain,
         nbAlertesCritiques: kpis.nbAlertesCritiques,
         confianceMoyenne: kpis.confianceMoyenne,
-        maladiePredominante: kpis.maladiePredominante?.classe.nom ?? null,
+        maladiePredominante: kpis.maladiePredominante
+          ? nomClasse(kpis.maladiePredominante.classe, langue)
+          : null,
         maladiesCritiques: maladiesCritiques.map((m) => ({
-          nom: m.classe.nom,
+          nom: nomClasse(m.classe, langue),
           occurrences: m.occurrences,
         })),
         repartitionMaladies: repartitionMaladies.slice(0, 6).map((m) => ({
-          nom: m.classe.nom,
+          nom: nomClasse(m.classe, langue),
           nombre: m.nombre,
           part: m.part,
         })),
         repartitionCultures: repartitionCultures.map((c) => ({
-          nom: c.culture,
+          nom: t.commun.cultures[c.culture],
           nombre: c.nombre,
           nombreAtteints: c.nombreAtteints,
         })),
+        langue,
       }),
     })
       .then(async (reponse) => {
@@ -97,6 +101,7 @@ export function SyntheseTableauDeBord({
     kpis.nbAlertesCritiques,
     kpis.tauxSain,
     kpis.maladiePredominante?.classe.id,
+    langue,
   ]);
 
   if (kpis.nbDiagnostics === 0) {

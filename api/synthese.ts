@@ -8,6 +8,9 @@
  * role n'est pas de decrire chaque maladie une par une, mais de degager une
  * priorite parmi tout ce qui a ete diagnostique. Meme principe que les
  * autres endpoints : la cle GROQ_API_KEY reste ici, cote serveur.
+ *
+ * Bilingue (parametre `langue`), meme raison que /api/conseil : ce texte est
+ * affiche tel quel dans le panneau "Recommandations" du tableau de bord.
  */
 
 interface RepartitionMaladie {
@@ -37,6 +40,7 @@ interface CorpsRequete {
   maladiesCritiques?: MaladieCritique[];
   repartitionMaladies?: RepartitionMaladie[];
   repartitionCultures?: RepartitionCulture[];
+  langue?: 'fr' | 'en';
 }
 
 export default async function handler(req: any, res: any) {
@@ -71,59 +75,108 @@ export default async function handler(req: any, res: any) {
     maladiesCritiques = [],
     repartitionMaladies = [],
     repartitionCultures = [],
+    langue,
   } = corps;
 
-  const contexte = [
-    `Période analysée : ${periode}`,
-    `Nombre de diagnostics : ${nbDiagnostics}`,
-    tauxSain !== null ? `Taux de plants sains : ${Math.round(tauxSain * 100)} %` : '',
-    `Alertes critiques : ${nbAlertesCritiques}`,
-    confianceMoyenne !== null
-      ? `Confiance moyenne du modèle : ${Math.round(confianceMoyenne * 100)} %`
-      : '',
-    maladiePredominante ? `Maladie la plus fréquente : ${maladiePredominante}` : '',
-    maladiesCritiques.length > 0
-      ? 'Maladies critiques détectées :\n' +
-        maladiesCritiques.map((m) => `  - ${m.nom} : ${m.occurrences} cas`).join('\n')
-      : '',
-    repartitionMaladies.length > 0
-      ? 'Répartition de toutes les maladies détectées :\n' +
-        repartitionMaladies
-          .map((m) => `  - ${m.nom} : ${m.nombre} cas (${Math.round(m.part * 100)} %)`)
-          .join('\n')
-      : '',
-    repartitionCultures.length > 0
-      ? 'Répartition par culture :\n' +
-        repartitionCultures
-          .map((c) => `  - ${c.nom} : ${c.nombre} fruits diagnostiqués, dont ${c.nombreAtteints} atteints`)
-          .join('\n')
-      : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const enAnglais = langue === 'en';
 
-  const systeme =
-    "Tu es un conseiller agricole qui analyse le TABLEAU DE BORD complet d'un " +
-    'producteur maraîcher au Cameroun (tomate, piment, oignon) - plusieurs ' +
-    "diagnostics accumulés sur une période, pas un seul. Ton lecteur cultive " +
-    "lui-même ses parcelles ; il n'est pas ingénieur. Ton rôle n'est PAS de " +
-    "décrire chaque maladie une par une (il a déjà le détail ailleurs dans " +
-    "l'application) : dégage une vision d'ensemble et une priorité claire. " +
-    'Écris en français simple et direct, à la deuxième personne (« vous »). ' +
-    "Reste factuel, base-toi UNIQUEMENT sur les chiffres fournis, n'invente " +
-    "aucune donnée (pas de météo, pas de superficie, pas de tendance " +
-    "régionale). N'utilise AUCUN symbole de mise en forme (pas d'astérisques, " +
-    'pas de #). Structure ta réponse EXACTEMENT avec ces trois titres en ' +
-    'MAJUSCULES, chacun sur sa propre ligne, suivi de lignes commençant par ' +
-    'un tiret :\n' +
-    'SITUATION GÉNÉRALE\n' +
-    'PRIORITÉ DE LA SEMAINE\n' +
-    'À SURVEILLER';
+  const contexte = enAnglais
+    ? [
+        `Period analyzed: ${periode}`,
+        `Number of diagnoses: ${nbDiagnostics}`,
+        tauxSain !== null ? `Healthy plant rate: ${Math.round(tauxSain * 100)}%` : '',
+        `Critical alerts: ${nbAlertesCritiques}`,
+        confianceMoyenne !== null
+          ? `Average model confidence: ${Math.round(confianceMoyenne * 100)}%`
+          : '',
+        maladiePredominante ? `Most frequent disease: ${maladiePredominante}` : '',
+        maladiesCritiques.length > 0
+          ? 'Critical diseases detected:\n' +
+            maladiesCritiques.map((m) => `  - ${m.nom}: ${m.occurrences} cases`).join('\n')
+          : '',
+        repartitionMaladies.length > 0
+          ? 'Breakdown of all detected diseases:\n' +
+            repartitionMaladies
+              .map((m) => `  - ${m.nom}: ${m.nombre} cases (${Math.round(m.part * 100)}%)`)
+              .join('\n')
+          : '',
+        repartitionCultures.length > 0
+          ? 'Breakdown by crop:\n' +
+            repartitionCultures
+              .map((c) => `  - ${c.nom}: ${c.nombre} fruit diagnosed, ${c.nombreAtteints} affected`)
+              .join('\n')
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : [
+        `Période analysée : ${periode}`,
+        `Nombre de diagnostics : ${nbDiagnostics}`,
+        tauxSain !== null ? `Taux de plants sains : ${Math.round(tauxSain * 100)} %` : '',
+        `Alertes critiques : ${nbAlertesCritiques}`,
+        confianceMoyenne !== null
+          ? `Confiance moyenne du modèle : ${Math.round(confianceMoyenne * 100)} %`
+          : '',
+        maladiePredominante ? `Maladie la plus fréquente : ${maladiePredominante}` : '',
+        maladiesCritiques.length > 0
+          ? 'Maladies critiques détectées :\n' +
+            maladiesCritiques.map((m) => `  - ${m.nom} : ${m.occurrences} cas`).join('\n')
+          : '',
+        repartitionMaladies.length > 0
+          ? 'Répartition de toutes les maladies détectées :\n' +
+            repartitionMaladies
+              .map((m) => `  - ${m.nom} : ${m.nombre} cas (${Math.round(m.part * 100)} %)`)
+              .join('\n')
+          : '',
+        repartitionCultures.length > 0
+          ? 'Répartition par culture :\n' +
+            repartitionCultures
+              .map((c) => `  - ${c.nom} : ${c.nombre} fruits diagnostiqués, dont ${c.nombreAtteints} atteints`)
+              .join('\n')
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
 
-  const utilisateur =
-    `Voici l'état actuel du tableau de bord de ce producteur :\n\n${contexte}\n\n` +
-    "Rédige une analyse d'ensemble courte et actionnable, en respectant " +
-    'scrupuleusement la structure demandée.';
+  const systeme = enAnglais
+    ? "You are an agricultural advisor analyzing the FULL DASHBOARD of a " +
+      'vegetable grower in Cameroon (tomato, pepper, onion) - several ' +
+      "diagnoses accumulated over a period, not just one. Your reader farms " +
+      "their own plots themselves; they are not an engineer. Your role is " +
+      "NOT to describe each disease one by one (they already have that " +
+      "detail elsewhere in the app): draw out an overall view and a clear " +
+      "priority. Write in simple, direct English, addressed to the grower " +
+      "('you'). Stay factual, rely ONLY on the figures provided, never " +
+      "invent data (no weather, no acreage, no regional trend). Use NO " +
+      "formatting symbols (no asterisks, no #). Structure your answer with " +
+      "EXACTLY these three headings in UPPERCASE, each on its own line, " +
+      "followed by lines starting with a dash:\n" +
+      "OVERALL SITUATION\n" +
+      "PRIORITY THIS WEEK\n" +
+      "TO WATCH"
+    : "Tu es un conseiller agricole qui analyse le TABLEAU DE BORD complet d'un " +
+      'producteur maraîcher au Cameroun (tomate, piment, oignon) - plusieurs ' +
+      "diagnostics accumulés sur une période, pas un seul. Ton lecteur cultive " +
+      "lui-même ses parcelles ; il n'est pas ingénieur. Ton rôle n'est PAS de " +
+      "décrire chaque maladie une par une (il a déjà le détail ailleurs dans " +
+      "l'application) : dégage une vision d'ensemble et une priorité claire. " +
+      'Écris en français simple et direct, à la deuxième personne (« vous »). ' +
+      "Reste factuel, base-toi UNIQUEMENT sur les chiffres fournis, n'invente " +
+      "aucune donnée (pas de météo, pas de superficie, pas de tendance " +
+      "régionale). N'utilise AUCUN symbole de mise en forme (pas d'astérisques, " +
+      'pas de #). Structure ta réponse EXACTEMENT avec ces trois titres en ' +
+      'MAJUSCULES, chacun sur sa propre ligne, suivi de lignes commençant par ' +
+      'un tiret :\n' +
+      'SITUATION GÉNÉRALE\n' +
+      'PRIORITÉ DE LA SEMAINE\n' +
+      'À SURVEILLER';
+
+  const utilisateur = enAnglais
+    ? `Here is this grower's current dashboard state:\n\n${contexte}\n\n` +
+      'Write a short, actionable overall analysis, strictly following the requested structure.'
+    : `Voici l'état actuel du tableau de bord de ce producteur :\n\n${contexte}\n\n` +
+      "Rédige une analyse d'ensemble courte et actionnable, en respectant " +
+      'scrupuleusement la structure demandée.';
 
   try {
     const reponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {

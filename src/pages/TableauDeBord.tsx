@@ -329,7 +329,7 @@ export function TableauDeBord() {
           to="/diagnostic"
           className="inline-grid min-h-cible place-items-center whitespace-nowrap rounded bg-encre px-e5 font-semibold text-papier no-underline transition-transform duration-150 hover:scale-105 hover:brightness-110 active:scale-100"
         >
-          + Nouveau diagnostic
+          {t.tableauDeBord.nouveauDiagnostic}
         </Link>
         <button
           type="button"
