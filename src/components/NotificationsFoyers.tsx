@@ -17,10 +17,21 @@ import { classeParId, nomClasse } from '../lib/classes';
 import { ouvrirAssistantAvecQuestion } from '../lib/assistantBus';
 import { useTraduction } from '../lib/traduction';
 
+/** Duree de l'animation de sortie (ms) - doit rester synchronisee avec la
+ * classe "duration-200" appliquee a chaque carte. Le retrait reel de l'etat
+ * n'intervient qu'apres ce delai, pour laisser jouer le fondu/retrecissement
+ * plutot que de faire disparaitre la carte d'un coup. */
+const DUREE_SORTIE = 200;
+
 export function NotificationsFoyers() {
   const { t, langue } = useTraduction();
   const [foyers, setFoyers] = useState<Foyer[]>([]);
   const [fermes, setFermes] = useState<Set<string>>(new Set());
+  // Cartes en cours de disparition : distinct de `fermes" pour pouvoir les
+  // animer avant de les retirer reellement de la liste (sinon la carte
+  // disparaitrait d'un coup, ce que le producteur avait signale comme "trop
+  // statique").
+  const [disparition, setDisparition] = useState<Set<string>>(new Set());
   const [ouvert, setOuvert] = useState(false);
   const [sonner, setSonner] = useState(false);
   const conteneurRef = useRef<HTMLDivElement>(null);
@@ -60,9 +71,28 @@ export function NotificationsFoyers() {
   }, [ouvert]);
 
   const visibles = foyers.filter((f) => !fermes.has(f.classeId));
+  // Compte affiche (badge + libelle accessible) : baisse des le clic, sans
+  // attendre la fin de l'animation de sortie - c'est ce qui donne la
+  // sensation de vider la boite au fil des clics plutot qu'un decompte figé.
+  const compteAffiche = visibles.filter((f) => !disparition.has(f.classeId)).length;
+
+  /** Dismissal anime : joue le fondu/retrecissement de la carte, puis la
+   * retire reellement de l'etat une fois l'animation terminee. */
+  function fermerAvecAnimation(id: string) {
+    setDisparition((prev) => new Set(prev).add(id));
+    setTimeout(() => {
+      setFermes((prev) => new Set(prev).add(id));
+      setDisparition((prev) => {
+        const suivant = new Set(prev);
+        suivant.delete(id);
+        return suivant;
+      });
+    }, DUREE_SORTIE);
+  }
 
   function localiser(foyer: Foyer) {
     setOuvert(false);
+    setFermes((prev) => new Set(prev).add(foyer.classeId));
     // La carte (sa propre page, voir pages/Carte.tsx) lit cet etat de
     // navigation a son montage pour se recentrer sur le foyer, sans avoir
     // besoin d'une reference partagee vers Leaflet.
@@ -71,6 +101,7 @@ export function NotificationsFoyers() {
 
   function demanderConseil(foyer: Foyer) {
     setOuvert(false);
+    setFermes((prev) => new Set(prev).add(foyer.classeId));
     const nom = classeParId(foyer.classeId)?.nom ?? foyer.classeId;
     ouvrirAssistantAvecQuestion(
       `Un foyer possible de ${nom} vient d'être détecté (${foyer.points.length} ` +
@@ -86,8 +117,8 @@ export function NotificationsFoyers() {
         className="relative grid min-h-cible min-w-cible place-items-center rounded bg-transparent text-chrome-texte hover:bg-white/10"
         onClick={() => setOuvert((v) => !v)}
         aria-label={
-          visibles.length > 0
-            ? t.notificationsFoyers.notificationsAvecCompte(visibles.length)
+          compteAffiche > 0
+            ? t.notificationsFoyers.notificationsAvecCompte(compteAffiche)
             : t.notificationsFoyers.notifications
         }
         aria-expanded={ouvert}
@@ -98,9 +129,9 @@ export function NotificationsFoyers() {
           style={{ transformOrigin: 'top center' }}
           aria-hidden="true"
         />
-        {visibles.length > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-atteint px-1 text-[10px] font-bold leading-none text-white">
-            {visibles.length}
+        {compteAffiche > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-atteint px-1 text-[10px] font-bold leading-none text-white transition-transform duration-150">
+            {compteAffiche}
           </span>
         )}
       </button>
@@ -112,17 +143,30 @@ export function NotificationsFoyers() {
           ) : (
             visibles.map((foyer) => {
               const classe = classeParId(foyer.classeId);
+              const enSortie = disparition.has(foyer.classeId);
               return (
                 <div
                   key={foyer.classeId}
-                  className="relative flex flex-col gap-e2 rounded-xl border border-atteint bg-atteint-fond p-e3 pr-e6"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fermerAvecAnimation(foyer.classeId)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      fermerAvecAnimation(foyer.classeId);
+                    }
+                  }}
+                  className={`relative flex cursor-pointer flex-col gap-e2 rounded-xl border border-atteint bg-atteint-fond p-e3 pr-e6 transition-all duration-200 ease-in hover:brightness-[0.97] ${
+                    enSortie ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+                  }`}
                 >
                   <button
                     type="button"
                     className="absolute right-e2 top-e2 grid h-7 w-7 shrink-0 place-items-center rounded-full border-0 bg-transparent text-encre-douce hover:bg-white/40"
-                    onClick={() =>
-                      setFermes((prev) => new Set(prev).add(foyer.classeId))
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fermerAvecAnimation(foyer.classeId);
+                    }}
                     aria-label={t.notificationsFoyers.fermerAlerte}
                   >
                     <X size={14} aria-hidden="true" />
@@ -140,13 +184,19 @@ export function NotificationsFoyers() {
                   <div className="flex flex-wrap gap-e2">
                     <button
                       className="bouton-second self-start text-xs"
-                      onClick={() => localiser(foyer)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        localiser(foyer);
+                      }}
                     >
                       {t.notificationsFoyers.localiserFoyer}
                     </button>
                     <button
                       className="bouton-second flex items-center gap-e1 self-start text-xs"
-                      onClick={() => demanderConseil(foyer)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        demanderConseil(foyer);
+                      }}
                     >
                       <MessageCircleQuestionMark size={14} aria-hidden="true" />
                       {t.notificationsFoyers.demanderAssistant}
