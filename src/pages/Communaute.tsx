@@ -80,6 +80,29 @@ function Connexion() {
     setEnCours(true);
     try {
       if (inscription) {
+        // Un <input type="email"> ne verifie que la SYNTAXE ("toto@toto.toto"
+        // la passe sans probleme) - on demande en plus a un endpoint serveur
+        // de verifier que le domaine peut reellement recevoir du courrier
+        // (voir api/verifier-email.ts, un navigateur ne peut pas faire cette
+        // requete DNS lui-meme). En echec du controle lui-meme (reseau,
+        // timeout), on laisse passer plutot que de bloquer une inscription
+        // legitime pour une panne qui n'a rien a voir avec l'e-mail saisi.
+        let verification = { valide: true };
+        try {
+          const reponseVerif = await fetch('/api/verifier-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+            signal: AbortSignal.timeout(5000),
+          });
+          verification = await reponseVerif.json();
+        } catch {
+          /* best-effort, voir commentaire ci-dessus */
+        }
+        if (!verification.valide) {
+          throw new Error(t.communaute.emailInvalide);
+        }
+
         const { data, error } = await supabase!.auth.signUp({
           email,
           password: motDePasse,

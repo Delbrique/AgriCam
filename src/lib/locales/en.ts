@@ -259,6 +259,7 @@ export const en: Traductions = {
     creerMonCompte: 'Create my account',
     compteCree: 'Account created. Check your inbox to confirm your address, then sign in.',
     erreurGenerique: 'Something went wrong.',
+    emailInvalide: "This email address doesn't seem to exist (the domain can't receive mail). Check for a typo.",
     dejaCompte: 'I already have an account',
     creerCompte: 'Create an account',
     salonGeneralPrefixe: 'General room · signed in as',

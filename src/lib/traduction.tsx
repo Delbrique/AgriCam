@@ -263,6 +263,7 @@ export interface Traductions {
     creerMonCompte: string;
     compteCree: string;
     erreurGenerique: string;
+    emailInvalide: string;
     dejaCompte: string;
     creerCompte: string;
     salonGeneralPrefixe: string;
