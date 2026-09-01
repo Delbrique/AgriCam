@@ -49,7 +49,7 @@ export default {
         titre: ['var(--police-titre)', 'system-ui', 'sans-serif'],
         texte: ['var(--police-texte)', 'system-ui', 'sans-serif'],
         donnee: ['var(--police-donnee)', 'ui-monospace', 'monospace'],
-        sora: ['var(--police-titre)', 'system-ui', 'sans-serif'],
+        sora: ['var(--police-texte)', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         xs: 'var(--t-xs)',
@@ -99,12 +99,13 @@ export default {
         },
         // Halo doux, pour un moment de satisfaction bref (ex. badge "pret
         // hors ligne" qui vient de passer au vert) - pas une boucle infinie.
-        // rgb(45,106,79) = --vert-moyen (light) : Tailwind ne peut pas lire
-        // une variable CSS ici (il faut un rgba() numerique), donc figee sur
-        // la teinte claire - un ecart mineur, deja accepte avant ce chantier.
+        // rgb(52,78,65) = --vert-moyen (light, palette AgriCore Precision) :
+        // Tailwind ne peut pas lire une variable CSS ici (il faut un
+        // rgba() numerique), donc figee sur la teinte claire - un ecart
+        // mineur, deja accepte avant ce chantier.
         lueur: {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(45, 106, 79, 0)' },
-          '50%': { boxShadow: '0 0 0 6px rgba(45, 106, 79, 0.18)' },
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(52, 78, 65, 0)' },
+          '50%': { boxShadow: '0 0 0 6px rgba(52, 78, 65, 0.18)' },
         },
         // Petit balancement de cloche, pour signaler une nouvelle alerte
         // sans etre aussi insistant qu'un clignotement.

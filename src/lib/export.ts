@@ -76,9 +76,9 @@ export function exporterCsv(consultations: Consultation[], t: Traductions, langu
   );
 }
 
-const ENCRE: [number, number, number] = [14, 26, 19];
-const ENCRE_DOUCE: [number, number, number] = [74, 90, 81];
-const TRAIT: [number, number, number] = [213, 219, 210];
+const ENCRE: [number, number, number] = [26, 28, 25];
+const ENCRE_DOUCE: [number, number, number] = [66, 72, 68];
+const TRAIT: [number, number, number] = [194, 200, 194];
 
 export function exporterPdf(consultations: Consultation[], t: Traductions, langue: 'fr' | 'en'): void {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });

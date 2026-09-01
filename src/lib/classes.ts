@@ -197,10 +197,10 @@ export function couleurGravite(g: Gravite): string {
  * tout rendu hors de la cascade CSS normale (Leaflet, Recharts, jsPDF), ou
  * var(--x) ne serait pas resolu. A tenir synchronise avec tokens.css. */
 export const COULEUR_GRAVITE_HEX: Record<Gravite, string> = {
-  sain: '#1f7a4d',
-  alerte: '#d98a04',
-  atteint: '#b3411a',
-  grave: '#6e1f14',
+  sain: '#344e41',
+  alerte: '#dda15e',
+  atteint: '#9b4338',
+  grave: '#75271f',
 };
 
 /**

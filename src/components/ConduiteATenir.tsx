@@ -49,10 +49,10 @@ const LECTURE_DISPONIBLE = typeof window !== 'undefined' && 'speechSynthesis' in
 /* --- Mise en page du PDF -------------------------------------------------
  * Memes teintes que tokens.css, en RGB numerique : jsPDF n'accepte pas les
  * variables CSS. A tenir synchronise avec --sain/--alerte/--atteint/--grave. */
-const ENCRE: [number, number, number] = [14, 26, 19];
-const ENCRE_DOUCE: [number, number, number] = [74, 90, 81];
-const TRAIT: [number, number, number] = [213, 219, 210];
-const PAPIER: [number, number, number] = [242, 244, 239];
+const ENCRE: [number, number, number] = [26, 28, 25];
+const ENCRE_DOUCE: [number, number, number] = [66, 72, 68];
+const TRAIT: [number, number, number] = [194, 200, 194];
+const PAPIER: [number, number, number] = [252, 249, 238];
 
 const FACTEUR_INTERLIGNE = 1.5;
 const PT_VERS_MM = 25.4 / 72;
@@ -65,10 +65,10 @@ function hauteurLigne(taillePt: number): number {
 
 function couleurGravitePdf(g: Gravite): [number, number, number] {
   return {
-    sain: [31, 122, 77],
-    alerte: [217, 138, 4],
-    atteint: [179, 65, 26],
-    grave: [110, 31, 20],
+    sain: [52, 78, 65],
+    alerte: [221, 161, 94],
+    atteint: [155, 67, 56],
+    grave: [117, 39, 31],
   }[g] as [number, number, number];
 }
 
