@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { LayoutGrid, Map, Microscope, Users, type LucideIcon } from 'lucide-react';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { Diagnostic } from './pages/Diagnostic';
 import { Carte } from './pages/Carte';
@@ -25,11 +26,13 @@ import { NotificationsFoyers } from './components/NotificationsFoyers';
 
 /** Classes de chaque onglet de navigation, calculees selon l'etat actif
     plutot qu'empilees en conflit : mobile = barre basse sur fond "carte"
-    (theme-adaptif) ; a bp860, la nav rejoint l'en-tete toujours sombre. */
+    (theme-adaptif), icone empilee au-dessus du libelle (colonne etroite,
+    4 onglets) ; a bp860, la nav rejoint l'en-tete toujours sombre et repasse
+    en ligne (icone a cote du libelle, plus de largeur disponible). */
 function classeOnglet({ isActive }: { isActive: boolean }) {
   const commun =
-    'grid place-items-center min-h-cible border-t-[3px] font-semibold text-sm no-underline ' +
-    'bp860:min-h-0 bp860:py-e2 bp860:border-t-0 bp860:border-b-[3px] bp860:hover:text-chrome-texte';
+    'flex flex-col items-center justify-center gap-0.5 min-h-cible border-t-[3px] font-semibold text-sm no-underline ' +
+    'bp860:min-h-0 bp860:flex-row bp860:gap-e2 bp860:py-e2 bp860:border-t-0 bp860:border-b-[3px] bp860:hover:text-chrome-texte';
   const etat = isActive
     ? 'text-encre border-t-encre bp860:text-chrome-texte bp860:border-b-accent'
     : 'text-encre-douce border-t-transparent bp860:text-chrome-texte-douce bp860:border-b-transparent';
@@ -41,11 +44,11 @@ export default function App() {
   const location = useLocation();
   const [alerte, setAlerte] = useState<string | null>(null);
 
-  const ONGLETS: [string, string][] = [
-    ['/', t.chrome.nav.tableauDeBord],
-    ['/diagnostic', t.chrome.nav.diagnostic],
-    ['/carte', t.chrome.nav.carte],
-    ['/communaute', t.chrome.nav.communaute],
+  const ONGLETS: [string, string, LucideIcon][] = [
+    ['/', t.chrome.nav.tableauDeBord, LayoutGrid],
+    ['/diagnostic', t.chrome.nav.diagnostic, Microscope],
+    ['/carte', t.chrome.nav.carte, Map],
+    ['/communaute', t.chrome.nav.communaute, Users],
   ];
 
   // Controle d'integrite : le referentiel de classes de l'application doit
@@ -87,8 +90,9 @@ export default function App() {
             en ligne. Un seul élément dans le DOM, donc un seul ordre de
             tabulation au clavier. */}
         <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-trait bg-carte pb-[env(safe-area-inset-bottom)] bp860:static bp860:grid-cols-none bp860:flex bp860:gap-e5 bp860:border-t-0 bp860:bg-transparent bp860:pb-0">
-          {ONGLETS.map(([chemin, libelle]) => (
+          {ONGLETS.map(([chemin, libelle, Icone]) => (
             <NavLink key={chemin} to={chemin} end={chemin === '/'} className={classeOnglet}>
+              <Icone size={18} aria-hidden="true" />
               {libelle}
             </NavLink>
           ))}
