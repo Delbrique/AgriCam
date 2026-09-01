@@ -7,6 +7,7 @@ export const fr: Traductions = {
     nav: {
       tableauDeBord: 'Tableau de bord',
       diagnostic: 'Diagnostic',
+      carte: 'Carte',
       communaute: 'Communauté',
     },
     modeleIncompatible: 'Modèle incompatible.',
@@ -15,6 +16,11 @@ export const fr: Traductions = {
   commun: {
     cultures: { toutes: 'Toutes', tomate: 'Tomate', piment: 'Piment', oignon: 'Oignon' },
     ou: 'ou',
+  },
+  carte: {
+    titre: 'Carte des diagnostics',
+    intro:
+      'Repérez, dans votre propre champ, où se trouvent les foyers de maladie au fil de vos diagnostics géolocalisés.',
   },
   tableauDeBord: {
     salutations: {
@@ -41,7 +47,6 @@ export const fr: Traductions = {
     repartitionMaladies: 'Répartition des maladies',
     culturesDiagnostiquees: 'Cultures diagnostiquées',
     derniersDiagnostics: 'Derniers diagnostics',
-    carteDiagnostics: 'Carte des diagnostics',
     evolutionTemporelle: 'Évolution temporelle',
     recommandations: 'Recommandations',
     exporterCsv: 'Exporter en CSV',

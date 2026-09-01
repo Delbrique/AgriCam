@@ -1,8 +1,11 @@
 /**
  * Tableau de bord.
  *
- * Page d'accueil de l'application : fusionne les anciennes pages Historique
- * et Carte (voir composants ListeDiagnostics et CarteFoyers). Tout est
+ * Page d'accueil de l'application : reprend l'ancienne page Historique
+ * (voir composant ListeDiagnostics). La carte des foyers geolocalises vit
+ * desormais sur sa propre page (voir pages/Carte.tsx) - elle avait ete
+ * fusionnee ici un temps pour ne pas disperser le suivi, mais s'est
+ * retrouvee etouffee dans le long defilement du tableau de bord. Tout est
  * calcule EN DIRECT depuis l'historique local (voir lib/tableauDeBord.ts) -
  * aucune donnee inventee (pas de meteo, pas de parcelles en hectares, pas de
  * tendance regionale), aucun appel reseau bloquant : la page reste
@@ -48,7 +51,6 @@ import type { Traductions } from '../lib/traduction';
 import { InstallApp } from '../components/InstallApp';
 import { ApparitionAuDefilement } from '../components/ApparitionAuDefilement';
 import { CompteurAnime } from '../components/CompteurAnime';
-import { CarteFoyers } from '../components/CarteFoyers';
 import { DonutMaladies } from '../components/DonutMaladies';
 import { BarresCultures } from '../components/BarresCultures';
 import { CourbeEvolution } from '../components/CourbeEvolution';
@@ -291,12 +293,6 @@ export function TableauDeBord() {
           parcelles={listeParcelles}
           onConsultationSupprimee={recharger}
         />
-      </ApparitionAuDefilement>
-
-      {/* ================= Carte des diagnostics ================= */}
-      <ApparitionAuDefilement className="flex min-w-0 flex-col gap-e4">
-        <h2 className="text-xl tracking-[-0.025em]">{t.tableauDeBord.carteDiagnostics}</h2>
-        <CarteFoyers />
       </ApparitionAuDefilement>
 
       {/* ================= Evolution temporelle ================= */}

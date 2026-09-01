@@ -29,6 +29,7 @@ export interface Traductions {
     nav: {
       tableauDeBord: string;
       diagnostic: string;
+      carte: string;
       communaute: string;
     };
     modeleIncompatible: string;
@@ -37,6 +38,10 @@ export interface Traductions {
   commun: {
     cultures: { toutes: string; tomate: string; piment: string; oignon: string };
     ou: string;
+  };
+  carte: {
+    titre: string;
+    intro: string;
   };
   tableauDeBord: {
     salutations: { nuit: string; matin: string; apresMidi: string; soir: string };
@@ -57,7 +62,6 @@ export interface Traductions {
     repartitionMaladies: string;
     culturesDiagnostiquees: string;
     derniersDiagnostics: string;
-    carteDiagnostics: string;
     evolutionTemporelle: string;
     recommandations: string;
     exporterCsv: string;

@@ -7,6 +7,7 @@ export const en: Traductions = {
     nav: {
       tableauDeBord: 'Dashboard',
       diagnostic: 'Diagnosis',
+      carte: 'Map',
       communaute: 'Community',
     },
     modeleIncompatible: 'Incompatible model.',
@@ -15,6 +16,10 @@ export const en: Traductions = {
   commun: {
     cultures: { toutes: 'All', tomate: 'Tomato', piment: 'Pepper', oignon: 'Onion' },
     ou: 'or',
+  },
+  carte: {
+    titre: 'Diagnosis map',
+    intro: 'See where disease outbreaks are located in your own field, based on your geolocated diagnoses.',
   },
   tableauDeBord: {
     salutations: {
@@ -41,7 +46,6 @@ export const en: Traductions = {
     repartitionMaladies: 'Disease breakdown',
     culturesDiagnostiquees: 'Crops diagnosed',
     derniersDiagnostics: 'Recent diagnoses',
-    carteDiagnostics: 'Diagnosis map',
     evolutionTemporelle: 'Trend over time',
     recommandations: 'Recommendations',
     exporterCsv: 'Export as CSV',

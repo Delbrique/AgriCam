@@ -1,16 +1,19 @@
 /**
  * Coque de l'application : en-tete, routes, navigation.
  *
- * Deux pages. Le tableau de bord est devenu l'ecran d'accueil : il fusionne
- * l'ancien historique et l'ancienne carte, pour ne plus disperser le suivi
- * sur trois onglets differents. La navigation reste en bas, a portee de
- * pouce, parce que l'outil s'utilise debout, une main occupee par le fruit.
+ * Le tableau de bord est l'ecran d'accueil (ancien historique). La carte des
+ * foyers geolocalises vit sur sa propre page (voir pages/Carte.tsx) - elle
+ * avait ete fusionnee un temps dans le tableau de bord, mais s'y retrouvait
+ * etouffee au milieu du long defilement de KPI et de graphiques. La
+ * navigation reste en bas, a portee de pouce, parce que l'outil s'utilise
+ * debout, une main occupee par le fruit.
  */
 
 import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { Diagnostic } from './pages/Diagnostic';
+import { Carte } from './pages/Carte';
 import { Communaute } from './pages/Communaute';
 import { verifierReferentiel } from './lib/classes';
 import { useTraduction } from './lib/traduction';
@@ -41,6 +44,7 @@ export default function App() {
   const ONGLETS: [string, string][] = [
     ['/', t.chrome.nav.tableauDeBord],
     ['/diagnostic', t.chrome.nav.diagnostic],
+    ['/carte', t.chrome.nav.carte],
     ['/communaute', t.chrome.nav.communaute],
   ];
 
@@ -66,20 +70,23 @@ export default function App() {
         className="flex items-center gap-e5 px-[var(--pad-page)] pb-e3 pt-[max(var(--e3),env(safe-area-inset-top))] text-chrome-texte"
         style={{ background: 'linear-gradient(120deg, var(--vert-fonce), var(--vert-moyen))' }}
       >
-        <div className="mr-auto flex flex-col">
-          <span className="font-titre text-lg font-extrabold leading-[1.1] tracking-[-0.03em]">
-            {t.chrome.marque}
-          </span>
-          <span className="hidden bp600:block text-xs text-chrome-texte-douce">
-            {t.chrome.sousTitre}
-          </span>
+        <div className="mr-auto flex items-center gap-e2">
+          <img src="/images/agricam-icone.png" alt="" className="h-9 w-9 shrink-0" aria-hidden="true" />
+          <div className="flex flex-col">
+            <span className="font-titre text-lg font-extrabold leading-[1.1] tracking-[-0.03em]">
+              {t.chrome.marque}
+            </span>
+            <span className="hidden bp600:block text-xs text-chrome-texte-douce">
+              {t.chrome.sousTitre}
+            </span>
+          </div>
         </div>
 
         {/* La navigation vit DANS l'en-tête. Sur téléphone, le CSS la détache
             en barre basse fixe, à portée de pouce ; sur grand écran elle reste
             en ligne. Un seul élément dans le DOM, donc un seul ordre de
             tabulation au clavier. */}
-        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 border-t border-trait bg-carte pb-[env(safe-area-inset-bottom)] bp860:static bp860:grid-cols-none bp860:flex bp860:gap-e5 bp860:border-t-0 bp860:bg-transparent bp860:pb-0">
+        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-trait bg-carte pb-[env(safe-area-inset-bottom)] bp860:static bp860:grid-cols-none bp860:flex bp860:gap-e5 bp860:border-t-0 bp860:bg-transparent bp860:pb-0">
           {ONGLETS.map(([chemin, libelle]) => (
             <NavLink key={chemin} to={chemin} end={chemin === '/'} className={classeOnglet}>
               {libelle}
@@ -115,6 +122,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<TableauDeBord />} />
             <Route path="/diagnostic" element={<Diagnostic />} />
+            <Route path="/carte" element={<Carte />} />
             <Route path="/communaute" element={<Communaute />} />
           </Routes>
         </ErrorBoundary>
