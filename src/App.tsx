@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
-import { LayoutGrid, Map, Microscope, Users, type LucideIcon } from 'lucide-react';
+import { Camera, Home, MapPin, MessagesSquare, type LucideIcon } from 'lucide-react';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { Diagnostic } from './pages/Diagnostic';
 import { Carte } from './pages/Carte';
@@ -45,10 +45,10 @@ export default function App() {
   const [alerte, setAlerte] = useState<string | null>(null);
 
   const ONGLETS: [string, string, LucideIcon][] = [
-    ['/', t.chrome.nav.tableauDeBord, LayoutGrid],
-    ['/diagnostic', t.chrome.nav.diagnostic, Microscope],
-    ['/carte', t.chrome.nav.carte, Map],
-    ['/communaute', t.chrome.nav.communaute, Users],
+    ['/', t.chrome.nav.tableauDeBord, Home],
+    ['/diagnostic', t.chrome.nav.diagnostic, Camera],
+    ['/carte', t.chrome.nav.carte, MapPin],
+    ['/communaute', t.chrome.nav.communaute, MessagesSquare],
   ];
 
   // Controle d'integrite : le referentiel de classes de l'application doit

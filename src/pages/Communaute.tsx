@@ -80,13 +80,20 @@ function Connexion() {
     setEnCours(true);
     try {
       if (inscription) {
-        const { error } = await supabase!.auth.signUp({
+        const { data, error } = await supabase!.auth.signUp({
           email,
           password: motDePasse,
           options: { data: { pseudo: pseudo.trim() || t.communaute.producteur } },
         });
         if (error) throw error;
-        setInfo(t.communaute.compteCree);
+        // Si le projet Supabase exige la confirmation par e-mail, `session`
+        // est nulle ici : il faut prevenir le producteur plutot que le
+        // laisser croire que l'inscription l'a connecte. Si la confirmation
+        // n'est PAS exigee, Supabase renvoie deja une session active - le
+        // changement d'etat remonte tout seul jusqu'a CommunauteConnectee
+        // (via onAuthStateChange) qui bascule alors sur la fenetre de
+        // discussion sans qu'on ait besoin de le faire ici.
+        if (!data.session) setInfo(t.communaute.compteCree);
       } else {
         const { error } = await supabase!.auth.signInWithPassword({ email, password: motDePasse });
         if (error) throw error;
