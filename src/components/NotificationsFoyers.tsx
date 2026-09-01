@@ -106,7 +106,7 @@ export function NotificationsFoyers() {
       </button>
 
       {ouvert && (
-        <div className="absolute right-0 top-full z-30 mt-e2 flex max-h-[70vh] w-[min(22rem,90vw)] flex-col gap-e2 overflow-y-auto rounded-lg border border-trait bg-carte p-e3 shadow-carte">
+        <div className="absolute right-0 top-full z-[1100] mt-e2 flex max-h-[70vh] w-[min(22rem,90vw)] flex-col gap-e2 overflow-y-auto rounded-lg border border-trait bg-carte p-e3 shadow-carte">
           {visibles.length === 0 ? (
             <p className="m-0 p-e2 text-sm text-encre-douce">{t.notificationsFoyers.aucuneAlerte}</p>
           ) : (
