@@ -66,6 +66,14 @@ COTE = 224
 IMAGES_MAX_PAR_CLASSE = 450  # plafond par classe, pour un temps de calcul raisonnable.
 FRACTION_VALIDATION = 0.2   # part tenue a l'ecart du centroide, meme sur les petites classes.
 RAPPEL_MIN = 0.95           # on choisit le seuil le plus strict qui garde au moins ce rappel.
+# Le recadrage de repli simule (voir recadrer_repli ci-dessous) n'est qu'une
+# APPROXIMATION du cadrage reel d'une photo de terrain : une vraie photo de
+# producteur s'ecarte davantage de la validation interne (memes images source
+# Roboflow) qu'un fruit tomate vraiment isole par le detecteur. D'ou une marge
+# de securite plus large - rappel cible plus eleve, donc seuil plus permissif
+# - pour piment et oignon specifiquement, observee necessaire en pratique
+# (rejets a tort persistant meme apres calibration au rappel standard).
+RAPPEL_MIN_SANS_DETECTEUR = 0.99
 
 CHEMIN_MODELE = ICI / "modeles" / "agricam_best_weights.h5"
 CHEMIN_CLASSES = RACINE_SOUTENANCE / "class_names.json"
@@ -279,7 +287,10 @@ def main():
     profils = []
     for i, (nom_classe, vecteurs) in enumerate(validation_par_classe):
         sim_classe = vecteurs @ centroides[i]
-        seuil_classe = max(meilleur_seuil, float(np.percentile(sim_classe, 100 * (1 - RAPPEL_MIN))))
+        rappel_min_classe = (
+            RAPPEL_MIN_SANS_DETECTEUR if nom_classe.startswith(PREFIXES_SANS_DETECTEUR) else RAPPEL_MIN
+        )
+        seuil_classe = max(meilleur_seuil, float(np.percentile(sim_classe, 100 * (1 - rappel_min_classe))))
         profils.append(
             {
                 "classe": nom_classe,
