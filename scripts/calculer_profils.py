@@ -72,6 +72,32 @@ CHEMIN_CLASSES = RACINE_SOUTENANCE / "class_names.json"
 DOSSIER_DONNEES = RACINE_SOUTENANCE / "data" / "agricam"
 SORTIE = ICI / "public" / "models" / "profils.json"
 
+# --------------------------------------------------------------------------------
+# Repli "sans detection" (voir pipeline.ts, diagnostiquer()) : le detecteur
+# YOLO n'a ete entraine que sur les boites TOMATE (le seul data.yaml annote du
+# projet, voir entrainer_detecteur.py). Sur une photo de piment ou d'oignon,
+# il ne trouve donc quasiment jamais rien, et le pipeline bascule sur un carre
+# centre plutot qu'un fruit isole. Les images de PIMENT et OIGNON n'etant, a
+# la difference de la tomate, jamais recadrees a la Phase 1 (ETL) - copie
+# brute des dossiers sources - un profil calcule sur ces images pleine taille
+# ne correspond a rien de ce que le classifieur voit reellement en inference
+# pour ces deux cultures, d'ou le rejet a tort en "hors sujet" observe en
+# pratique. On reproduit ici EXACTEMENT le meme recadrage.
+FRACTION_REPLI_CENTRE = 0.75   # pipeline.ts : part du plus petit cote conservee.
+MARGE_RECADRAGE = 0.12         # pipeline.ts : marge appliquee par recadrer().
+PREFIXES_SANS_DETECTEUR = ("Pepper___", "Onion___")
+
+
+def recadrer_repli(image: Image.Image) -> Image.Image:
+    """Reproduit le repli 'sans detection' + recadrer() de pipeline.ts : un
+    carre centre, cote = plus petit cote * 0.75 * 1.12, plutot qu'un fruit
+    isole par le detecteur."""
+    largeur, hauteur = image.size
+    cote = min(largeur, hauteur) * FRACTION_REPLI_CENTRE * (1 + MARGE_RECADRAGE)
+    cote = min(cote, largeur, hauteur)
+    cx, cy = largeur / 2, hauteur / 2
+    return image.crop((cx - cote / 2, cy - cote / 2, cx + cote / 2, cy + cote / 2))
+
 # Vraies photos personnelles, sans aucun rapport avec les cultures - servent a
 # mesurer le taux de rejet reel plutot que de deviner un seuil a l'aveugle.
 # Jamais transmises nulle part : lues localement, uniquement pour calibrer.
@@ -122,19 +148,24 @@ def isoler_tronc(modele):
     raise SystemExit("Impossible d'isoler le tronc convolutif.")
 
 
-def charger_image(chemin: pathlib.Path) -> np.ndarray | None:
+def charger_image(chemin: pathlib.Path, repli: bool) -> np.ndarray | None:
     try:
-        image = Image.open(chemin).convert("RGB").resize((COTE, COTE))
+        image = Image.open(chemin).convert("RGB")
+        if repli:
+            image = recadrer_repli(image)
+        image = image.resize((COTE, COTE))
         return np.asarray(image, dtype=np.float32)  # 0-255 : EfficientNet normalise en interne.
     except Exception:
         return None  # fichier illisible/corrompu - ignore plutot que de tout arreter.
 
 
-def embeddings(tronc, fichiers: list[pathlib.Path], taille_lot: int = 32) -> np.ndarray:
+def embeddings(
+    tronc, fichiers: list[pathlib.Path], repli: bool, taille_lot: int = 32
+) -> np.ndarray:
     tous_les_vecteurs = []
     for depart in range(0, len(fichiers), taille_lot):
         lot_fichiers = fichiers[depart : depart + taille_lot]
-        images = [charger_image(f) for f in lot_fichiers]
+        images = [charger_image(f, repli) for f in lot_fichiers]
         images = [im for im in images if im is not None]
         if not images:
             continue
@@ -179,14 +210,16 @@ def main():
         fichiers_profil = fichiers[:coupure]
         fichiers_validation = fichiers[coupure:]
 
-        print(f"\n{nom_classe} : {len(fichiers_profil)} images profil, {len(fichiers_validation)} images validation")
-        vecteurs_profil = normaliser(embeddings(tronc, fichiers_profil))
+        repli = nom_classe.startswith(PREFIXES_SANS_DETECTEUR)
+        suffixe = " (recadrage repli simule)" if repli else ""
+        print(f"\n{nom_classe}{suffixe} : {len(fichiers_profil)} images profil, {len(fichiers_validation)} images validation")
+        vecteurs_profil = normaliser(embeddings(tronc, fichiers_profil, repli))
         centroide = vecteurs_profil.mean(axis=0)
         centroide = centroide / np.maximum(np.linalg.norm(centroide), 1e-9)
         centroides.append(centroide)
 
         if fichiers_validation:
-            vecteurs_validation = normaliser(embeddings(tronc, fichiers_validation))
+            vecteurs_validation = normaliser(embeddings(tronc, fichiers_validation, repli))
         else:
             vecteurs_validation = vecteurs_profil  # classe trop petite : repli sur le meme lot.
         validation_par_classe.append((nom_classe, vecteurs_validation))
@@ -199,7 +232,14 @@ def main():
         if dossier.exists():
             fichiers_hors_sujet += lister_images(dossier, MAX_HORS_SUJET // len(DOSSIERS_HORS_SUJET))
     print(f"\n{len(fichiers_hors_sujet)} images hors sujet (validation du rejet) :")
-    vecteurs_hors_sujet = normaliser(embeddings(tronc, fichiers_hors_sujet)) if fichiers_hors_sujet else None
+    # Une vraie photo hors sujet (visage, terrain de foot...) ne declenche pas
+    # non plus le detecteur tomate : elle emprunte donc, elle aussi, le repli
+    # "sans detection" en inference reelle - meme recadrage ici.
+    vecteurs_hors_sujet = (
+        normaliser(embeddings(tronc, fichiers_hors_sujet, repli=True))
+        if fichiers_hors_sujet
+        else None
+    )
 
     # --- 3. Similarite de chaque image de validation a SA propre classe -------
     similarites_connues = []
