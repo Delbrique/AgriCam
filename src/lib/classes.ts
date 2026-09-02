@@ -203,6 +203,45 @@ export const COULEUR_GRAVITE_HEX: Record<Gravite, string> = {
   grave: '#75271f',
 };
 
+/** Eclaircit (quantite > 0, vers le blanc) ou fonce (quantite < 0, vers le
+ * noir) une couleur hex ; quantite dans [-1, 1]. */
+function teinter(hex: string, quantite: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const cible = quantite >= 0 ? 255 : 0;
+  const q = Math.min(1, Math.abs(quantite));
+  const melanger = (c: number) => Math.round(c + (cible - c) * q);
+  const versHex = (n: number) => n.toString(16).padStart(2, '0');
+  return `#${versHex(melanger(r))}${versHex(melanger(g))}${versHex(melanger(b))}`;
+}
+
+/** Decalages appliques dans l'ordre a chaque maladie d'un meme groupe de
+ * gravite (alterne plus clair/plus fonce, en s'eloignant progressivement) -
+ * 6 valeurs suffisent largement, le referentiel ne compte que 9 classes. */
+const DECALAGES_TEINTE = [0, 0.22, -0.22, 0.42, -0.42, 0.6];
+
+/** Attribue une couleur distincte a chaque classe d'une liste, meme quand
+ * plusieurs partagent la meme gravite (donc la meme COULEUR_GRAVITE_HEX de
+ * base) - indispensable pour un graphique dont la legende doit pouvoir
+ * apparier une couleur a UNE maladie precise (ex. DonutMaladies.tsx), pas
+ * seulement reconnaitre un niveau de gravite. Reste dans la meme famille de
+ * teinte que la gravite (toujours reconnaissable comme "grave" ou "a
+ * surveiller"), juste nuancee pour rester distinguable au sein du groupe. */
+export function couleursDistinctes(classes: Classe[]): Record<string, string> {
+  const compteur: Partial<Record<Gravite, number>> = {};
+  const resultat: Record<string, string> = {};
+  for (const c of classes) {
+    const i = compteur[c.gravite] ?? 0;
+    compteur[c.gravite] = i + 1;
+    resultat[c.id] = teinter(
+      COULEUR_GRAVITE_HEX[c.gravite],
+      DECALAGES_TEINTE[i % DECALAGES_TEINTE.length],
+    );
+  }
+  return resultat;
+}
+
 /**
  * Seuil de confiance en deca duquel on refuse de trancher.
  *

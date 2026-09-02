@@ -7,7 +7,7 @@
  */
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { COULEUR_GRAVITE_HEX, nomClasse } from '../lib/classes';
+import { couleursDistinctes, nomClasse } from '../lib/classes';
 import type { PartMaladie } from '../lib/tableauDeBord';
 import { useTraduction } from '../lib/traduction';
 
@@ -22,10 +22,14 @@ export function DonutMaladies({ donnees }: Props) {
     return <p className="m-0 text-sm text-encre-douce">{t.donutMaladies.aucune}</p>;
   }
 
+  // Plusieurs maladies partagent souvent la meme gravite (donc la meme
+  // couleur de base) : sans nuance par identite, leurs segments et pastilles
+  // de legende seraient impossibles a distinguer les uns des autres.
+  const couleurs = couleursDistinctes(donnees.map((d) => d.classe));
   const donneesPlates = donnees.map((d) => ({
     nom: nomClasse(d.classe, langue),
     nombre: d.nombre,
-    couleur: COULEUR_GRAVITE_HEX[d.classe.gravite],
+    couleur: couleurs[d.classe.id],
   }));
 
   return (
@@ -68,7 +72,7 @@ export function DonutMaladies({ donnees }: Props) {
           <li key={d.classe.id} className="flex items-center gap-e2">
             <span
               className="h-[10px] w-[10px] shrink-0 rounded-full"
-              style={{ background: COULEUR_GRAVITE_HEX[d.classe.gravite] }}
+              style={{ background: couleurs[d.classe.id] }}
               aria-hidden="true"
             />
             <span className="min-w-0 flex-1 truncate">{nomClasse(d.classe, langue)}</span>
