@@ -67,9 +67,9 @@ export function FicheResultat({ diagnostic, onRecommencer }: Props) {
               Math.round(diagnostic.tauxInfestation * 100),
             )}
           </p>
-        ) : (
+        ) : !diagnostic.sansDetection ? (
           <p className="m-0 text-sm text-encre-douce">{t.ficheResultat.unSeulFruit}</p>
-        ))}
+        ) : null)}
 
         {diagnostic.sansDetection && (
           <p className="avis avis--attention">{t.ficheResultat.sansDetection}</p>
