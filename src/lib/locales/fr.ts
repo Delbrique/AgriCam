@@ -265,7 +265,8 @@ export const fr: Traductions = {
     compteCree:
       'Compte créé. Vérifiez votre boîte mail pour confirmer votre adresse, puis connectez-vous.',
     erreurGenerique: 'Une erreur est survenue.',
-    emailInvalide: "Cette adresse e-mail ne semble pas exister (le domaine ne reçoit pas de courrier). Vérifiez qu'il n'y a pas de faute de frappe.",
+    emailInvalide: 'Utilisez une adresse Gmail, Yahoo ou Outlook pour vous inscrire.',
+    fournisseursAcceptes: 'Gmail, Yahoo ou Outlook uniquement.',
     dejaCompte: "J'ai déjà un compte",
     creerCompte: 'Créer un compte',
     salonGeneralPrefixe: 'Salon général · connecté en tant que',

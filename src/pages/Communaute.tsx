@@ -29,6 +29,18 @@ interface Message {
 
 const SALON = 'general';
 
+/** Liste blanche stricte : seuls ces fournisseurs grand public sont
+ * acceptes a l'inscription, a l'exclusion de tout autre domaine (y compris
+ * des domaines "reels" mais peu connus ou de complaisance, type
+ * "toto@toto.com") - un choix delibere pour cette communaute, pas une
+ * verification technique de deliverabilite. */
+const FOURNISSEURS_AUTORISES = ['gmail.com', 'yahoo.com', 'outlook.com'];
+
+function fournisseurAutorise(email: string): boolean {
+  const domaine = email.split('@')[1]?.trim().toLowerCase();
+  return !!domaine && FOURNISSEURS_AUTORISES.includes(domaine);
+}
+
 export function Communaute() {
   const { t } = useTraduction();
   if (!communauteDisponible()) {
@@ -80,26 +92,12 @@ function Connexion() {
     setEnCours(true);
     try {
       if (inscription) {
-        // Un <input type="email"> ne verifie que la SYNTAXE ("toto@toto.toto"
-        // la passe sans probleme) - on demande en plus a un endpoint serveur
-        // de verifier que le domaine peut reellement recevoir du courrier
-        // (voir api/verifier-email.ts, un navigateur ne peut pas faire cette
-        // requete DNS lui-meme). En echec du controle lui-meme (reseau,
-        // timeout), on laisse passer plutot que de bloquer une inscription
-        // legitime pour une panne qui n'a rien a voir avec l'e-mail saisi.
-        let verification = { valide: true };
-        try {
-          const reponseVerif = await fetch('/api/verifier-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-            signal: AbortSignal.timeout(5000),
-          });
-          verification = await reponseVerif.json();
-        } catch {
-          /* best-effort, voir commentaire ci-dessus */
-        }
-        if (!verification.valide) {
+        // Un <input type="email"> ne verifie que la SYNTAXE ("toto@toto.com"
+        // la passe sans probleme, et un controle DNS generique aussi puisque
+        // "toto.com" est un vrai domaine enregistre) - seuls les fournisseurs
+        // grand public explicitement autorises passent, voir
+        // FOURNISSEURS_AUTORISES ci-dessus.
+        if (!fournisseurAutorise(email)) {
           throw new Error(t.communaute.emailInvalide);
         }
 
@@ -159,6 +157,11 @@ function Connexion() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+          {inscription && (
+            <span className="text-xs font-normal text-encre-douce">
+              {t.communaute.fournisseursAcceptes}
+            </span>
+          )}
         </label>
         <label className="flex flex-col gap-1 text-sm text-encre">
           {t.communaute.motDePasseLabel}
