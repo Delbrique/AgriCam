@@ -18,7 +18,7 @@ import { Diagnostic } from './pages/Diagnostic';
 import { Carte } from './pages/Carte';
 import { Communaute } from './pages/Communaute';
 import { verifierReferentiel } from './lib/classes';
-import { chargerProfil, type ProfilProducteur } from './lib/profilProducteur';
+import type { ProfilProducteur } from './lib/profilProducteur';
 import { useTraduction } from './lib/traduction';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -45,9 +45,11 @@ export default function App() {
   const { t } = useTraduction();
   const location = useLocation();
   const [alerte, setAlerte] = useState<string | null>(null);
-  // Lecture synchrone (localStorage) : evite un flash du reste de l'app
-  // avant de savoir si l'ecran d'accueil doit bloquer le passage.
-  const [profil, setProfil] = useState<ProfilProducteur | null>(() => chargerProfil());
+  // Volontairement PAS initialise depuis le profil enregistre : l'ecran
+  // d'accueil doit reapparaitre a chaque chargement de l'app, pas seulement
+  // au tout premier. Le profil deja saisi sert uniquement a pre-remplir le
+  // formulaire (voir Bienvenue.tsx), pas a sauter l'ecran.
+  const [profil, setProfil] = useState<ProfilProducteur | null>(null);
 
   const ONGLETS: [string, string, LucideIcon][] = [
     ['/', t.chrome.nav.tableauDeBord, Home],

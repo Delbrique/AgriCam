@@ -1,14 +1,16 @@
 /**
- * Ecran d'accueil, affiche une seule fois au tout premier lancement.
+ * Ecran d'accueil, affiche a CHAQUE chargement de l'application (voir
+ * App.tsx - le profil enregistre ne sert jamais a sauter cet ecran, par
+ * choix delibere : le producteur confirme ses informations a chaque fois,
+ * plutot qu'une seule fois pour toutes).
  *
- * Bloque l'acces au reste de l'application (voir App.tsx) tant que le
- * producteur n'a pas rempli l'essentiel de son profil - nom, telephone,
- * cultures. C'est la seule information que l'app connaitra jamais sur lui :
- * pas de compte, pas de mot de passe, tout reste sur l'appareil.
+ * Pre-rempli depuis le dernier profil enregistre, pour eviter de tout
+ * retaper a chaque passage - seule la validation elle-meme se repete.
+ * Pas de compte, pas de mot de passe : tout reste sur l'appareil.
  */
 import { useState, type FormEvent } from 'react';
 import { MapPin } from 'lucide-react';
-import { enregistrerProfil, type ProfilProducteur } from '../lib/profilProducteur';
+import { chargerProfil, enregistrerProfil, type ProfilProducteur } from '../lib/profilProducteur';
 import type { Parcelle } from '../lib/stockage';
 import { useTraduction } from '../lib/traduction';
 
@@ -20,11 +22,12 @@ const CULTURES: Parcelle['culture'][] = ['tomate', 'piment', 'oignon'];
 
 export function Bienvenue({ onTermine }: Props) {
   const { t } = useTraduction();
-  const [nom, setNom] = useState('');
-  const [telephone, setTelephone] = useState('');
-  const [localite, setLocalite] = useState('');
-  const [cultures, setCultures] = useState<Parcelle['culture'][]>([]);
-  const [position, setPosition] = useState<{ latitude: number; longitude: number }>();
+  const profilPrecedent = chargerProfil();
+  const [nom, setNom] = useState(profilPrecedent?.nom ?? '');
+  const [telephone, setTelephone] = useState(profilPrecedent?.telephone ?? '');
+  const [localite, setLocalite] = useState(profilPrecedent?.localite ?? '');
+  const [cultures, setCultures] = useState<Parcelle['culture'][]>(profilPrecedent?.cultures ?? []);
+  const [position, setPosition] = useState(profilPrecedent?.position);
   const [localisationEnCours, setLocalisationEnCours] = useState(false);
 
   const LIBELLE_CULTURE: Record<Parcelle['culture'], string> = {
