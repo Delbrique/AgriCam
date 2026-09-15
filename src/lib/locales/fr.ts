@@ -22,6 +22,22 @@ export const fr: Traductions = {
     intro:
       'Repérez, dans votre propre champ, où se trouvent les foyers de maladie au fil de vos diagnostics géolocalisés.',
   },
+  bienvenue: {
+    titre: 'Bienvenue sur AgriCam',
+    intro:
+      "Quelques informations avant de commencer - elles restent sur votre téléphone, jamais envoyées ailleurs.",
+    nomLabel: 'Votre nom',
+    nomPlaceholder: 'ex. Jean Mballa',
+    telephoneLabel: 'Votre numéro de téléphone',
+    telephonePlaceholder: 'ex. 6XX XX XX XX',
+    localiteLabel: 'Votre localité (facultatif)',
+    localitePlaceholder: 'ex. Bafoussam',
+    utiliserPosition: 'Utiliser ma position',
+    localisationEnCours: 'Localisation en cours…',
+    positionAcquise: 'Position enregistrée',
+    culturesLabel: 'Vos cultures principales',
+    commencer: 'Commencer',
+  },
   tableauDeBord: {
     salutations: {
       nuit: 'Bonne nuit',

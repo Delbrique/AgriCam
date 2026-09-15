@@ -12,11 +12,13 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { Camera, Home, MapPin, MessagesSquare, type LucideIcon } from 'lucide-react';
+import { Bienvenue } from './pages/Bienvenue';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { Diagnostic } from './pages/Diagnostic';
 import { Carte } from './pages/Carte';
 import { Communaute } from './pages/Communaute';
 import { verifierReferentiel } from './lib/classes';
+import { chargerProfil, type ProfilProducteur } from './lib/profilProducteur';
 import { useTraduction } from './lib/traduction';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -43,6 +45,9 @@ export default function App() {
   const { t } = useTraduction();
   const location = useLocation();
   const [alerte, setAlerte] = useState<string | null>(null);
+  // Lecture synchrone (localStorage) : evite un flash du reste de l'app
+  // avant de savoir si l'ecran d'accueil doit bloquer le passage.
+  const [profil, setProfil] = useState<ProfilProducteur | null>(() => chargerProfil());
 
   const ONGLETS: [string, string, LucideIcon][] = [
     ['/', t.chrome.nav.tableauDeBord, Home],
@@ -66,6 +71,10 @@ export default function App() {
     verifier();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!profil) {
+    return <Bienvenue onTermine={setProfil} />;
+  }
 
   return (
     <div className="grid min-h-[100dvh] grid-rows-[auto_1fr] overflow-x-hidden bg-papier">

@@ -34,6 +34,7 @@ import { classifieurPret } from '../lib/classifieur';
 import { nomClasse } from '../lib/classes';
 import { detecteurPret } from '../lib/detecteur';
 import { prechargerModeles } from '../lib/pipeline';
+import { chargerProfil, prenom } from '../lib/profilProducteur';
 import {
   calculerKpis,
   filtrerParPeriode,
@@ -162,7 +163,9 @@ export function TableauDeBord() {
   }
 
   const maintenantDate = new Date();
+  const profil = chargerProfil();
   const salutation = salutationSelonHeure(maintenantDate.getHours(), t);
+  const salutationNominale = profil ? `${salutation}, ${prenom(profil)}` : salutation;
   const humeur = messageEtat(kpis, t);
 
   return (
@@ -170,7 +173,7 @@ export function TableauDeBord() {
       {/* ================= En-tete ================= */}
       <section className="flex flex-col gap-e3">
         <div className="flex items-baseline justify-between gap-e3">
-          <span className="text-sm font-semibold text-encre-douce">{salutation} 👋</span>
+          <span className="text-sm font-semibold text-encre-douce">{salutationNominale} 👋</span>
           <span className="whitespace-nowrap text-xs capitalize text-encre-douce">
             {maintenantDate.toLocaleDateString(langue === 'en' ? 'en-US' : 'fr-FR', {
               weekday: 'long',
