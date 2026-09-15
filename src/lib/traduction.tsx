@@ -43,21 +43,6 @@ export interface Traductions {
     titre: string;
     intro: string;
   };
-  bienvenue: {
-    titre: string;
-    intro: string;
-    nomLabel: string;
-    nomPlaceholder: string;
-    telephoneLabel: string;
-    telephonePlaceholder: string;
-    localiteLabel: string;
-    localitePlaceholder: string;
-    utiliserPosition: string;
-    localisationEnCours: string;
-    positionAcquise: string;
-    culturesLabel: string;
-    commencer: string;
-  };
   tableauDeBord: {
     salutations: { nuit: string; matin: string; apresMidi: string; soir: string };
     intro: string;

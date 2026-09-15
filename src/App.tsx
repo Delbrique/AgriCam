@@ -11,20 +11,23 @@
 
 import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
-import { Camera, Home, MapPin, MessagesSquare, type LucideIcon } from 'lucide-react';
-import { Bienvenue } from './pages/Bienvenue';
+import type { Session } from '@supabase/supabase-js';
+import { Camera, Home, LogOut, MapPin, MessagesSquare, type LucideIcon } from 'lucide-react';
+import { Connexion } from './pages/Connexion';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { Diagnostic } from './pages/Diagnostic';
 import { Carte } from './pages/Carte';
 import { Communaute } from './pages/Communaute';
 import { verifierReferentiel } from './lib/classes';
-import type { ProfilProducteur } from './lib/profilProducteur';
+import { SessionProvider } from './lib/contexteSession';
+import { communauteDisponible, supabase } from './lib/supabase';
 import { useTraduction } from './lib/traduction';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSelector } from './components/LanguageSelector';
 import { Assistant } from './components/Assistant';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NotificationsFoyers } from './components/NotificationsFoyers';
+import { Squelette } from './components/Squelette';
 
 /** Classes de chaque onglet de navigation, calculees selon l'etat actif
     plutot qu'empilees en conflit : mobile = barre basse sur fond "carte"
@@ -45,11 +48,21 @@ export default function App() {
   const { t } = useTraduction();
   const location = useLocation();
   const [alerte, setAlerte] = useState<string | null>(null);
-  // Volontairement PAS initialise depuis le profil enregistre : l'ecran
-  // d'accueil doit reapparaitre a chaque chargement de l'app, pas seulement
-  // au tout premier. Le profil deja saisi sert uniquement a pre-remplir le
-  // formulaire (voir Bienvenue.tsx), pas a sauter l'ecran.
-  const [profil, setProfil] = useState<ProfilProducteur | null>(null);
+
+  // Authentification Supabase, porte d'entree de toute l'application (pas
+  // seulement de la Communaute). `undefined` = etat pas encore connu (verif.
+  // en cours) ; `null` = pas de session. Si Supabase n'est pas configure
+  // (env manquantes), on ne bloque personne - meme logique de degradation
+  // gracieuse que partout ailleurs dans le projet (voir lib/supabase.ts).
+  const authRequise = communauteDisponible();
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (!authRequise) return;
+    supabase!.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: abonnement } = supabase!.auth.onAuthStateChange((_evenement, s) => setSession(s));
+    return () => abonnement.subscription.unsubscribe();
+  }, [authRequise]);
 
   const ONGLETS: [string, string, LucideIcon][] = [
     ['/', t.chrome.nav.tableauDeBord, Home],
@@ -74,8 +87,19 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!profil) {
-    return <Bienvenue onTermine={setProfil} />;
+  if (authRequise && session === undefined) {
+    return (
+      <div className="grid min-h-[100dvh] place-items-center bg-papier px-[var(--pad-page)]">
+        <div className="carte flex w-full max-w-sm flex-col gap-e3">
+          <Squelette className="h-6 w-2/3" />
+          <Squelette className="h-4 w-full" />
+          <Squelette className="h-10 w-full" />
+        </div>
+      </div>
+    );
+  }
+  if (authRequise && !session) {
+    return <Connexion />;
   }
 
   return (
@@ -113,6 +137,16 @@ export default function App() {
           <NotificationsFoyers />
           <ThemeToggle />
           <LanguageSelector />
+          {authRequise && session && (
+            <button
+              type="button"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-0 bg-transparent text-chrome-texte-douce hover:bg-white/10"
+              onClick={() => supabase!.auth.signOut()}
+              aria-label={t.communaute.seDeconnecter}
+            >
+              <LogOut size={18} aria-hidden="true" />
+            </button>
+          )}
         </div>
       </header>
 
@@ -134,12 +168,14 @@ export default function App() {
             changement de route evite qu'une erreur sur /diagnostic reste
             affichee apres avoir clique sur "Tableau de bord". */}
         <ErrorBoundary key={location.pathname} t={t}>
-          <Routes>
-            <Route path="/" element={<TableauDeBord />} />
-            <Route path="/diagnostic" element={<Diagnostic />} />
-            <Route path="/carte" element={<Carte />} />
-            <Route path="/communaute" element={<Communaute />} />
-          </Routes>
+          <SessionProvider session={session ?? null}>
+            <Routes>
+              <Route path="/" element={<TableauDeBord />} />
+              <Route path="/diagnostic" element={<Diagnostic />} />
+              <Route path="/carte" element={<Carte />} />
+              <Route path="/communaute" element={<Communaute />} />
+            </Routes>
+          </SessionProvider>
         </ErrorBoundary>
       </main>
 

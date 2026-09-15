@@ -21,21 +21,6 @@ export const en: Traductions = {
     titre: 'Diagnosis map',
     intro: 'See where disease outbreaks are located in your own field, based on your geolocated diagnoses.',
   },
-  bienvenue: {
-    titre: 'Welcome to AgriCam',
-    intro: 'A few details before you start - they stay on your phone, never sent anywhere else.',
-    nomLabel: 'Your name',
-    nomPlaceholder: 'e.g. John Doe',
-    telephoneLabel: 'Your phone number',
-    telephonePlaceholder: 'e.g. 6XX XX XX XX',
-    localiteLabel: 'Your location (optional)',
-    localitePlaceholder: 'e.g. Bafoussam',
-    utiliserPosition: 'Use my location',
-    localisationEnCours: 'Locating…',
-    positionAcquise: 'Location saved',
-    culturesLabel: 'Your main crops',
-    commencer: 'Get started',
-  },
   tableauDeBord: {
     salutations: {
       nuit: 'Good night',
@@ -263,9 +248,9 @@ export const en: Traductions = {
   },
   communaute: {
     indisponible: 'The community is not available right now.',
-    rejoindre: 'Join the community',
+    rejoindre: 'Create my account',
     seConnecter: 'Sign in',
-    intro: 'Chat with other producers about your crop diagnoses.',
+    intro: 'Sign in to access AgriCam and chat with other producers.',
     pseudoLabel: 'Display name',
     pseudoPlaceholder: 'Your display name',
     emailLabel: 'Email',

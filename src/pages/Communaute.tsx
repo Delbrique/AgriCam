@@ -15,6 +15,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { LogOut, Send } from 'lucide-react';
 import { communauteDisponible, supabase } from '../lib/supabase';
+import { useSession } from '../lib/contexteSession';
 import { Squelette } from '../components/Squelette';
 import { useTraduction } from '../lib/traduction';
 
@@ -29,177 +30,22 @@ interface Message {
 
 const SALON = 'general';
 
-/** Liste blanche stricte : seuls ces fournisseurs grand public sont
- * acceptes a l'inscription, a l'exclusion de tout autre domaine (y compris
- * des domaines "reels" mais peu connus ou de complaisance, type
- * "toto@toto.com") - un choix delibere pour cette communaute, pas une
- * verification technique de deliverabilite. */
-const FOURNISSEURS_AUTORISES = ['gmail.com', 'yahoo.com', 'outlook.com'];
-
-function fournisseurAutorise(email: string): boolean {
-  const domaine = email.split('@')[1]?.trim().toLowerCase();
-  return !!domaine && FOURNISSEURS_AUTORISES.includes(domaine);
-}
-
 export function Communaute() {
   const { t } = useTraduction();
-  if (!communauteDisponible()) {
+  // La connexion elle-meme est geree en amont par App.tsx (porte d'entree de
+  // toute l'application, pas seulement de cette page) : au moment ou cette
+  // page s'affiche, la session est deja garantie presente si Supabase est
+  // configure. Le controle ci-dessous ne couvre que le cas ou Supabase ne
+  // l'est pas (env manquantes), auquel cas App.tsx n'a rien bloque non plus.
+  const session = useSession();
+  if (!communauteDisponible() || !session) {
     return (
       <div className="avis avis--incertain">
         <p>{t.communaute.indisponible}</p>
       </div>
     );
   }
-  return <CommunauteConnectee />;
-}
-
-function CommunauteConnectee() {
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
-
-  useEffect(() => {
-    supabase!.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: abonnement } = supabase!.auth.onAuthStateChange((_evenement, s) => setSession(s));
-    return () => abonnement.subscription.unsubscribe();
-  }, []);
-
-  if (session === undefined) {
-    return (
-      <div className="carte mx-auto flex w-full max-w-sm flex-col gap-e3">
-        <Squelette className="h-6 w-2/3" />
-        <Squelette className="h-4 w-full" />
-        <Squelette className="h-10 w-full" />
-      </div>
-    );
-  }
-  if (!session) return <Connexion />;
   return <FenetreChat session={session} />;
-}
-
-function Connexion() {
-  const { t } = useTraduction();
-  const [inscription, setInscription] = useState(false);
-  const [email, setEmail] = useState('');
-  const [motDePasse, setMotDePasse] = useState('');
-  const [pseudo, setPseudo] = useState('');
-  const [enCours, setEnCours] = useState(false);
-  const [erreur, setErreur] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
-
-  async function soumettre(e: FormEvent) {
-    e.preventDefault();
-    setErreur(null);
-    setInfo(null);
-    setEnCours(true);
-    try {
-      if (inscription) {
-        // Un <input type="email"> ne verifie que la SYNTAXE ("toto@toto.com"
-        // la passe sans probleme, et un controle DNS generique aussi puisque
-        // "toto.com" est un vrai domaine enregistre) - seuls les fournisseurs
-        // grand public explicitement autorises passent, voir
-        // FOURNISSEURS_AUTORISES ci-dessus.
-        if (!fournisseurAutorise(email)) {
-          throw new Error(t.communaute.emailInvalide);
-        }
-
-        const { data, error } = await supabase!.auth.signUp({
-          email,
-          password: motDePasse,
-          options: { data: { pseudo: pseudo.trim() || t.communaute.producteur } },
-        });
-        if (error) throw error;
-        // Si le projet Supabase exige la confirmation par e-mail, `session`
-        // est nulle ici : il faut prevenir le producteur plutot que le
-        // laisser croire que l'inscription l'a connecte. Si la confirmation
-        // n'est PAS exigee, Supabase renvoie deja une session active - le
-        // changement d'etat remonte tout seul jusqu'a CommunauteConnectee
-        // (via onAuthStateChange) qui bascule alors sur la fenetre de
-        // discussion sans qu'on ait besoin de le faire ici.
-        if (!data.session) setInfo(t.communaute.compteCree);
-      } else {
-        const { error } = await supabase!.auth.signInWithPassword({ email, password: motDePasse });
-        if (error) throw error;
-      }
-    } catch (err) {
-      setErreur(err instanceof Error ? err.message : t.communaute.erreurGenerique);
-    } finally {
-      setEnCours(false);
-    }
-  }
-
-  return (
-    <div className="carte mx-auto flex w-full max-w-sm flex-col gap-e4">
-      <div>
-        <h1 className="m-0 font-titre text-lg font-bold text-encre">
-          {inscription ? t.communaute.rejoindre : t.communaute.seConnecter}
-        </h1>
-        <p className="m-0 mt-1 text-sm text-encre-douce">{t.communaute.intro}</p>
-      </div>
-
-      <form className="flex flex-col gap-e3" onSubmit={soumettre}>
-        {inscription && (
-          <label className="flex flex-col gap-1 text-sm text-encre">
-            {t.communaute.pseudoLabel}
-            <input
-              className="min-h-cible rounded-xl border border-trait bg-papier px-e3 text-sm text-encre"
-              value={pseudo}
-              onChange={(e) => setPseudo(e.target.value)}
-              placeholder={t.communaute.pseudoPlaceholder}
-              maxLength={40}
-            />
-          </label>
-        )}
-        <label className="flex flex-col gap-1 text-sm text-encre">
-          {t.communaute.emailLabel}
-          <input
-            type="email"
-            required
-            className="min-h-cible rounded-xl border border-trait bg-papier px-e3 text-sm text-encre"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          {inscription && (
-            <span className="text-xs font-normal text-encre-douce">
-              {t.communaute.fournisseursAcceptes}
-            </span>
-          )}
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-encre">
-          {t.communaute.motDePasseLabel}
-          <input
-            type="password"
-            required
-            minLength={6}
-            className="min-h-cible rounded-xl border border-trait bg-papier px-e3 text-sm text-encre"
-            value={motDePasse}
-            onChange={(e) => setMotDePasse(e.target.value)}
-          />
-        </label>
-
-        {erreur && <p className="avis avis--erreur">{erreur}</p>}
-        {info && <p className="avis avis--merci">{info}</p>}
-
-        <button type="submit" className="bouton-principal min-h-cible" disabled={enCours}>
-          {enCours
-            ? t.communaute.unInstant
-            : inscription
-              ? t.communaute.creerMonCompte
-              : t.communaute.seConnecter}
-        </button>
-      </form>
-
-      <button
-        type="button"
-        className="bouton-second min-h-cible"
-        onClick={() => {
-          setInscription((v) => !v);
-          setErreur(null);
-          setInfo(null);
-        }}
-      >
-        {inscription ? t.communaute.dejaCompte : t.communaute.creerCompte}
-      </button>
-    </div>
-  );
 }
 
 function FenetreChat({ session }: { session: Session }) {

@@ -34,7 +34,7 @@ import { classifieurPret } from '../lib/classifieur';
 import { nomClasse } from '../lib/classes';
 import { detecteurPret } from '../lib/detecteur';
 import { prechargerModeles } from '../lib/pipeline';
-import { chargerProfil, prenom } from '../lib/profilProducteur';
+import { useSession } from '../lib/contexteSession';
 import {
   calculerKpis,
   filtrerParPeriode,
@@ -100,6 +100,7 @@ function messageEtat(
 
 export function TableauDeBord() {
   const { t, langue } = useTraduction();
+  const session = useSession();
   const [consultations, setConsultations] = useState<Consultation[] | null>(null);
   const [listeParcelles, setListeParcelles] = useState<Parcelle[]>([]);
   const [periode, setPeriode] = useState<Periode>('semaine');
@@ -163,9 +164,9 @@ export function TableauDeBord() {
   }
 
   const maintenantDate = new Date();
-  const profil = chargerProfil();
+  const pseudo = session?.user.user_metadata.pseudo as string | undefined;
   const salutation = salutationSelonHeure(maintenantDate.getHours(), t);
-  const salutationNominale = profil ? `${salutation}, ${prenom(profil)}` : salutation;
+  const salutationNominale = pseudo ? `${salutation}, ${pseudo}` : salutation;
   const humeur = messageEtat(kpis, t);
 
   return (
