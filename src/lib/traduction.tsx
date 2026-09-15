@@ -276,6 +276,17 @@ export interface Traductions {
     envoyer: string;
     producteur: string;
   };
+  connexion: {
+    eyebrowHero: string;
+    titreHero: string;
+    texteHero: string;
+    atout1Titre: string;
+    atout1Texte: string;
+    atout2Titre: string;
+    atout2Texte: string;
+    eyebrowFormulaire: string;
+    piedDePage: string;
+  };
   errorBoundary: {
     titre: string;
     texte: string;

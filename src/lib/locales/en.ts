@@ -272,6 +272,18 @@ export const en: Traductions = {
     envoyer: 'Send',
     producteur: 'Producer',
   },
+  connexion: {
+    eyebrowHero: 'AgriCam Platform',
+    titreHero: 'Diagnose your crops with a single photo.',
+    texteHero:
+      'Spot diseases on your tomato, pepper and onion plants, keep a history of your field, and chat with other producers.',
+    atout1Titre: 'Works offline',
+    atout1Texte: 'Diagnosis works right in the field, with no network.',
+    atout2Titre: 'Just a photo',
+    atout2Texte: 'No technical jargon - AgriCam explains what comes next in plain language.',
+    eyebrowFormulaire: 'Producer sign-in',
+    piedDePage: 'AgriCam · Offline diagnosis',
+  },
   errorBoundary: {
     titre: 'An unexpected error occurred.',
     texte: 'Your diagnoses remain safe in this device’s history. Try reloading the page.',

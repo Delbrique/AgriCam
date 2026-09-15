@@ -278,6 +278,18 @@ export const fr: Traductions = {
     envoyer: 'Envoyer',
     producteur: 'Producteur',
   },
+  connexion: {
+    eyebrowHero: 'Plateforme AgriCam',
+    titreHero: 'Diagnostiquez vos cultures en une photo.',
+    texteHero:
+      'Repérez les maladies de vos plants de tomate, piment et oignon, gardez l\'historique de votre champ et échangez avec d\'autres producteurs.',
+    atout1Titre: 'Hors connexion',
+    atout1Texte: 'Le diagnostic fonctionne même sur le terrain, sans réseau.',
+    atout2Titre: 'Une simple photo',
+    atout2Texte: "Pas de jargon technique - AgriCam explique la suite en clair.",
+    eyebrowFormulaire: 'Connexion producteur',
+    piedDePage: 'AgriCam · Diagnostic hors ligne',
+  },
   errorBoundary: {
     titre: 'Une erreur inattendue est survenue.',
     texte: "Vos diagnostics restent en sécurité dans l'historique de l'appareil. Essayez de recharger la page.",
