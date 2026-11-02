@@ -295,6 +295,13 @@ export const en: Traductions = {
     confirmationLabel: 'Confirm the password',
     motsDePasseDifferents: 'The two passwords do not match.',
     enregistrerMotDePasse: 'Save the password',
+    changerMotDePasse: 'Change my password',
+    annuler: 'Cancel',
+    erreurIdentifiants: 'Incorrect email or password.',
+    erreurEmailNonConfirme: 'Your email address is not confirmed yet: open the link sent to you by email.',
+    erreurMemeMotDePasse: 'The new password must be different from the old one.',
+    erreurTropDeDemandes: 'Too many attempts. Please wait a few minutes before trying again.',
+    erreurDejaInscrit: 'An account already exists with this email address.',
   },
   errorBoundary: {
     titre: 'An unexpected error occurred.',

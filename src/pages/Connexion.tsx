@@ -14,6 +14,7 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { useTraduction } from '../lib/traduction';
+import { traduireErreurAuth } from '../lib/erreursAuth';
 
 /** Liste blanche stricte : seuls ces fournisseurs grand public sont
  * acceptes a l'inscription, a l'exclusion de tout autre domaine (y compris
@@ -96,7 +97,7 @@ export function Connexion() {
         if (error) throw error;
       }
     } catch (err) {
-      setErreur(err instanceof Error ? err.message : t.communaute.erreurGenerique);
+      setErreur(traduireErreurAuth(err, t));
     } finally {
       setEnCours(false);
     }
@@ -166,6 +167,7 @@ export function Connexion() {
                   onChange={(e) => setPseudo(e.target.value)}
                   placeholder={t.communaute.pseudoPlaceholder}
                   maxLength={40}
+                  autoComplete="nickname"
                   autoFocus
                 />
               </label>
@@ -179,7 +181,11 @@ export function Connexion() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus={!inscription}
-                autoComplete="email"
+                // "username" (et non "email") : c'est l'identifiant de
+                // connexion. Sans cette indication, le gestionnaire de mots
+                // de passe du navigateur prenait le pseudo - premier champ du
+                // formulaire d'inscription - pour l'identifiant.
+                autoComplete="username"
               />
               {inscription && (
                 <span className="text-xs font-normal text-encre-douce">

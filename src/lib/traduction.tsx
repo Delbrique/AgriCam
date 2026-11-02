@@ -297,6 +297,13 @@ export interface Traductions {
     confirmationLabel: string;
     motsDePasseDifferents: string;
     enregistrerMotDePasse: string;
+    changerMotDePasse: string;
+    annuler: string;
+    erreurIdentifiants: string;
+    erreurEmailNonConfirme: string;
+    erreurMemeMotDePasse: string;
+    erreurTropDeDemandes: string;
+    erreurDejaInscrit: string;
   };
   errorBoundary: {
     titre: string;

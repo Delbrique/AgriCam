@@ -12,7 +12,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
-import { Camera, Home, LogOut, MapPin, MessagesSquare, type LucideIcon } from 'lucide-react';
+import { Camera, Home, KeyRound, LogOut, MapPin, MessagesSquare, type LucideIcon } from 'lucide-react';
 import { Connexion } from './pages/Connexion';
 import { NouveauMotDePasse } from './pages/NouveauMotDePasse';
 import { TableauDeBord } from './pages/TableauDeBord';
@@ -21,7 +21,12 @@ import { Carte } from './pages/Carte';
 import { Communaute } from './pages/Communaute';
 import { verifierReferentiel } from './lib/classes';
 import { SessionProvider } from './lib/contexteSession';
-import { arriveeParLienRecuperation, communauteDisponible, supabase } from './lib/supabase';
+import {
+  arriveeParLienRecuperation,
+  communauteDisponible,
+  oublierRecuperation,
+  supabase,
+} from './lib/supabase';
 import { useTraduction } from './lib/traduction';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -57,15 +62,31 @@ export default function App() {
   // gracieuse que partout ailleurs dans le projet (voir lib/supabase.ts).
   const authRequise = communauteDisponible();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
-  // Arrivee par le lien "mot de passe oublie" : on impose l'ecran de nouveau
-  // mot de passe avant l'application (voir pages/NouveauMotDePasse.tsx).
-  const [recuperation, setRecuperation] = useState(authRequise && arriveeParLienRecuperation);
+  // Ecran de mot de passe (voir pages/NouveauMotDePasse.tsx) :
+  // 'recuperation' = arrivee par le lien "mot de passe oublie", impose avant
+  // l'application ; 'changement' = ouvert volontairement depuis l'en-tete,
+  // annulable.
+  const [ecranMotDePasse, setEcranMotDePasse] = useState<'recuperation' | 'changement' | null>(
+    authRequise && arriveeParLienRecuperation ? 'recuperation' : null,
+  );
+
+  function fermerEcranMotDePasse() {
+    oublierRecuperation();
+    setEcranMotDePasse(null);
+  }
 
   useEffect(() => {
     if (!authRequise) return;
-    supabase!.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase!.auth.getSession().then(({ data }) => {
+      // Drapeau de recuperation reste en sessionStorage sans session
+      // derriere (lien expire, deconnexion) : il ne doit pas imposer l'ecran
+      // a la prochaine connexion normale.
+      if (!data.session) fermerEcranMotDePasse();
+      setSession(data.session);
+    });
     const { data: abonnement } = supabase!.auth.onAuthStateChange((evenement, s) => {
-      if (evenement === 'PASSWORD_RECOVERY') setRecuperation(true);
+      if (evenement === 'PASSWORD_RECOVERY') setEcranMotDePasse('recuperation');
+      if (evenement === 'SIGNED_OUT') fermerEcranMotDePasse();
       setSession(s);
     });
     return () => abonnement.subscription.unsubscribe();
@@ -108,8 +129,14 @@ export default function App() {
   if (authRequise && !session) {
     return <Connexion />;
   }
-  if (recuperation) {
-    return <NouveauMotDePasse onTermine={() => setRecuperation(false)} />;
+  if (authRequise && session && ecranMotDePasse) {
+    return (
+      <NouveauMotDePasse
+        email={session.user.email ?? ''}
+        onTermine={fermerEcranMotDePasse}
+        onAnnuler={ecranMotDePasse === 'changement' ? fermerEcranMotDePasse : undefined}
+      />
+    );
   }
 
   return (
@@ -147,6 +174,17 @@ export default function App() {
           <NotificationsFoyers />
           <ThemeToggle />
           <LanguageSelector />
+          {authRequise && session && (
+            <button
+              type="button"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-0 bg-transparent text-chrome-texte-douce hover:bg-white/10"
+              onClick={() => setEcranMotDePasse('changement')}
+              aria-label={t.connexion.changerMotDePasse}
+              title={t.connexion.changerMotDePasse}
+            >
+              <KeyRound size={18} aria-hidden="true" />
+            </button>
+          )}
           {authRequise && session && (
             <button
               type="button"

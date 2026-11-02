@@ -302,6 +302,13 @@ export const fr: Traductions = {
     confirmationLabel: 'Confirmez le mot de passe',
     motsDePasseDifferents: 'Les deux mots de passe ne correspondent pas.',
     enregistrerMotDePasse: 'Enregistrer le mot de passe',
+    changerMotDePasse: 'Changer mon mot de passe',
+    annuler: 'Annuler',
+    erreurIdentifiants: 'E-mail ou mot de passe incorrect.',
+    erreurEmailNonConfirme: "Votre adresse e-mail n'est pas encore confirmée : ouvrez le lien reçu par e-mail.",
+    erreurMemeMotDePasse: "Le nouveau mot de passe doit être différent de l'ancien.",
+    erreurTropDeDemandes: 'Trop de tentatives. Patientez quelques minutes avant de réessayer.',
+    erreurDejaInscrit: 'Un compte existe déjà avec cette adresse e-mail.',
   },
   errorBoundary: {
     titre: 'Une erreur inattendue est survenue.',

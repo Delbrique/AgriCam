@@ -10,8 +10,19 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { useTraduction } from '../lib/traduction';
+import { traduireErreurAuth } from '../lib/erreursAuth';
 
-export function NouveauMotDePasse({ onTermine }: { onTermine: () => void }) {
+export function NouveauMotDePasse({
+  email,
+  onTermine,
+  onAnnuler,
+}: {
+  email: string;
+  onTermine: () => void;
+  /** Absent en recuperation (ecran impose), present quand le producteur a
+   * ouvert l'ecran lui-meme depuis l'en-tete. */
+  onAnnuler?: () => void;
+}) {
   const { t } = useTraduction();
   const [motDePasse, setMotDePasse] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -31,7 +42,7 @@ export function NouveauMotDePasse({ onTermine }: { onTermine: () => void }) {
       if (error) throw error;
       onTermine();
     } catch (err) {
-      setErreur(err instanceof Error ? err.message : t.communaute.erreurGenerique);
+      setErreur(traduireErreurAuth(err, t));
     } finally {
       setEnCours(false);
     }
@@ -58,6 +69,10 @@ export function NouveauMotDePasse({ onTermine }: { onTermine: () => void }) {
         <p className="m-0 text-sm text-encre-douce">{t.connexion.texteNouveauMotDePasse}</p>
 
         <form className="flex flex-col gap-e3" onSubmit={soumettre}>
+          {/* Champ cache portant l'e-mail du compte : sans lui, le
+              gestionnaire de mots de passe du navigateur enregistre le
+              nouveau mot de passe sans identifiant (ou avec un mauvais). */}
+          <input type="email" name="email" autoComplete="username" value={email} readOnly hidden />
           <label className="flex flex-col gap-1 text-sm text-encre">
             {t.connexion.nouveauMotDePasseLabel}
             <input
@@ -89,6 +104,11 @@ export function NouveauMotDePasse({ onTermine }: { onTermine: () => void }) {
           <button type="submit" className="bouton-principal min-h-cible" disabled={enCours}>
             {enCours ? t.communaute.unInstant : t.connexion.enregistrerMotDePasse}
           </button>
+          {onAnnuler && (
+            <button type="button" className="bouton-second min-h-cible" onClick={onAnnuler} disabled={enCours}>
+              {t.connexion.annuler}
+            </button>
+          )}
         </form>
       </div>
     </div>
