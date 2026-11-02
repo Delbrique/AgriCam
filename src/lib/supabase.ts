@@ -19,6 +19,15 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CLE_ANON_SUPABASE = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
+/** Vrai si la page s'ouvre depuis le lien de l'e-mail "mot de passe oublie"
+ * (#...&type=recovery). Lu AVANT createClient : le client consomme puis
+ * efface ce fragment de l'URL des son initialisation, et l'evenement
+ * PASSWORD_RECOVERY qu'il emet peut partir avant qu'App.tsx soit abonne -
+ * ce drapeau sert de filet pour ne jamais rater la page de nouveau mot de
+ * passe. */
+export const arriveeParLienRecuperation =
+  typeof window !== 'undefined' && window.location.hash.includes('type=recovery');
+
 export const supabase: SupabaseClient | null =
   URL_SUPABASE && CLE_ANON_SUPABASE ? createClient(URL_SUPABASE, CLE_ANON_SUPABASE) : null;
 

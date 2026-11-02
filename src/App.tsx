@@ -14,13 +14,14 @@ import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { Camera, Home, LogOut, MapPin, MessagesSquare, type LucideIcon } from 'lucide-react';
 import { Connexion } from './pages/Connexion';
+import { NouveauMotDePasse } from './pages/NouveauMotDePasse';
 import { TableauDeBord } from './pages/TableauDeBord';
 import { Diagnostic } from './pages/Diagnostic';
 import { Carte } from './pages/Carte';
 import { Communaute } from './pages/Communaute';
 import { verifierReferentiel } from './lib/classes';
 import { SessionProvider } from './lib/contexteSession';
-import { communauteDisponible, supabase } from './lib/supabase';
+import { arriveeParLienRecuperation, communauteDisponible, supabase } from './lib/supabase';
 import { useTraduction } from './lib/traduction';
 import { ThemeToggle } from './components/ThemeToggle';
 import { LanguageSelector } from './components/LanguageSelector';
@@ -56,11 +57,17 @@ export default function App() {
   // gracieuse que partout ailleurs dans le projet (voir lib/supabase.ts).
   const authRequise = communauteDisponible();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
+  // Arrivee par le lien "mot de passe oublie" : on impose l'ecran de nouveau
+  // mot de passe avant l'application (voir pages/NouveauMotDePasse.tsx).
+  const [recuperation, setRecuperation] = useState(authRequise && arriveeParLienRecuperation);
 
   useEffect(() => {
     if (!authRequise) return;
     supabase!.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: abonnement } = supabase!.auth.onAuthStateChange((_evenement, s) => setSession(s));
+    const { data: abonnement } = supabase!.auth.onAuthStateChange((evenement, s) => {
+      if (evenement === 'PASSWORD_RECOVERY') setRecuperation(true);
+      setSession(s);
+    });
     return () => abonnement.subscription.unsubscribe();
   }, [authRequise]);
 
@@ -100,6 +107,9 @@ export default function App() {
   }
   if (authRequise && !session) {
     return <Connexion />;
+  }
+  if (recuperation) {
+    return <NouveauMotDePasse onTermine={() => setRecuperation(false)} />;
   }
 
   return (

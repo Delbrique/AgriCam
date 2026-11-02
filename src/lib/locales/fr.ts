@@ -289,6 +289,19 @@ export const fr: Traductions = {
     atout2Texte: "Pas de jargon technique - AgriCam explique la suite en clair.",
     eyebrowFormulaire: 'Connexion producteur',
     piedDePage: 'AgriCam · Diagnostic hors ligne',
+    motDePasseOublie: 'Mot de passe oublié ?',
+    texteOubli:
+      'Saisissez l\'adresse e-mail de votre compte : nous vous enverrons un lien pour choisir un nouveau mot de passe.',
+    envoyerLien: 'Envoyer le lien',
+    lienEnvoye:
+      'Si un compte existe pour cette adresse, un e-mail vient de partir. Ouvrez le lien qu\'il contient sur cet appareil.',
+    retourConnexion: 'Retour à la connexion',
+    titreNouveauMotDePasse: 'Nouveau mot de passe',
+    texteNouveauMotDePasse: 'Choisissez un nouveau mot de passe pour votre compte AgriCam.',
+    nouveauMotDePasseLabel: 'Nouveau mot de passe',
+    confirmationLabel: 'Confirmez le mot de passe',
+    motsDePasseDifferents: 'Les deux mots de passe ne correspondent pas.',
+    enregistrerMotDePasse: 'Enregistrer le mot de passe',
   },
   errorBoundary: {
     titre: 'Une erreur inattendue est survenue.',

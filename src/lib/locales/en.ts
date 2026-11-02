@@ -283,6 +283,18 @@ export const en: Traductions = {
     atout2Texte: 'No technical jargon - AgriCam explains what comes next in plain language.',
     eyebrowFormulaire: 'Producer sign-in',
     piedDePage: 'AgriCam · Offline diagnosis',
+    motDePasseOublie: 'Forgot your password?',
+    texteOubli: "Enter your account's email address and we'll send you a link to choose a new password.",
+    envoyerLien: 'Send the link',
+    lienEnvoye:
+      'If an account exists for this address, an email is on its way. Open the link it contains on this device.',
+    retourConnexion: 'Back to sign-in',
+    titreNouveauMotDePasse: 'New password',
+    texteNouveauMotDePasse: 'Choose a new password for your AgriCam account.',
+    nouveauMotDePasseLabel: 'New password',
+    confirmationLabel: 'Confirm the password',
+    motsDePasseDifferents: 'The two passwords do not match.',
+    enregistrerMotDePasse: 'Save the password',
   },
   errorBoundary: {
     titre: 'An unexpected error occurred.',

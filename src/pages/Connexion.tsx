@@ -27,9 +27,15 @@ function fournisseurAutorise(email: string): boolean {
   return !!domaine && FOURNISSEURS_AUTORISES.includes(domaine);
 }
 
+/** Les trois etats du formulaire : se connecter, creer un compte, ou
+ * demander le lien de reinitialisation du mot de passe (e-mail seul). */
+type Mode = 'connexion' | 'inscription' | 'oubli';
+
 export function Connexion() {
   const { t } = useTraduction();
-  const [inscription, setInscription] = useState(false);
+  const [mode, setMode] = useState<Mode>('connexion');
+  const inscription = mode === 'inscription';
+  const oubli = mode === 'oubli';
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [pseudo, setPseudo] = useState('');
@@ -37,13 +43,31 @@ export function Connexion() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
+  function changerMode(nouveau: Mode) {
+    setMode(nouveau);
+    setErreur(null);
+    setInfo(null);
+  }
+
   async function soumettre(e: FormEvent) {
     e.preventDefault();
     setErreur(null);
     setInfo(null);
     setEnCours(true);
     try {
-      if (inscription) {
+      if (oubli) {
+        // redirectTo = l'origine courante (localhost en dev, domaine Vercel
+        // en prod) : sans lui, Supabase renvoie sur la "Site URL" du projet.
+        // Cette adresse doit figurer dans les Redirect URLs autorisees du
+        // tableau de bord Supabase, sinon elle est ignoree. Le message de
+        // confirmation reste volontairement le meme que le compte existe ou
+        // non, pour ne pas reveler quelles adresses sont inscrites.
+        const { error } = await supabase!.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        setInfo(t.connexion.lienEnvoye);
+      } else if (inscription) {
         // Un <input type="email"> ne verifie que la SYNTAXE ("toto@toto.com"
         // la passe sans probleme, et un controle DNS generique aussi puisque
         // "toto.com" est un vrai domaine enregistre) - seuls les fournisseurs
@@ -129,7 +153,7 @@ export function Connexion() {
           </div>
 
           <p className="m-0 text-sm text-encre-douce">
-            {inscription ? t.connexion.texteHero : t.communaute.intro}
+            {oubli ? t.connexion.texteOubli : inscription ? t.connexion.texteHero : t.communaute.intro}
           </p>
 
           <form className="flex flex-col gap-e3" onSubmit={soumettre}>
@@ -155,6 +179,7 @@ export function Connexion() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus={!inscription}
+                autoComplete="email"
               />
               {inscription && (
                 <span className="text-xs font-normal text-encre-douce">
@@ -162,17 +187,29 @@ export function Connexion() {
                 </span>
               )}
             </label>
-            <label className="flex flex-col gap-1 text-sm text-encre">
-              {t.communaute.motDePasseLabel}
-              <input
-                type="password"
-                required
-                minLength={6}
-                className="min-h-cible rounded-xl border border-trait bg-papier px-e3 text-sm text-encre shadow-sm outline-none transition-colors focus:border-accent"
-                value={motDePasse}
-                onChange={(e) => setMotDePasse(e.target.value)}
-              />
-            </label>
+            {!oubli && (
+              <label className="flex flex-col gap-1 text-sm text-encre">
+                {t.communaute.motDePasseLabel}
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  className="min-h-cible rounded-xl border border-trait bg-papier px-e3 text-sm text-encre shadow-sm outline-none transition-colors focus:border-accent"
+                  value={motDePasse}
+                  onChange={(e) => setMotDePasse(e.target.value)}
+                  autoComplete={inscription ? 'new-password' : 'current-password'}
+                />
+              </label>
+            )}
+            {mode === 'connexion' && (
+              <button
+                type="button"
+                className="-mt-e2 self-end border-0 bg-transparent p-0 text-xs font-semibold text-encre underline underline-offset-2 hover:text-encre-douce"
+                onClick={() => changerMode('oubli')}
+              >
+                {t.connexion.motDePasseOublie}
+              </button>
+            )}
 
             {erreur && <p className="avis avis--erreur">{erreur}</p>}
             {info && <p className="avis avis--merci">{info}</p>}
@@ -180,22 +217,24 @@ export function Connexion() {
             <button type="submit" className="bouton-principal min-h-cible" disabled={enCours}>
               {enCours
                 ? t.communaute.unInstant
-                : inscription
-                  ? t.communaute.creerMonCompte
-                  : t.communaute.seConnecter}
+                : oubli
+                  ? t.connexion.envoyerLien
+                  : inscription
+                    ? t.communaute.creerMonCompte
+                    : t.communaute.seConnecter}
             </button>
           </form>
 
           <button
             type="button"
             className="bouton-second min-h-cible"
-            onClick={() => {
-              setInscription((v) => !v);
-              setErreur(null);
-              setInfo(null);
-            }}
+            onClick={() => changerMode(oubli || inscription ? 'connexion' : 'inscription')}
           >
-            {inscription ? t.communaute.dejaCompte : t.communaute.creerCompte}
+            {oubli
+              ? t.connexion.retourConnexion
+              : inscription
+                ? t.communaute.dejaCompte
+                : t.communaute.creerCompte}
           </button>
 
           <p className="m-0 mt-auto border-t border-trait pt-e3 text-center text-[11px] font-medium uppercase tracking-[0.22em] text-encre-douce">

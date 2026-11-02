@@ -286,6 +286,17 @@ export interface Traductions {
     atout2Texte: string;
     eyebrowFormulaire: string;
     piedDePage: string;
+    motDePasseOublie: string;
+    texteOubli: string;
+    envoyerLien: string;
+    lienEnvoye: string;
+    retourConnexion: string;
+    titreNouveauMotDePasse: string;
+    texteNouveauMotDePasse: string;
+    nouveauMotDePasseLabel: string;
+    confirmationLabel: string;
+    motsDePasseDifferents: string;
+    enregistrerMotDePasse: string;
   };
   errorBoundary: {
     titre: string;
